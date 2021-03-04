@@ -332,7 +332,7 @@ void XIOObject::Release(LONG volatile *pRef)
 	OnFree();
 }
 
-#endif	// _TEST
+#endif	// XIOOBJECT_DEBUG
 
 BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
 {

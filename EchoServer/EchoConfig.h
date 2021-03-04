@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IOLIb.h"
+#include <vector>
 
 class CEchoConfig  
 {

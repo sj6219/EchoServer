@@ -48,10 +48,16 @@ XIOLibInit	theInit;
 
 
 
-
-
-
-
+tstring Format(LPCTSTR format, ...)
+{
+	va_list arglist;
+	va_start(arglist, format);
+	int n = _vsctprintf(format, arglist) + 1;
+	TCHAR *p = (TCHAR *) _alloca(sizeof(TCHAR) * n);
+	_vstprintf_s(p, n, format, arglist);
+	va_end(arglist);
+	return p;
+}
 
 
 

@@ -46,7 +46,6 @@
 #include <queue>
 #include <strsafe.h>
 
-// TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
 #include <memory>
 
 #define LPCPACKET LPCSTR
@@ -62,8 +61,6 @@ void TRACE(LPCTSTR lpszFormat, ...);
 #endif
 
 #ifdef _DEBUG
-#undef _TEST
-#define _TEST
 void BREAK();
 #define ASSERT(expr) if (!(expr)) BREAK()
 #else
@@ -132,6 +129,8 @@ inline LPSTR WINAPI T_ACopy(LPSTR lpa, LPCTSTR lpt, int nChars)
 #define T_A(lpt) (lpt)
 
 #endif // UNICODE
+
+tstring Format(LPCTSTR format, ...);
 
 extern "C"
 {

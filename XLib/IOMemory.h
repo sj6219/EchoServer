@@ -22,37 +22,16 @@
 
 #undef new
 
-inline void * operator new(size_t cb, const char * szFileName, int nLine)
-{
-    return _malloc_dbg(cb, _NORMAL_BLOCK, szFileName, nLine);
-}
+//inline void * operator new(size_t cb, const char * szFileName, int nLine)
+//{
+//    return _malloc_dbg(cb, _NORMAL_BLOCK, szFileName, nLine);
+//}
 
 #define DBG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-//#define new NEW
+#define new DBG_NEW
 
 #else
 #include <cstdlib>
-
-inline void* operator new[](size_t cb)
-{
-    return malloc( cb);
-}
-
-inline void operator delete[](void* p)
-{
-    return free( p);
-}
-
-inline void * operator new( size_t cb)
-{
-    return malloc( cb);
-
-}
-
-inline void operator delete( void * p)
-{
-    free( p );
-}
 #define _expand(p, s)     XIOMemory::__expand(p,s)
 #define free(p)           XIOMemory::_free(p)
 #define _msize(p)         XIOMemory::__msize(p)
@@ -67,6 +46,7 @@ class XIOMemory
 {
 public:
 
+	static void Check();
 	void *	_realloc_base(void * pBlock, size_t newsize);
 	void *	_expand_base(void * pBlock, size_t newsize);
 	size_t	_msize_base(void * pblock);

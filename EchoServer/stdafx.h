@@ -14,13 +14,19 @@
 #define _HAS_EXCEPTIONS 0
 #endif
 
-#include "IOLib.h"
+#include "targetver.h"
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+// Windows Header Files
+#include <windows.h>
 
-#include <commctrl.h>
-#include <mswsock.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/utime.h>
+#include "IOMemory.h"
+//#include "IOLib.h"
+
+//#include <commctrl.h>
+//#include <mswsock.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <sys/utime.h>
 
 
 // TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.

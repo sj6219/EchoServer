@@ -21,7 +21,7 @@ void	CStatus::Update()
 		ULONG Status;
 
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
-		_ASSERT(Status != ERROR_SUCCESS);
+		_ASSERT(Status == ERROR_SUCCESS);
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
 
 	}

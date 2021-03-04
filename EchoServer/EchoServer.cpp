@@ -5,13 +5,13 @@
 #include "IOLib.h"
 #include "IOException.h"
 #include "IOScreen.h"
-#include "Update.h"
 #include "Misc.h"
 #include "EchoServer.h"
 #include "Resource.h"
 #include "Status.h"
 #include "EchoConfig.h"
 #include "Server.h"
+#include <commctrl.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -131,6 +131,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    g_hInst = hInstance; 
 
+   XIOMemory::Check();
 	XIOLog::s_screen.Open( 200, 50);
 	CStatus::s_screen.Open( 80, 20);
 	XIOScreen::s_pScreen = &XIOLog::s_screen;
@@ -149,7 +150,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 
 	CreateMutex( NULL, FALSE, tstring(_T("Global\\")).append(GetUniqueName()).c_str());
-	if(GetLastError())
+	if(GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		MessageBox(hWnd, _T("Another Server is running"), _T(""), MB_ICONERROR);
 		return 0;

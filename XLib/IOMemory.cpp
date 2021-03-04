@@ -7,15 +7,19 @@
 #pragma warning(disable: 4074) 
 #pragma init_seg(compiler)
 
+//#define DEBUG_LEAK 0
+static XIOMemory::CInit  theInit;
+
 #define MEMORY_HEAP_SIZE 16
 
-static XIOMemory::CInit  theInit;
+#ifndef _DEBUG
 static XIOMemory g_memory[MEMORY_HEAP_SIZE]; 
-
-
-
-
 static long g_nMemoryCount;
+#endif
+
+
+
+
 
 
 XIOMemory::CInit::CInit()
@@ -29,13 +33,18 @@ XIOMemory::CInit::CInit()
 
 XIOMemory::CInit::~CInit()
 {
-#ifndef	_DEBUG
+#if 	!defined(_DEBUG) && !defined(DEBUG_LEAK)
 	TCHAR buf[128];
-	_stprintf_s(buf,  _T("Memory Total Size = %d\n"), XIOMemory::s_nTotalSize);
+	_stprintf_s(buf,  _T("Memory Total Size = %lld\n"), XIOMemory::s_nTotalSize);
 	OutputDebugString(buf);
 	if (XIOMemory::s_nTotalSize && IsDebuggerPresent()) 
 		DebugBreak();
 #endif
+}
+
+void XIOMemory::Check()
+{
+
 }
  
 #ifndef	_DEBUG
@@ -462,12 +471,10 @@ size_t	XIOMemory::__msize(void * pBlock)
 }
 
 
-#if	0
+
 void * operator new( size_t cb)
 {
-
 	return malloc( cb);
-
 }
 
 void operator delete( void * p)
@@ -484,7 +491,7 @@ void operator delete[](void* p)
 {
     return free( p);
 }
-#endif
+
 int	XIOMemory::__sbh_resize_block (PHEADER pHeader, void * pvAlloc, int intNew)
 {
     PREGION         pRegion;
@@ -1145,9 +1152,7 @@ void *	XIOMemory::_malloc(size_t size)
 	if (pHeader) {
 		pHeader->size = size;
 		pHeader->key = KEY + nIndex;
-#ifdef	_TEST
 		memset(++pHeader, 0xfc, size);
-#endif
 #if		DEBUG_LEAK
 		if (pHeader == (HEAP_HEADER *) DEBUG_LEAK) {
 			TCHAR buff[128];

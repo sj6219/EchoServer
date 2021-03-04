@@ -239,7 +239,7 @@ public :
 	XIOSocket(SOCKET s);
 	static void Start();
 	static void Stop();
-#ifdef _TEST
+#ifdef XIOOBJECT_DEBUG
 	void AddRefIO() { AddRef(&m_nSystemRef); }
 	void ReleaseIO() { Release(&m_nSystemRef); }
 #else

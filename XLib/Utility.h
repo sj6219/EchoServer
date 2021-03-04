@@ -161,6 +161,9 @@ namespace util
 	void	FreePage(XMemoryPage *pPage);
 }
 
+#pragma push_macro("new")
+#undef new
+
 class XMemoryPage : public XLink
 {
 public:
@@ -252,12 +255,13 @@ public:
 
 };
 
+
 template <int size>  typename XMemoryPool<size>  XMemoryPool<size>::s_self;
 
 template <typename TYPE> TYPE *XConstruct()
 {
-	//return new (XMemoryPool<sizeof(TYPE)>::Alloc()) TYPE;
-	return new TYPE;
+	return new (XMemoryPool<sizeof(TYPE)>::Alloc()) TYPE;
+	//return new TYPE;
 }
 
 template <typename TYPE> void XDestruct(TYPE *ptr)
@@ -404,6 +408,7 @@ template <typename TYPE> void ZDestruct(TYPE *ptr)
 {
 	ZMemoryPool<TYPE>::Free(ptr);
 }
+#pragma pop_macro("new")
 
 
 

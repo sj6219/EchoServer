@@ -1,5 +1,4 @@
 #include "Stdafx.h"
-#include "update.h"
 #include "Server.h"
 #include "Socket.h"
 #include "EchoConfig.h"
