@@ -1,9 +1,10 @@
 #pragma once
 
+#include "IOLib.h"
+#include "Link.h"
 #include <string>
 #include <map>
 #include <vector>
-#include "Link.h"
 #include <math.h>
 
 #define ITERATE(T, it, container) for (T::iterator it = (container).begin(); it != (container).end(); it++)
@@ -553,44 +554,18 @@ inline __int64 PowDistance64( const POINT& ptP1, const POINT& ptP2)
 
 void LogPacket( int nType, int nSize, char* buffer);
 
-extern UINT ACP_ID;
-
-
-namespace util
-{
-	class string : public std::string
-	{
-	public:
-		string() : std::string() {}
-		string(LPCSTR str) : std::string(str) {}
-		string(LPCSTR str, size_t size) : std::string(str, size) {}
-		operator LPCSTR () { return c_str(); }
-	};
-	class wstring : public std::wstring
-	{
-	public:
-		wstring() : std::wstring() {}
-		wstring(LPCWSTR str) : std::wstring(str) {}
-		wstring(LPCWSTR str, size_t size) : std::wstring(str, size) {}
-		operator LPCWSTR () { return c_str(); }
-	};
-#ifdef	UNICODE
-	typedef	 util::wstring	tstring;
-#else
-	typedef 	util::string	tstring;
-#endif
-}
 
 #ifdef	UNICODE
-util::wstring AtoT(LPCSTR lpa);
-util::string TtoA(LPCWSTR lpw);
+std::wstring ToWString(LPCSTR lpa);
+std::string ToString(LPCWSTR lpw);
+#define AtoT(lpa) ToWString(lpa).c_str()
+#define TtoA(lpw) ToString(lpw).c_str()
 #else
 #define AtoT(lpa) lpa
 #define TtoA(lpw) lpw
 #endif
 
-util::tstring FormatString(LPCTSTR format, ...);
-util::tstring GetUniqueName();
+tstring GetUniqueName();
 LPCTSTR	GetNamePart(LPCTSTR szPath);
 __forceinline LPTSTR	GetNamePart(LPTSTR szPath) { return (LPTSTR) GetNamePart((LPCTSTR) szPath); }
 

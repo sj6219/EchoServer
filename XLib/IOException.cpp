@@ -95,6 +95,10 @@ XIOException::CInit::~CInit()
 	XIOException::Stop();
 }
 
+void XIOException::Touch()
+{
+
+}
 static void sendMail()
 {
 	if (g_szMailServer)

@@ -459,10 +459,6 @@ __false:
 }
 #endif
 
-#ifdef	GAME
-#pragma code_seg(push, ".system")
-#endif
-
 char *__stdcall WritePacketV(char *packet, va_list va) 
 {
 	char *format = va_arg(va, char *);
@@ -518,9 +514,6 @@ char *__stdcall WritePacketV(char *packet, va_list va)
 		}
 	}
 }
-#ifdef	GAME
-#pragma code_seg(pop)
-#endif
 
 char *WritePacket(char *packet, const char *, ...)
 {
@@ -848,19 +841,6 @@ void init_codepage(UINT codepage)
 
 #ifndef	UNICODE
 
-class InitCodePage
-{
-public:
-	InitCodePage()
-	{
-		init_codepage(CP_ACP);
-		ACP_ID = GetACP();
-	}
-};
-
-
-static InitCodePage instance;
-
 int _stdcall mbstricmp(const char *s1, const char *s2)
 {
 	int c1, c2, c3;
@@ -891,263 +871,6 @@ int _stdcall mbstricmp(const char *s1, const char *s2)
 }
 #endif
 
-#if	defined(MAINSVR) || defined(AUTHSVR) || defined(DBSVR)
-int g_nExVersion;
-
-// °¡: B0A1 Èþ: C8FE
-BOOL __stdcall IsValidString(LPCTSTR str, LPCTSTR allow)
-{
-	if (*str == 0)
-		return FALSE;
-
-	switch (g_nExVersion)
-	{
-	case V_CS :
-	case V_KT :
-	case V_KR :
-	case V_NS :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)str) || _tcschr(allow, *(PTBYTE)str))
-				str++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)str > 0xFF) 
-				str++;
-#else
-			else if (*(PTBYTE)str >= 0xB0 && *(PTBYTE)str <= 0xC8)
-			{
-				str++;
-				if (!(*(PTBYTE)str >= 0xA1 && *(PTBYTE)str <= 0xFE))
-					return FALSE;
-				str++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*str == 0)
-				break;
-		}
-		break;
-	case V_CN :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)str) || _tcschr(allow, *(PTBYTE)str))
-				str++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)str > 0xFF) 
-				str++;
-#else
-			// GB2312 Simplified Chinese
-			else if (*(PTBYTE)str >= 0xB0 && *(PTBYTE)str <= 0xF7) 
-			{
-				if (*(PTBYTE)str++ == 0xD7)
-				{
-					if (!(*(PTBYTE)str >= 0xA1 && *(PTBYTE)str <= 0xF9))
-						return FALSE;
-				}
-				else
-				{
-					if (!(*(PTBYTE)str >= 0xA1 && *(PTBYTE)str <= 0xFE))
-						return FALSE;
-				}
-				str++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*str == 0)
-				break;
-		}
-		break;
-	case V_JP :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)str) || _tcschr(allow, *(PTBYTE)str))
-				str++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)str > 0xFF) 
-				str++;
-#else
-			// shift_jis
-			else if ((*(PTBYTE)str >= 0x81 && *(PTBYTE)str <= 0x9F) ||
-				(*(PTBYTE)str >= 0xE0 && *(PTBYTE)str <= 0xEF))
-			{
-				str++;
-				if (!(*(PTBYTE)str >= 0x40 && *(PTBYTE)str <= 0x7E) &&
-					!(*(PTBYTE)str >= 0x80 && *(PTBYTE)str <= 0xFC))
-					return FALSE;
-				str++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*str == 0)
-				break;
-		}
-		break;
-	case V_EN :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)str) || _tcschr(allow, *(PTBYTE)str))
-				str++;
-			else
-				return FALSE;
-			if (*str == 0)
-				break;
-		}
-		break;
-	default :
-		return FALSE;
-	}
-	return TRUE;
-}
-
-BOOL __stdcall IsValidName(LPCTSTR name)
-{
-	if (*name == 0)
-		return FALSE;
-
-	switch (g_nExVersion)
-	{
-	case V_CS :
-	case V_KT :
-	case V_KR :
-	case V_NS :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)name))
-				name++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)name > 0xFF) 
-				name++;
-#else
-			else if (*(PTBYTE)name >= 0xB0 && *(PTBYTE)name <= 0xC8)
-			{
-				name++;
-				if (!(*(PTBYTE)name >= 0xA1 && *(PTBYTE)name <= 0xFE))
-					return FALSE;
-				name++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*name == 0)
-				break;
-		}
-		break;
-	case V_CN :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)name))
-				name++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)name > 0xFF) 
-				name++;
-#else
-			// GB2312 Simplified Chinese
-			else if (*(PTBYTE)name >= 0xB0 && *(PTBYTE)name <= 0xF7) 
-			{
-				if (*(PTBYTE)name++ == 0xD7)
-				{
-					if (!(*(PTBYTE)name >= 0xA1 && *(PTBYTE)name <= 0xF9))
-						return FALSE;
-				}
-				else
-				{
-					if (!(*(PTBYTE)name >= 0xA1 && *(PTBYTE)name <= 0xFE))
-						return FALSE;
-				}
-				name++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*name == 0)
-				break;
-		}
-		break;
-	case V_JP :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)name))
-				name++;
-#ifdef	UNICODE
-			else if (*(PTBYTE)name > 0xFF) 
-				name++;
-#else
-			// shift_jis
-			else if ((*(PTBYTE)name >= 0x81 && *(PTBYTE)name <= 0x9F) ||
-				(*(PTBYTE)name >= 0xE0 && *(PTBYTE)name <= 0xEF))
-			{
-				name++;
-				if (!(*(PTBYTE)name >= 0x40 && *(PTBYTE)name <= 0x7E) &&
-					!(*(PTBYTE)name >= 0x80 && *(PTBYTE)name <= 0xFC))
-					return FALSE;
-				name++;
-			}
-#endif
-			else
-				return FALSE;
-			if (*name == 0)
-				break;
-		}
-		break;
-	case V_EN :
-		for ( ; ; )
-		{
-			if (_istalnum(*(PTBYTE)name))
-				name++;
-			else
-				return FALSE;
-			if (*name == 0)
-				break;
-		}
-		break;
-	default :
-		return FALSE;
-	}
-	return TRUE;
-}
-
-BOOL __stdcall IsValidAdminName(LPCTSTR name, LPCTSTR allow)
-{
-	if (*name == 0)
-		return FALSE;
-	for ( ; ; )
-	{
-#ifdef	UNICODE
-		if (*(PTBYTE)name > 0xFF)
-			name++;
-#else
-		if (lower_table[*(PTBYTE)name] < 0)
-		{
-			name++;
-			if (*name == 0)
-				return FALSE;
-			name++;
-		}
-#endif
-		else if (_istalnum(*(PTBYTE)name) || _tcschr(allow, *(PTBYTE)name))
-			name++;
-		else 
-			return FALSE;
-		if (*name == 0)
-			break;
-	}
-	return TRUE;
-}
-
-
-BOOL __stdcall IsValidAddress(void *p)
-{
-#ifdef _WIN64
-	return (vptr >= 0x20000 && vptr < 0x7ff000000000 && (vptr & 3) == 0);
-#else
-	return (vptr >= 0x20000 && vptr < 0x7ffe0000 && (vptr & 3) == 0);
-#endif
-}
-
-#endif
 
 
 void LogPacket(int nType, int nSize, char *buffer)
@@ -1185,35 +908,24 @@ void LogPacket(int nType, int nSize, char *buffer)
 }
 
 #ifdef	UNICODE
-util::wstring AtoT(LPCSTR lpa)
+std::wstring ToWString(LPCSTR lpa)
 {
-	int len = (int) strlen(lpa);
+	int len = (int) strlen(lpa) + 1;
 	LPWSTR lpw = (LPWSTR) _alloca(len * 2);
-	len = MultiByteToWideChar(CP_ACP, 0, lpa, len, lpw, len);
-	return util::wstring(lpw, len);
+	len = MultiByteToWideChar(CP_UTF8, 0, lpa, len, lpw, len);
+	return lpw;
 }
 
-util::string TtoA(LPCWSTR lpw)
+std::string ToString(LPCWSTR lpw)
 {
 	int len = (int) wcslen(lpw);
-	LPSTR lpa = (LPSTR) _alloca(len * 2);
+	LPSTR lpa = (LPSTR) _alloca(len * 4+1);
 	len = WideCharToMultiByte(CP_ACP, 0, lpw, len, lpa, len * 2, 0, 0);
-	return util::string(lpa, len);
+	return lpa;
 }
 #endif
 
-util::tstring FormatString(LPCTSTR format, ...)
-{
-	TCHAR buff[1024];
-	va_list	va;
-	va_start(va, format);
-	if (FAILED(StringCbVPrintf(buff, sizeof(buff), format, va)))
-		buff[0] = 0;
-	va_end(va);
-	return buff;
-}
-
-util::tstring GetUniqueName()
+tstring GetUniqueName()
 {
 	TCHAR path[MAX_PATH+1];
 	GetModuleFileName(0, path, MAX_PATH);
@@ -1291,9 +1003,6 @@ const DWORD util::m_vCRC32Table[] =
   0x2d02ef8dL
 };
 
-#ifdef	GAME
-#pragma code_seg(push, ".system")
-#endif
 
 DWORD	UpdateCRC(DWORD crc, void *buf, int len)
 {
@@ -1349,9 +1058,6 @@ DWORD __stdcall DecodeCRC(DWORD crc, void* buf, int len)
 	}
 	return crc;
 }
-#ifdef	GAME
-#pragma code_seg(pop)
-#endif
 
 time_t GetTimeStamp()
 {

@@ -2,7 +2,7 @@
 
 #include "IOLib.h"
 #include "IOSocket.h"
-#include "Misc.h"
+#include "Link.h"
 
 class CSocket : public XIOSocket
 {

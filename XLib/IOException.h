@@ -20,6 +20,7 @@ public:
 	static CRITICAL_SECTION s_lock;
 	static void Start();
 	static void Stop();
+	static void Touch();
 	class CInit
 	{
 	public:

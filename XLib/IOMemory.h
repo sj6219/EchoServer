@@ -46,7 +46,7 @@ class XIOMemory
 {
 public:
 
-	static void Check();
+	static void Touch();
 	void *	_realloc_base(void * pBlock, size_t newsize);
 	void *	_expand_base(void * pBlock, size_t newsize);
 	size_t	_msize_base(void * pblock);

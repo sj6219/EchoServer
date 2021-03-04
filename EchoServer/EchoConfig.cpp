@@ -2,10 +2,11 @@
 #include "EchoConfig.h"
 #include "IOLib.h"
 #include "IOScreen.h"
+#include "Utility.h"
 #include "Lisp.h"
 #include "XParser.h"
-#include "Update.h"
-#include "Misc.h"
+
+#define ECHO_PORT 50004
 
 CEchoConfig::AddressVector CEchoConfig::s_vector;
 long CEchoConfig::s_index;
@@ -17,7 +18,6 @@ tstring CEchoConfig::s_strMailFrom;
 tstring CEchoConfig::s_strMailTo;
 int CEchoConfig::s_nPort;
 BOOL	CEchoConfig::s_bAutoStart;
-BOOL	CEchoConfig::s_vbChannel[UPDATE_CHANNEL_SIZE];
 int	CEchoConfig::s_nNumberOfThreads;
 int	CEchoConfig::s_nMaxUser;
 INT64	CEchoConfig::s_nMaxUpdateSize;
@@ -54,7 +54,7 @@ BOOL CEchoConfig::Open()
 	s_nMailBindPort = GetValue<int>(var, _T("MailBindPort"), 0);
 	s_strMailFrom = GetValue<LPCTSTR>(var, _T("MailFrom"), _T(""));
 	s_strMailTo = GetValue<LPCTSTR>(var, _T("MailTo"), _T(""));
-	s_nPort = GetValue<int>(var, _T("Port"), UPDATE_PORT);
+	s_nPort = GetValue<int>(var, _T("Port"), ECHO_PORT);
 	s_nConnectPort = GetValue<int>(var, _T("ConnectPort"), s_nPort);
 	s_nBindPort = GetValue<int>(var, _T("BindPort"), 0);
 	s_nNumberOfThreads = GetValue<int>(var, _T("NumberOfThreads"), sysinfo.dwNumberOfProcessors * 2);
@@ -79,13 +79,6 @@ BOOL CEchoConfig::Open()
 			s_vector.push_back( nAddr);
 		else
 			LOG_ERR( _T("invalid address %s"), szAddr);
-	}
-	lisp::var channels = var.get(_T("Channel")).cdr();
-	for ( ; !channels.null(); ) {
-		DWORD nChannel = channels.pop();
-		if (nChannel < UPDATE_CHANNEL_SIZE) {
-			s_vbChannel[nChannel] = TRUE;
-		}
 	}
 
 	var.destroy();

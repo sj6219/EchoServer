@@ -42,7 +42,7 @@ XIOMemory::CInit::~CInit()
 #endif
 }
 
-void XIOMemory::Check()
+void XIOMemory::Touch()
 {
 
 }

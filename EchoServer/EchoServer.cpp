@@ -5,7 +5,7 @@
 #include "IOLib.h"
 #include "IOException.h"
 #include "IOScreen.h"
-#include "Misc.h"
+#include "Utility.h"
 #include "EchoServer.h"
 #include "Resource.h"
 #include "Status.h"
@@ -131,7 +131,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    g_hInst = hInstance; 
 
-   XIOMemory::Check();
+   XIOMemory::Touch();
 	XIOLog::s_screen.Open( 200, 50);
 	CStatus::s_screen.Open( 80, 20);
 	XIOScreen::s_pScreen = &XIOLog::s_screen;

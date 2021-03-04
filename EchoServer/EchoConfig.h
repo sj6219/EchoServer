@@ -18,7 +18,6 @@ public:
 	static int s_nPort;
 	static ULONG GetAddress();
 	static BOOL	s_bAutoStart;
-	static BOOL	s_vbChannel[];
 	static int s_nNumberOfThreads;
 	static INT64 s_nMaxUpdateSize;
 	static int s_nMaxUser;

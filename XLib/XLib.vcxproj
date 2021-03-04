@@ -169,7 +169,6 @@
     <ClInclude Include="LinkEx.h" />
     <ClInclude Include="Lisp.h" />
     <ClInclude Include="MainProtocol.h" />
-    <ClInclude Include="Misc.h" />
     <ClInclude Include="ModelHeader.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Update.h" />
@@ -184,7 +183,6 @@
     <ClCompile Include="IOScreen.cpp" />
     <ClCompile Include="IOSocket.cpp" />
     <ClCompile Include="Lisp.cpp" />
-    <ClCompile Include="Misc.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

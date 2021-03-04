@@ -4,10 +4,9 @@
 
 
 #pragma once
+//#include "Utility.h"
 #include <stddef.h>
 #include <iterator>
-#include "Utility.h"
-
 //template <typename TYPE> TYPE *XConstruct();
 //template <typename TYPE> void XDestruct(TYPE *ptr);
 
