@@ -1217,8 +1217,8 @@ void __stdcall EBREAK()
 	if (!g_nEnable)
 		return;
 
-//	if (IsDebuggerPresent())
-//		DebugBreak();
+	if (IsDebuggerPresent())
+		DebugBreak();
 
 	long nBreak = InterlockedIncrement(&g_nBreak);
 #ifndef	_WIN64

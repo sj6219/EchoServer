@@ -584,8 +584,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 	}
 	struct sockaddr_in *paddrLocal, *paddrRemote;
 	int	nLocalLen, nRemoteLen;
-	EASSERT(dwTransferred == sizeof(m_AcceptBuf));
-	GetAcceptExSockaddrs(m_AcceptBuf[i], dwTransferred, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+	GetAcceptExSockaddrs(m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
 		(LPSOCKADDR *)&paddrLocal, &nLocalLen, (LPSOCKADDR *)&paddrRemote, &nRemoteLen); 
 
 	pSocket = CreateSocket(m_hAcceptSocket[i], paddrRemote);
