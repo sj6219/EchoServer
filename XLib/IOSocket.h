@@ -1,6 +1,6 @@
 #pragma once
 
-
+#define USE_ACCEPTEX
 #include <winsock2.h>
 
 #define BUFFER_SIZE 8000
@@ -150,8 +150,15 @@ public:
 	void Close();
 	void Stop();
 
-	HANDLE	m_hAcceptEvent;
 	SOCKET m_hSocket;
+#ifdef USE_ACCEPTEX
+	SOCKET m_hAcceptSocket;
+	char	m_AcceptBuf[sizeof(struct sockaddr_in) * 2 + 32];
+	OVERLAPPED m_overlappedAccept;
+#else
+	HANDLE	m_hAcceptEvent;
+#endif
+
 };
 
 class CIOSpinLock

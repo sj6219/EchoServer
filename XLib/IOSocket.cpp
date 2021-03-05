@@ -1,13 +1,14 @@
 #include "pch.h"
-#include <windows.h>
-#include <tchar.h>
 #include "IOSocket.h"
 #include "IOLib.h"
 #include "IOException.h"
 #include "Utility.h"
+#include <windows.h>
+#include <tchar.h>
 #include <vector>
 #include <queue>
 #include <process.h>
+#include <mswsock.h>
 
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
@@ -370,6 +371,26 @@ BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
 		goto fail;
 	}
 
+#ifdef USE_ACCEPTEX
+	if (CreateIoCompletionPort((HANDLE)m_hSocket, XIOSocket::s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
+	{
+		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hAcceptSocket, XIOSocket::s_hCompletionPort);
+		goto fail;
+	}
+	m_hAcceptSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_hAcceptSocket == INVALID_SOCKET)
+	{
+		LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+		goto fail;
+	}
+	DWORD dwRecv;
+	if (!AcceptEx(m_hSocket, m_hAcceptSocket, m_AcceptBuf, 0, sizeof(struct sockaddr_in) + 16,
+		sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept) && GetLastError() != ERROR_IO_PENDING)
+	{
+		LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
+		goto fail;
+	}
+#else
 	m_hAcceptEvent = WSACreateEvent();
 	WSAEventSelect(m_hSocket, m_hAcceptEvent, FD_ACCEPT);
 	if (!RegisterWait(m_hAcceptEvent))
@@ -377,6 +398,7 @@ BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
 		LOG_ERR(_T("RegisterWait error on port %d"), nPort);
 		goto fail;
 	}
+#endif
 	return TRUE;
 fail:
 	Close();
@@ -529,8 +551,12 @@ XIOSocket::CInit::~CInit()
 
 void XIOServer::OnWaitCallback()
 {
+#ifdef USE_ACCEPTEX
+	EBREAK();
+#else
 	WSAResetEvent(m_hAcceptEvent);
 	PostQueuedCompletionStatus(XIOSocket::s_hCompletionPort, 0, (ULONG_PTR)this, NULL);
+#endif
 }
 
 void XIOServer::Stop()
@@ -542,7 +568,7 @@ void XIOServer::Stop()
 
 void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
-#ifdef USE_ACCPETEX
+#ifdef USE_ACCEPTEX
 	XIOSocket *pSocket;
 	if (!bSuccess)
 	{
@@ -554,6 +580,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 	}
 	struct sockaddr_in *paddrLocal, *paddrRemote;
 	int	nLocalLen, nRemoteLen;
+	EASSERT(dwTransferred == sizeof(m_AcceptBuf));
 	GetAcceptExSockaddrs(m_AcceptBuf, dwTransferred, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
 		(LPSOCKADDR *)&paddrLocal, &nLocalLen, (LPSOCKADDR *)&paddrRemote, &nRemoteLen); 
 
@@ -572,6 +599,11 @@ retry:
 		LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
 		return;
 	}
+	if (CreateIoCompletionPort((HANDLE)m_hAcceptSocket, XIOSocket::s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
+	{
+		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hAcceptSocket, XIOSocket::s_hCompletionPort);
+		return;
+	}
 	DWORD dwRecv;
 	if (!AcceptEx(m_hSocket, m_hAcceptSocket, m_AcceptBuf, 0, sizeof(struct sockaddr_in) + 16, 
 		sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept) && GetLastError() != ERROR_IO_PENDING)
@@ -579,7 +611,7 @@ retry:
 		LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
 		return;
 	}
-#else	// USE_ACCPETEX
+#else	// USE_ACCEPTEX
 	struct sockaddr_in clientAddress;
 	int clientAddressLength = sizeof(clientAddress);
 	SOCKET newSocket = accept(m_hSocket, (struct sockaddr *)&clientAddress, &clientAddressLength);
@@ -604,7 +636,7 @@ retry:
 	}
 	pSocket->Initialize();
 	pSocket->ReleaseSelf();
-#endif
+#endif // USE_ACCEPTEX
 }
 
 void XIOSocket::Initialize()
@@ -639,7 +671,12 @@ void XIOSocket::Write(char *buf, DWORD size)
 XIOServer::XIOServer()
 {
 	m_hSocket = INVALID_SOCKET;
+#ifdef USE_ACCEPTEX
+	m_hAcceptSocket = INVALID_SOCKET;
+	memset(&m_overlappedAccept, 0, sizeof(OVERLAPPED));
+#else
 	m_hAcceptEvent = WSA_INVALID_EVENT;
+#endif
 }
 
 XIOServer::~XIOServer()
