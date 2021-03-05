@@ -1,6 +1,6 @@
 #pragma once
 
-#define USE_ACCEPTEX
+#define ACCEPT_SIZE 4
 #include <winsock2.h>
 
 #define BUFFER_SIZE 8000
@@ -151,10 +151,10 @@ public:
 	void Stop();
 
 	SOCKET m_hSocket;
-#ifdef USE_ACCEPTEX
-	SOCKET m_hAcceptSocket;
-	char	m_AcceptBuf[sizeof(struct sockaddr_in) * 2 + 32];
-	OVERLAPPED m_overlappedAccept;
+#if ACCEPT_SIZE
+	SOCKET m_hAcceptSocket[ACCEPT_SIZE];
+	char	m_AcceptBuf[ACCEPT_SIZE][sizeof(struct sockaddr_in) * 2 + 32];
+	OVERLAPPED m_overlappedAccept[ACCEPT_SIZE];
 #else
 	HANDLE	m_hAcceptEvent;
 #endif
