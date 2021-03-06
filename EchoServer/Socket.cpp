@@ -5,6 +5,18 @@
 #define LOCAL_ADDRESS 0x0100007f
 #pragma comment(lib, "Mswsock.lib")
 
+CSocket::CSocket(SOCKET socket, in_addr addr) : XIOSocket(socket)
+{
+	m_addr = addr;
+	//m_hFile = INVALID_HANDLE_VALUE;
+	//m_pNotice = CNotice::GetNotice();
+}
+
+CSocket::~CSocket()
+{
+	//CloseHandle( m_hFile);
+//	m_pNotice->Release();
+}
 
 void	CSocket::OnTimer(int nId)
 {
@@ -24,25 +36,26 @@ void	CSocket::Read(DWORD dwLeft)
 
 void CSocket::Write( void* buf, int len)
 {
-	AddRefIO();
-	WSABUF wsabuf;
-	wsabuf.buf = (char*)buf;
-	wsabuf.len = len;
-	DWORD dwSent;
-	m_dwTimeout = GetTickCount() + 0x7fffffff;
-	m_lock.Lock();
-	if( WSASend( m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
-		&& GetLastError( ) != ERROR_IO_PENDING)
-	{
-		m_lock.Unlock();
-		int nErr = GetLastError();
-		if( nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
-			LOG_ERR( _T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
-		Close();
-		ReleaseIO();
-	}
-	else
-		m_lock.Unlock();
+	XIOSocket::Write(buf, len);
+	//AddRefIO();
+	//WSABUF wsabuf;
+	//wsabuf.buf = (char*)buf;
+	//wsabuf.len = len;
+	//DWORD dwSent;
+	//m_dwTimeout = GetTickCount() + 0x7fffffff;
+	//m_lock.Lock();
+	//if( WSASend( m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
+	//	&& GetLastError( ) != ERROR_IO_PENDING)
+	//{
+	//	m_lock.Unlock();
+	//	int nErr = GetLastError();
+	//	if( nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
+	//		LOG_ERR( _T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
+	//	Close();
+	//	ReleaseIO();
+	//}
+	//else
+	//	m_lock.Unlock();
 }
 
 void CSocket::OnIOCallback( BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
@@ -89,18 +102,6 @@ void CSocket::OnWrite()
 
 
 
-CSocket::CSocket( SOCKET socket, in_addr addr) : XIOSocket( socket)
-{
-	m_addr = addr;
-	//m_hFile = INVALID_HANDLE_VALUE;
-	//m_pNotice = CNotice::GetNotice();
-}
-
-CSocket::~CSocket()
-{
-	//CloseHandle( m_hFile);
-//	m_pNotice->Release();
-}
 
 void CSocket::OnCreate()
 {

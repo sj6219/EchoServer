@@ -652,8 +652,9 @@ void XIOSocket::Initialize()
 
 	OnCreate();
 }
-void XIOSocket::Write(char *buf, DWORD size)
+void XIOSocket::Write(void *buffer, DWORD size)
 {
+	char* buf = (char*) buffer;
 	while (size)
 	{
 		XIOBuffer *pBuffer = XIOBuffer::Alloc();
@@ -870,6 +871,7 @@ void CIOSpinLock::Wait()
 
 void XIOSocket::Read(DWORD dwLeft)
 {
+	_ASSERT(m_pReadBuf->m_dwSize >= dwLeft);
 	m_pReadBuf->m_dwSize -= dwLeft;
 	if (m_pReadBuf->m_nRef != 1)
 	{

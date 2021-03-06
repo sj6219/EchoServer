@@ -255,7 +255,7 @@ public :
 #endif
 	void WriteWithLock(XIOBuffer *pBuffer);
 	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
-	void Write(char *buf, DWORD size);
+	void Write(void *buf, DWORD size);
 	void Initialize();
 	long PendingWrite() { return m_nPendingWrite; }
 	static unsigned __stdcall IOThread(void *arglist);
