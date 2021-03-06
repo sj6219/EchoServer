@@ -1,5 +1,8 @@
 #pragma once
 
+#define USE_SHARED_MUTEX
+
+
 #pragma warning(disable: 4245) // 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
 #pragma warning(disable: 4018) // 'expression' : signed/unsigned mismatch
 #pragma warning(disable: 4710) // 'function' : function not inlined
@@ -47,6 +50,7 @@
 #include <strsafe.h>
 
 #include <memory>
+#include <shared_mutex>
 
 #define LPCPACKET LPCSTR
 #define LPPACKET LPSTR
@@ -268,15 +272,23 @@ public:
 
 class XIORWLock
 {
+#ifdef USE_SHARED_MUTEX
+	std::shared_mutex m_lock;
 public:
+	void WriteLock() { m_lock.lock(); }
+	void WriteUnlock() { m_lock.unlock(); }
+	BOOL WriteTryLock() { return m_lock.try_lock(); }
+	void ReadLock() { m_lock.lock_shared(); }
+	void ReadUnlock() { m_lock.unlock_shared(); }
+#else
+public:
+	XIORWLock();
+	~XIORWLock();
 	void WriteLock();
 	void WriteUnlock();
 	BOOL WriteTryLock();
-	XIORWLock();
-	~XIORWLock();
 	void ReadLock();
 	void ReadUnlock();
-
 
 	void Lock() 
 	{
@@ -292,6 +304,7 @@ public:
 	HANDLE m_hWEvent;
 	long m_nCount;
 	long m_nLock;
+#endif
 
 };
 

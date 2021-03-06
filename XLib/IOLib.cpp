@@ -95,7 +95,7 @@ void XIOSpinLock::Wait()
 
 
 
-
+#ifndef USE_SHARED_MUTEX
 
 #pragma	warning(disable: 4146)	// unary minus operator applied to unsigned type, result still unsigned
 
@@ -267,7 +267,7 @@ BOOL XIORWLock::WriteTryLock()
 	return TRUE;
 }
 
-
+#endif
 
 
 XIOScreen XIOLog::s_screen;
