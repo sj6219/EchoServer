@@ -272,12 +272,13 @@ static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 
 	STACKFRAME64 sf;
 	memset(&sf, 0, sizeof(sf));
-
 #ifdef	_WIN64
 	sf.AddrPC.Offset       = ptrContext->Rip;
 	sf.AddrPC.Mode         = AddrModeFlat;
 	sf.AddrStack.Offset    = ptrContext->Rsp;
 	sf.AddrStack.Mode      = AddrModeFlat;
+	sf.AddrFrame.Offset = ptrContext->Rsp;
+	sf.AddrFrame.Mode = AddrModeFlat;
 #else
 	sf.AddrPC.Offset       = ptrContext->Eip;
 	sf.AddrPC.Mode         = AddrModeFlat;
@@ -1196,7 +1197,12 @@ static void GenerateExceptionReport()
     EXCEPTION_RECORD stExRec ;
     EXCEPTION_POINTERS stExpPtrs ;
 
+#ifdef _WIN64
+	RtlCaptureContext(&stContext);
+#else
 	SnapCurrentProcessMiniDump(&stContext);
+#endif
+
 	// Zero out all the individual values.
 	ZeroMemory ( &stExRec , sizeof ( EXCEPTION_RECORD )) ;
 	ZeroMemory ( &stExpPtrs , sizeof ( EXCEPTION_POINTERS ) ) ;
