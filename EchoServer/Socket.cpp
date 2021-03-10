@@ -36,34 +36,35 @@ void	CSocket::Read(DWORD dwLeft)
 
 void CSocket::Write( void* buf, int len)
 {
-	XIOSocket::Write(buf, len);
-	//AddRefIO();
-	//WSABUF wsabuf;
-	//wsabuf.buf = (char*)buf;
-	//wsabuf.len = len;
-	//DWORD dwSent;
-	//m_dwTimeout = GetTickCount() + 0x7fffffff;
-	//m_lock.Lock();
-	//if( WSASend( m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
-	//	&& GetLastError( ) != ERROR_IO_PENDING)
-	//{
-	//	m_lock.Unlock();
-	//	int nErr = GetLastError();
-	//	if( nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
-	//		LOG_ERR( _T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
-	//	Close();
-	//	ReleaseIO();
-	//}
-	//else
-	//	m_lock.Unlock();
+	AddRefIO();
+	WSABUF wsabuf;
+	wsabuf.buf = (char*)buf;
+	wsabuf.len = len;
+	DWORD dwSent;
+	m_dwTimeout = GetTickCount() + 0x7fffffff;
+	m_lock.Lock();
+	if( WSASend( m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
+		&& GetLastError( ) != ERROR_IO_PENDING)
+	{
+		m_lock.Unlock();
+		int nErr = GetLastError();
+		if( nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
+			LOG_ERR( _T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
+		Close();
+		ReleaseIO();
+	}
+	else
+		m_lock.Unlock();
 }
 
 void CSocket::OnIOCallback( BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
 	if( !bSuccess)
 	{ 
-//		if (lpOverlapped == &m_overlappedRead)
-		Close();
+		if (lpOverlapped == &m_overlappedRead) // closed only at read
+			Close();
+		else if (lpOverlapped == &m_overlappedWrite)
+			FreeBuffer();
 		ReleaseIO();
 	}
 	else if( lpOverlapped == &m_overlappedRead)
@@ -80,7 +81,7 @@ void CSocket::OnIOCallback( BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpO
 	{
 		_ASSERT( lpOverlapped == NULL);
 		OnTimer( dwTransferred);
-		ReleaseTimer();	// ¢¾TimerRef
+		ReleaseTimer();	// ï¿½ï¿½TimerRef
 	}
 }
 
