@@ -45,6 +45,11 @@ _object* lisp::_string::copy() const
 	return new (p) _string((LPCTSTR) memcpy(p + sizeof(_string), m_pString, size)); 
 }
 
+void lisp::_string::destroy() 
+{ 
+	free(this); 
+}
+
 #ifdef _DEBUG
 tstring lisp::_string::print(int level) const
 {

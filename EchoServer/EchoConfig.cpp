@@ -5,6 +5,7 @@
 #include "Utility.h"
 #include "Lisp.h"
 #include "XParser.h"
+#include "XFile.h"
 
 #define ECHO_PORT 50004
 
@@ -41,7 +42,19 @@ BOOL CEchoConfig::Open()
 	LPCTSTR str;
 
 	XParser parser;
+
+#ifdef USE_PARSELIST
+	XFileEx file;
+	file.Open(_T("EchoConfig.txt"));
+	parser.Open(&file);
+	lisp::var var;
+	auto func = [] (lisp::var in, void *param)->DWORD_PTR {
+		*(lisp::var *) param = in.copy();
+		return 1; };
+	parser.ParseList(func, &var);
+#else
 	lisp::var var = parser.Load(_T("EchoConfig.txt"));
+#endif
 	if (var.errorp())
 	{
 		LOG_ERR(_T("can't open EchoConfig.txt"));

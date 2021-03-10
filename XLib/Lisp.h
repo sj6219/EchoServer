@@ -62,7 +62,7 @@ namespace lisp
 		virtual unsigned GetUnsigned() const;
 		virtual bool stringp() const { return true; }
 		virtual _object* copy() const;
-		virtual void destroy() { free(this); }
+		virtual void destroy();
 #ifdef _DEBUG
 		virtual tstring print(int level) const;
 #endif
