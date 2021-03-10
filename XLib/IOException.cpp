@@ -13,6 +13,8 @@
 	// Linker/Optimization/References /OPT:REF
 	// Linker/Optimization/COMDAT Folding /OPT:ICF
 #include "pch.h"
+#include "IOException.h"
+#include "Utility.h"
 #include <windows.h>
 #include <tchar.h>
 #include <ws2tcpip.h>
@@ -20,7 +22,6 @@
 #include <winsock2.h>
 #include <time.h>
 #include <stdio.h>
-#include "IOException.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -116,6 +117,8 @@ static void sendMail()
 
 		_stprintf_s(szFilePart, szNewPath - szFilePart + MAX_PATH, _T("Exception\\%02d%02d%02d.%02d%02d%02d.dbg.txt"), tm.tm_year % 100, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+		CreatePath(szNewPath);
 		MoveFileEx(g_szLogPath, szNewPath, MOVEFILE_REPLACE_EXISTING);
 		_stprintf_s(szFilePart, szNewPath - szFilePart + MAX_PATH, _T("Exception\\%02d%02d%02d.%02d%02d%02d.dbg.dmp"), tm.tm_year % 100, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec);

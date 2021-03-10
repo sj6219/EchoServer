@@ -392,7 +392,7 @@ public :
 	static void AddV(int nType, LPCTSTR format, va_list va);
 	static void Flush();
 	static XIOScreen s_screen;
-	enum { INFO, NORMAL, WARN, ERR, HACK };
+	enum { INFO, NORMAL, WARN, ERR };
 };
 
 

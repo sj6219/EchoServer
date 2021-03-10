@@ -1,10 +1,11 @@
 #include "pch.h"
-#include <windows.h>
-#include <tchar.h>
 #include "IOLIb.h"
 #include "IOException.h"
 #include "IOSocket.h"
 #include "IOScreen.h"
+#include "Utility.h"
+#include <windows.h>
+#include <tchar.h>
 
 #if defined(_DEBUG)
 void TRACE(LPCTSTR lpszFormat, ...)
@@ -309,14 +310,6 @@ void LOG_ERR(LPCTSTR format, ...)
 	va_end(va);
 }
 
-void LOG_HACK(LPCTSTR format, ...)
-{
-	va_list va;
-	va_start(va, format);
-	XIOLog::AddV(XIOLog::HACK, format, va);
-	va_end(va);
-}
-
 void	XIOLog::Stop()
 {
 	for (int i = 0; i < sizeof(g_pFile) / sizeof(*g_pFile); i++)
@@ -359,12 +352,13 @@ void XIOLog::AddV(int nType, LPCTSTR format, va_list va)
 
 			_stprintf_s(szFileName, sizeof(szFileName)/sizeof(TCHAR), 
 				(nType == NORMAL) ? _T("Log\\%02d%02d%02d.log") :
-				(nType == WARN) ? _T("Log\\%02d%02d%02d.warn.log") :
-				(nType == ERR) ? _T("Log\\%02d%02d%02d.err.log") : _T("Log\\%02d%02d%02d.hack.log"),
+				(nType == WARN) ? _T("Log\\%02d%02d%02d.warn.log") : 
+				_T("Log\\%02d%02d%02d.err.log"),
 				tm->tm_year % 100, tm->tm_mon + 1, tm->tm_mday);
 			struct tm tmOld = *tm;
 			tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
 			g_nNext[nType] = mktime(tm) + 3600 * 24;
+			CreatePath(szFileName);
 			g_pFile[nType] = _tfopen(szFileName, _T("ab"));
 #ifdef	UNICODE
 			if (g_pFile[nType]) {
