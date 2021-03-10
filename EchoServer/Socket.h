@@ -4,20 +4,25 @@
 #include "IOSocket.h"
 #include "Link.h"
 
+#define USE_IOBUFFER
+
 class CSocket : public XIOSocket
 {
 public:
 	XLink	m_link;
+	CSocket(SOCKET socket, in_addr addr);
+	virtual ~CSocket();
+
 	virtual void OnCreate();
 	virtual void OnRead();
 	virtual void OnClose();
+#ifndef USE_IOBUFFER
+	void	Write(void* buf, int len);
 	virtual void OnWrite();
 	virtual void OnIOCallback( BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
+#endif
 
-	CSocket( SOCKET socket, in_addr addr);
-	virtual ~CSocket();
 	in_addr GetAddr() { return m_addr; }
-	void	Write( void* buf, int len);
 	void	Read(DWORD dwLeft);
 	virtual void OnTimer(int nId);
 	
