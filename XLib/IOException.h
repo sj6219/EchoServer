@@ -14,7 +14,6 @@ public:
 	static BOOL IsEnable();
 	static BOOL	Disable();
 	static void SendMail();
-	static BOOL	ToggleAssert();
 	static void	Open(LPCTSTR szMailServer, LPCTSTR szMailFrom, LPCTSTR szMailTo, int nPort = 0);
 	static BOOL Enable();
 	static CRITICAL_SECTION s_lock;

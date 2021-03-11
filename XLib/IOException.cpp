@@ -460,6 +460,7 @@ static BOOL sendFile(SOCKET sock, LPCTSTR name)
 
 BOOL	XIOException::Enable()
 {
+	InterlockedExchange(&g_bBreak, 1);
 	return !InterlockedExchange(&g_nEnable, 1);
 }
 
@@ -480,16 +481,9 @@ void	XIOException::SendMail()
 	Unlock();
 }
 
-BOOL	XIOException::ToggleAssert()
-{
-	g_bBreak ^= 1;
-	return g_bBreak;
-}
-
 
 static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 {
-#if !defined(_M_ARM64) && !defined(_M_ARM)
 
 	HANDLE LogFile = CreateFile(g_szLogPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
 		OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, 0);
@@ -514,6 +508,7 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 		GetCurrentThreadId(), GetCurrentThreadId(), 
 		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, g_nBreak);
 
+#if !defined(_M_ARM64) && !defined(_M_ARM)
 
 	TCHAR CrashModulePathName[MAX_PATH];
 	LPCTSTR CrashModuleFileName = _T("Unknown");
@@ -628,9 +623,9 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 		SymCleanup(GetCurrentProcess());
 	}
 
+#endif
 	RecordModuleList(LogFile);
 	CloseHandle(LogFile);
-#endif
 
 	CreateMiniDump(data);
 }
@@ -962,20 +957,20 @@ void	XIOException::DumpStack(int nThread, HANDLE *hThread, unsigned *nThreadId)
 	localtime_s(&tm, &g_timeStart);
 	hprintf(LogFile, _T("start at %02d/%02d/%02d %02d:%02d:%02d\r\n"), tm.tm_year % 100, tm.tm_mon + 1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec);
-	if (SymInitialize(GetCurrentProcess(), 0, TRUE)) {
-		DWORD dwOpts = SymGetOptions () ;
-		if ((dwOpts & ( SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS)) != 
-			(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS))
-			SymSetOptions ( (dwOpts & ~SYMOPT_UNDNAME) | (SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS));
 #if !defined(_M_ARM64) && !defined(_M_ARM)
+	if (SymInitialize(GetCurrentProcess(), 0, TRUE)) {
+		DWORD dwOpts = SymGetOptions();
+		if ((dwOpts & (SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS)) !=
+			(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS))
+			SymSetOptions((dwOpts & ~SYMOPT_UNDNAME) | (SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS));
 		for (int i = 0; i < nThread; i++) {
 			hprintf(LogFile, _T("Call Stack Information %d %#x(%d):\r\n"), i, nThreadId[i], nThreadId[i]);
 			ImageHelpStackWalk(LogFile, hThread[i]);
-	}
-#endif // !defined(_M_ARM64)
-		RecordModuleList(LogFile);
+		}
 		SymCleanup(GetCurrentProcess());
 	}
+#endif // !defined(_M_ARM64)
+	RecordModuleList(LogFile);
 	CloseHandle(LogFile);
 //	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
 	CreateMiniDump(0);
@@ -1329,6 +1324,29 @@ static void RecordModuleList(HANDLE LogFile)
 {
 	hprintf(LogFile, _T("Module list:\r\n"));
 	ShowModuleInfo(LogFile, GetModuleHandle(0));
+
+
+	//PBYTE pb = NULL;
+	//MEMORY_BASIC_INFORMATION mbi;
+
+	//while (VirtualQuery(pb, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+
+	//	if (mbi.State == MEM_FREE)
+	//		mbi.AllocationBase = mbi.BaseAddress;
+
+	//	if (	(mbi.AllocationBase != mbi.BaseAddress) ||
+	//		(mbi.AllocationBase == NULL)) {
+	//		// Do not add the module name to the list
+	//		// if any of the following is true:
+	//		// 1. If this block is NOT the beginning of a region
+	//		// 2. If the address is NULL
+	//	}
+	//	else {
+	//		ShowModuleInfo(LogFile, (HINSTANCE)mbi.AllocationBase);
+	//	}
+
+	//	pb += mbi.RegionSize;
+	//}
 
 
 }
