@@ -69,8 +69,10 @@ public :
 };
 
 #define LINK_POINTER(link, type, member) ((type *)((char *)link - (size_t)&((type *)0)->member))
+#define LINKED_LIST_(TYPE, MEMBER) linked_list_<std::add_pointer_t<TYPE>, offsetof(TYPE, MEMBER)>
+#define LINKED_LIST(TYPE, MEMBER) linked_list<std::add_pointer_t<TYPE>, offsetof(TYPE, MEMBER)>
 
-template <typename TYPE, size_t offset = 0> class _linked_list
+template <typename TYPE, size_t offset = 0> class linked_list_
 {
 public :
 	typedef	TYPE &reference;
@@ -219,7 +221,7 @@ public :
 		TYPE m_ptr;
 	};
 
-	_linked_list() 
+	linked_list_() 
 	{
 		m_list.Initialize();
 	}
@@ -297,11 +299,11 @@ public :
 	}
 };
 
-template <typename TYPE, size_t offset = 0> class linked_list : public _linked_list<TYPE, offset>
+template <typename TYPE, size_t offset = 0> class linked_list : public linked_list_<TYPE, offset>
 {
 protected :
 	long m_nSize;
-	typedef	_linked_list<TYPE, offset> Super;
+	typedef	linked_list_<TYPE, offset> Super;
 	typedef Super::iterator iterator;
 public :
 	linked_list() 

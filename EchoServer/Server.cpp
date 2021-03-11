@@ -4,8 +4,7 @@
 #include "EchoConfig.h"
 
 static XIOSpinLock g_lock;
-static XLink	g_link;
-static int g_nSocket;
+static LINKED_LIST(CSocket, m_link) g_link;
 
 static CServer g_server;
 
@@ -15,13 +14,11 @@ void CServer::Shutdown()
 	for( ; ; )
 	{
 		g_lock.Lock();
-		XLink* pLink = g_link.m_pNext;
-		if( pLink == &g_link)
-		{
+		if (g_link.empty()) {
 			g_lock.Unlock();
 			return;
 		}
-		CSocket* pSocket = LINK_POINTER( pLink, CSocket, m_link);
+		CSocket* pSocket = g_link.front();
 		pSocket->AddRef();
 		g_lock.Unlock();
 		pSocket->Close();
@@ -33,20 +30,18 @@ void CServer::Shutdown()
 void CServer::Start()
 {
 	g_server.XIOServer::Start( CEchoConfig::s_nPort);
-	g_link.Initialize();
 }
 
 void CServer::Remove( CSocket *pSocket)
 {
 	g_lock.Lock();
-	pSocket->m_link.Remove();
-	g_nSocket--;
+	g_link.erase(pSocket);
 	g_lock.Unlock();
 }
 
 int	CServer::Size()
 {
-	return g_nSocket;
+	return g_link.size();
 }
 
 void CServer::Stop()
@@ -64,8 +59,7 @@ XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 void CServer::Add( CSocket *pSocket)
 {
 	g_lock.Lock();
-	pSocket->m_link.Insert( &g_link);
-	g_nSocket++;
+	g_link.push_front(pSocket);
 	g_lock.Unlock();
 }
 

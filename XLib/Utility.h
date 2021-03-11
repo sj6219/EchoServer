@@ -183,7 +183,7 @@ public:
 	};
 
 	static const DWORD PAGE_SIZE = util::PAGE_SIZE;
-	typedef	_linked_list<XMemoryPage *> PAGELIST;
+	typedef	linked_list_<XMemoryPage *> PAGELIST;
 
 	PAGELIST	m_listPage;
 #ifdef	_MT
