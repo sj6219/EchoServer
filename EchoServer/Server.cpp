@@ -1,9 +1,10 @@
 #include "Stdafx.h"
+#include "Utility.h"
 #include "Server.h"
 #include "Socket.h"
 #include "EchoConfig.h"
 
-static XIOSpinLock g_lock;
+static XLock g_lock;
 static LINKED_LIST(CSocket, m_link) g_link;
 
 static CServer g_server;
@@ -13,14 +14,14 @@ void CServer::Shutdown()
 {
 	for( ; ; )
 	{
-		g_lock.Lock();
+		g_lock.lock();
 		if (g_link.empty()) {
-			g_lock.Unlock();
+			g_lock.unlock();
 			return;
 		}
 		CSocket* pSocket = g_link.front();
 		pSocket->AddRef();
-		g_lock.Unlock();
+		g_lock.unlock();
 		pSocket->Close();
 		pSocket->Release();
 	}
@@ -34,9 +35,9 @@ void CServer::Start()
 
 void CServer::Remove( CSocket *pSocket)
 {
-	g_lock.Lock();
+	g_lock.lock();
 	g_link.erase(pSocket);
-	g_lock.Unlock();
+	g_lock.unlock();
 }
 
 int	CServer::Size()
@@ -58,8 +59,8 @@ XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 
 void CServer::Add( CSocket *pSocket)
 {
-	g_lock.Lock();
+	g_lock.lock();
 	g_link.push_front(pSocket);
-	g_lock.Unlock();
+	g_lock.unlock();
 }
 

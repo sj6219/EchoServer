@@ -1,7 +1,5 @@
 #pragma once
 
-#define USE_SHARED_MUTEX
-
 
 #pragma warning(disable: 4245) // 'conversion' : conversion from 'type1' to 'type2', signed/unsigned mismatch
 #pragma warning(disable: 4018) // 'expression' : signed/unsigned mismatch
@@ -50,7 +48,6 @@
 #include <strsafe.h>
 
 #include <memory>
-#include <shared_mutex>
 
 #define LPCPACKET LPCSTR
 #define LPPACKET LPSTR
@@ -241,139 +238,6 @@ public:
 	bool operator ! () const { return m_p == 0; }
 };
 
-
-class XIOSpinLock
-{
-protected :
-	long lock;
-
-	void Wait();
-public:
-	XIOSpinLock() { lock = 0; }
-	void Lock() 
-	{
-		if (InterlockedCompareExchange(&lock, 1, 0))
-			Wait();
-	}
-	void Unlock()
-	{
-		InterlockedExchange(&lock, 0);
-	}
-	BOOL TryLock()
-	{
-		return InterlockedCompareExchange(&lock, 1, 0) == 0;
-	}
-};
-
-
-
-
-
-
-class XIORWLock
-{
-#ifdef USE_SHARED_MUTEX
-	std::shared_mutex m_lock;
-public:
-	void WriteLock() { m_lock.lock(); }
-	void WriteUnlock() { m_lock.unlock(); }
-	BOOL WriteTryLock() { return m_lock.try_lock(); }
-	void ReadLock() { m_lock.lock_shared(); }
-	void ReadUnlock() { m_lock.unlock_shared(); }
-#else
-public:
-	XIORWLock();
-	~XIORWLock();
-	void WriteLock();
-	void WriteUnlock();
-	BOOL WriteTryLock();
-	void ReadLock();
-	void ReadUnlock();
-
-	void Lock() 
-	{
-		if (InterlockedCompareExchange(&m_nLock, 1, 0))
-			Wait();
-	}
-	void Unlock()
-	{
-		InterlockedExchange(&m_nLock, 0);
-	}
-	void Wait();
-	HANDLE m_hREvent;
-	HANDLE m_hWEvent;
-	long m_nCount;
-	long m_nLock;
-#endif
-
-};
-
-class CAutoReadLock
-{
-private:
-	XIORWLock &m_lock;
-public:
-	CAutoReadLock(XIORWLock &lock) : m_lock(lock) { m_lock.ReadLock(); }
-	~CAutoReadLock() { m_lock.ReadUnlock(); }
-private:
-   CAutoReadLock & operator=( const CAutoReadLock & ) {}
-};
-
-class CAutoWriteLock
-{
-private:
-	XIORWLock &m_lock;
-public:
-	CAutoWriteLock(XIORWLock &lock) : m_lock(lock) { m_lock.WriteLock(); }
-	~CAutoWriteLock() { m_lock.WriteUnlock(); }
-private:
-   CAutoWriteLock & operator=( const CAutoWriteLock & ) {}
-};
-
-template <typename T> class TAutoLock
-{
-private:
-	typename T *m_pT;
-public:
-	TAutoLock(typename T *pT) : m_pT(pT)
-	{
-		m_pT->Lock();
-	}
-	~TAutoLock()
-	{
-		m_pT->Unlock();
-	}
-};
-
-template <typename T> class TAutoReadLock
-{
-private:
-	typename T *m_pT;
-public:
-	TAutoReadLock(typename T *pT) : m_pT(pT)
-	{
-		m_pT->ReadLock();
-	}
-	~TAutoReadLock()
-	{
-		m_pT->ReadUnlock();
-	}
-};
-
-template <typename T> class TAutoWriteLock
-{
-private:
-	typename T *m_pT;
-public:
-	TAutoWriteLock(typename T *pT) : m_pT(pT)
-	{
-		m_pT->WriteLock();
-	}
-	~TAutoWriteLock()
-	{
-		m_pT->WriteUnlock();
-	}
-};
 
 
 

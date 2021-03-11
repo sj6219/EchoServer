@@ -1,11 +1,14 @@
 #pragma once
 
+#define USE_SRWLOCK
+
 #include "IOLib.h"
 #include "Link.h"
 #include <string>
 #include <map>
 #include <vector>
 #include <math.h>
+#include <synchapi.h>
 
 #define ITERATE(T, it, container) for (T::iterator it = (container).begin(); it != (container).end(); it++)
 
@@ -102,52 +105,115 @@ public:
 #endif
 };
 
+
 class XSpinLock
 {
 protected:
-	long m_nLock;
+	long m_lock;
 
-	void Wait();
+	void wait();
 public:
-	XSpinLock() { m_nLock = 0; }
-	void Lock() 
+	XSpinLock() { m_lock = 0; }
+	void lock()
 	{
-		if( InterlockedCompareExchange( &m_nLock, 1, 0))
-			Wait();
+		if (InterlockedCompareExchange(&m_lock, 1, 0))
+			wait();
 	}
-	void Unlock()
+	void unlock()
 	{
-		InterlockedExchange( &m_nLock, 0);
+		InterlockedExchange(&m_lock, 0);
+	}
+	bool try_lock()
+	{
+		return InterlockedCompareExchange(&m_lock, 1, 0) == 0;
 	}
 };
 
 #ifdef	_MT
+
 class XLock
 {
 protected:
-	CRITICAL_SECTION m_critical_section;
+	CRITICAL_SECTION m_lock;
 
 public:
-	XLock() { InitializeCriticalSection( &m_critical_section); }
-//	XLock( DWORD dwSpinCount) { InitializeCriticalSectionAndSpinCount( &m_critical_section, dwSpinCount); }
-	~XLock() { DeleteCriticalSection( &m_critical_section); }
-	void Lock() { EnterCriticalSection( &m_critical_section); }
-	void Unlock() { LeaveCriticalSection( &m_critical_section); }
-};
-
-class XAutoLock
-{
-protected:
-	XLock &m_lock;
-public:
-	XAutoLock(XLock& lock) : m_lock(lock) { m_lock.Lock(); } 
-	~XAutoLock() { m_lock.Unlock(); }
-private:
-   XAutoLock & operator=( const XAutoLock & ) {}
-
+	XLock() { InitializeCriticalSectionAndSpinCount(&m_lock, 0x00000400); }
+	~XLock() { DeleteCriticalSection( &m_lock); }
+	void lock() { EnterCriticalSection( &m_lock); }
+	void unlock() { LeaveCriticalSection( &m_lock); }
+	bool try_lock() { return TryEnterCriticalSection(&m_lock); }
 };
 
 #endif
+
+class XRWLock
+{
+#ifdef USE_SRWLOCK
+	SRWLOCK m_lock;
+public:
+	XRWLock() { InitializeSRWLock(&m_lock); }
+	void lock() { AcquireSRWLockExclusive(&m_lock); }
+	void unlock() { ReleaseSRWLockExclusive(&m_lock); }
+	BOOL try_lock() { return TryAcquireSRWLockExclusive(&m_lock); }
+	void lock_shared() { AcquireSRWLockShared(&m_lock); }
+	void unlock_shared() { ReleaseSRWLockShared(&m_lock);  }
+#else
+public:
+	XRWLock();
+	~XRWLock();
+	void lock();
+	void unlock();
+	BOOL try_lock();
+	void lock_shared();
+	void unlock_shared();
+
+	void Lock()
+	{
+		if (InterlockedCompareExchange(&m_nLock, 1, 0))
+			Wait();
+	}
+	void Unlock()
+	{
+		InterlockedExchange(&m_nLock, 0);
+	}
+	void Wait();
+	HANDLE m_hREvent;
+	HANDLE m_hWEvent;
+	long m_nCount;
+	long m_nLock;
+#endif
+
+};
+
+template <typename T> class XSharedLock
+{
+private:
+	typename T* m_pT;
+public:
+	XSharedLock(typename T* pT) : m_pT(pT)
+	{
+		m_pT->lock_shared();
+	}
+	~XSharedLock()
+	{
+		m_pT->unlock_shared();
+	}
+};
+
+template <typename T> class XUniqueLock
+{
+private:
+	typename T* m_pT;
+public:
+	XUniqueLock(typename T* pT) : m_pT(pT)
+	{
+		m_pT->lock();
+	}
+	~XUniqueLock()
+	{
+		m_pT->unlock();
+	}
+};
 
 
 class XMemoryPage;
