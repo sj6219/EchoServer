@@ -273,28 +273,27 @@ void	util::FreePage(XMemoryPage *pPage)
 	MemoryUnlock();
 }
 
-char KTableA[21 * 19 * 2 + 1] =
-"가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기"
-"까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼"
-"나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니"
-"다대댜걔더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디"
-"따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠"
-"라래랴떄러레려례로롸뢔뢰료루뤄뤠뤼류르릐리"
-"마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미"
-"바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비"
-"빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐"
-"사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시"
-"싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨"
-"아애야얘어에여예오와왜외요우워웨위유으의이"
-"자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지"
-"짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌"
-"차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치"
-"카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키"
-"타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티"
-"파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피"
-"하해햐햬허헤펴혜호화홰회효후훠훼휘휴흐희히";
+//char KTableA[21 * 19 * 2 + 1] =
+//"가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기"
+//"까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼"
+//"나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니"
+//"다대댜걔더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디"
+//"따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠"
+//"라래랴떄러레려례로롸뢔뢰료루뤄뤠뤼류르릐리"
+//"마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미"
+//"바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비"
+//"빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐"
+//"사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시"
+//"싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨"
+//"아애야얘어에여예오와왜외요우워웨위유으의이"
+//"자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지"
+//"짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌"
+//"차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치"
+//"카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키"
+//"타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티"
+//"파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피"
+//"하해햐햬허헤펴혜호화홰회효후훠훼휘휴흐희히";
 
-#if 1
 wchar_t KTableW[21 * 19 + 1] =
 L"가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기"
 L"까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼"
@@ -315,7 +314,6 @@ L"카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키"
 L"타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티"
 L"파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피"
 L"하해햐햬허헤펴혜호화홰회효후훠훼휘휴흐희히";
-#endif
 
 // Code point of Hangul = tail + (vowel-1)*28 + (lead-1)*588 + 44032
 
@@ -390,33 +388,29 @@ int	ExpandStringV(char* buffer, size_t count, const char* format, const char** a
 					format++;
 					goto skip;
 				}
-				if (nDigit < 1 || end_ptr - ptr < 1)
-					goto skip;
-				const char* szSuffix[2];
-				if (strncmp(format, "이", 2) == 0 || strncmp(format, "가", 2) == 0) {
-					szSuffix[0] = "가";
-					szSuffix[1] = "이";
-				}
-				else if (strncmp(format, "을", 2) == 0 || strncmp(format, "를", 2) == 0) {
-					szSuffix[0] = "를";
-					szSuffix[1] = "을";
-				}
-				else if (strncmp(format, "은", 2) == 0 || strncmp(format, "는", 2) == 0) {
-					szSuffix[0] = "는";
-					szSuffix[1] = "은";
-				}
-				else
-					goto skip;
-				//				int nIndex = ((BYTE) ptr[-2]-0xb0)*(0xff-0xa1)+((BYTE) ptr[-1] -0xa1);
-				//				if (nIndex < 0 || nIndex >= sizeof(ks_table) / sizeof(*ks_table)) 
-				//					goto skip;
-				//				memcpy(ptr, szSuffix[ (ks_table[nIndex][2] == 1) ? 0 : 1], 2);
-				if (wmemchr((wchar_t*)KTableA, *(WORD*)(ptr -1), 21 * 19) != 0)
-					memcpy(ptr, szSuffix[0], 2);
-				else
-					memcpy(ptr, szSuffix[1], 2);
-				ptr += 2;
-				format += 2;
+				//if (nDigit < 1 || end_ptr - ptr < 1)
+				//	goto skip;
+				//const char* szSuffix[2];
+				//if (strncmp(format, "이", 2) == 0 || strncmp(format, "가", 2) == 0) {
+				//	szSuffix[0] = "가";
+				//	szSuffix[1] = "이";
+				//}
+				//else if (strncmp(format, "을", 2) == 0 || strncmp(format, "를", 2) == 0) {
+				//	szSuffix[0] = "를";
+				//	szSuffix[1] = "을";
+				//}
+				//else if (strncmp(format, "은", 2) == 0 || strncmp(format, "는", 2) == 0) {
+				//	szSuffix[0] = "는";
+				//	szSuffix[1] = "은";
+				//}
+				//else
+				//	goto skip;
+				//if (wmemchr((wchar_t*)KTableA, *(WORD*)(ptr -1), 21 * 19) != 0)
+				//	memcpy(ptr, szSuffix[0], 2);
+				//else
+				//	memcpy(ptr, szSuffix[1], 2);
+				//ptr += 2;
+				//format += 2;
 			skip:
 				;
 			}
@@ -524,10 +518,6 @@ int	ExpandStringV(wchar_t* buffer, size_t count, const wchar_t* format, const wc
 					*ptr = szSuffix[0];
 				else
 					*ptr = szSuffix[1];
-				//				if (::equal<wchar_t *, wchar_t>(KTableW, &KTableW[21*19], ptr[-1]) != &KTableW[21*19])
-				//					*ptr = szSuffix[0];
-				//				else
-				//					*ptr = szSuffix[1];
 				if (wmemchr((wchar_t*)KTableW, *(WORD*)(ptr - 1), 21 * 19) != 0)
 					*ptr = szSuffix[0];
 				else
