@@ -1,4 +1,5 @@
 #pragma once
+#include "IOLib.h"
 
 #define ACCEPT_SIZE 4
 #include <winsock2.h>
@@ -161,31 +162,6 @@ public:
 
 };
 
-class CIOSpinLock
-{
-protected :
-	long lock;
-
-	void Wait();
-public:
-	CIOSpinLock() { lock = 0; }
-	void Lock() 
-	{
-		if (InterlockedCompareExchange(&lock, 1, 0))
-			Wait();
-	}
-	void Unlock()
-	{
-		InterlockedExchange(&lock, 0);
-	}
-	BOOL TryLock()
-	{
-		return InterlockedCompareExchange(&lock, 1, 0) == 0;
-	}
-};
-
-
-
 class XIOBuffer 
 {
 public :
@@ -193,7 +169,7 @@ public :
 	{
 	public :
 		XIOBuffer *m_pBuffer;
-		CIOSpinLock m_lock;
+		XLock m_lock;
 
 		CSlot() : m_pBuffer(NULL) {}
 	};

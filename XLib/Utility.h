@@ -129,22 +129,6 @@ public:
 	}
 };
 
-#ifdef	_MT
-
-class XLock
-{
-protected:
-	CRITICAL_SECTION m_lock;
-
-public:
-	XLock() { InitializeCriticalSectionAndSpinCount(&m_lock, 0x00000400); }
-	~XLock() { DeleteCriticalSection( &m_lock); }
-	void lock() { EnterCriticalSection( &m_lock); }
-	void unlock() { LeaveCriticalSection( &m_lock); }
-	bool try_lock() { return TryEnterCriticalSection(&m_lock); }
-};
-
-#endif
 
 class XRWLock
 {

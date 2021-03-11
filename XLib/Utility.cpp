@@ -16,9 +16,9 @@ void XSpinLock::wait()
 	{
 		if (InterlockedCompareExchange(&m_lock, 1, 0) == 0)
 			return;
-#ifndef	_WIN64
+#if !defined(_WIN64) && !defined(_M_ARM)
 		__asm pause //__asm { rep nop} 
-#endif
+#endif // !defined(_WIN64) && !defined(_M_ARM)
 	}
 	count = 4000;
 	while (--count >= 0)

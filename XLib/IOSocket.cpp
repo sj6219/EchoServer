@@ -153,15 +153,15 @@ XIOBuffer *XIOBuffer::Alloc()
 	CSlot *pSlot = &g_slotBuffer[nBufferIndex & (BUFFER_POOL_SIZE - 1)];
 //	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
 	XIOBuffer *newBuffer;
-	pSlot->m_lock.Lock();
+	pSlot->m_lock.lock();
 	if ((newBuffer = pSlot->m_pBuffer) != NULL)
 	{
 		pSlot->m_pBuffer = newBuffer->m_pNext;
-		pSlot->m_lock.Unlock();
+		pSlot->m_lock.unlock();
 	}
 	else
 	{
-		pSlot->m_lock.Unlock();
+		pSlot->m_lock.unlock();
 		newBuffer = new XIOBuffer;
 	}
 	newBuffer->m_dwSize = 0;
@@ -175,10 +175,10 @@ void XIOBuffer::Free()
 {
 	CSlot *pSlot = &g_slotBuffer[m_nBufferIndex & (BUFFER_POOL_SIZE - 1)];
 //	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
-	pSlot->m_lock.Lock();
+	pSlot->m_lock.lock();
 	m_pNext = pSlot->m_pBuffer;
 	pSlot->m_pBuffer = this;
-	pSlot->m_lock.Unlock();
+	pSlot->m_lock.unlock();
 }
 
 void XIOBuffer::FreeAll()
@@ -186,14 +186,14 @@ void XIOBuffer::FreeAll()
 	for (int i = 0; i < BUFFER_POOL_SIZE; i++)
 	{
 		CSlot *pSlot = &g_slotBuffer[i];
-		pSlot->m_lock.Lock();
+		pSlot->m_lock.lock();
 		XIOBuffer *pBuffer;
 		while ((pBuffer = pSlot->m_pBuffer) != NULL)
 		{
 			pSlot->m_pBuffer = pBuffer->m_pNext;
 			delete pBuffer;
 		}
-		pSlot->m_lock.Unlock();
+		pSlot->m_lock.unlock();
 	}
 }
 
@@ -833,40 +833,6 @@ void XIOSocket::FreeIOThread()
 	g_hThread = 0;
 	g_nThreadId = 0;
 }
-
-
-
-
-void CIOSpinLock::Wait()
-{
-	int count = 4000;
-	while (--count >= 0)
-	{
-		if (InterlockedCompareExchange(&lock, 1, 0) == 0)
-			return;
-#ifndef	_WIN64
-		__asm pause //__asm { rep nop} 
-#endif
-	}
-	count = 4000;
-	while (--count >= 0)
-	{
-		SwitchToThread(); //Sleep(0);
-		if (InterlockedCompareExchange(&lock, 1, 0) == 0)
-			return;
-	}
-	for ( ; ; )
-	{
-		Sleep(1000);
-		if (InterlockedCompareExchange(&lock, 1, 0) == 0)
-			return;
-	}
-}
-
-
-
-
-
 
 
 void XIOSocket::Read(DWORD dwLeft)

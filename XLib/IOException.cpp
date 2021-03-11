@@ -269,6 +269,7 @@ static void PrintStack(HANDLE LogFile, DWORD_PTR begin, DWORD_PTR end)
 	}
 }
 
+#if !defined(_M_ARM64) && !defined(_M_ARM)
 static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 {
 	hprintf(LogFile, _T("Call Stack Information:\r\n"));
@@ -386,6 +387,7 @@ print_param:
 	}
 	hprintf(LogFile, _T("\r\n"));
 }
+#endif
 
 static void __cdecl hprintf(HANDLE LogFile, LPCTSTR Format, ...)
 {
@@ -487,6 +489,8 @@ BOOL	XIOException::ToggleAssert()
 
 static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 {
+#if !defined(_M_ARM64) && !defined(_M_ARM)
+
 	HANDLE LogFile = CreateFile(g_szLogPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
 		OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, 0);
 	if (LogFile == INVALID_HANDLE_VALUE) {
@@ -626,6 +630,7 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 
 	RecordModuleList(LogFile);
 	CloseHandle(LogFile);
+#endif
 
 	CreateMiniDump(data);
 }
@@ -726,7 +731,7 @@ static LPCTSTR GetExceptionDescription(DWORD ExceptionCode)
 		return _T("Unknown exception type");
 }
 
-
+#if !defined(_M_ARM64) && !defined(_M_ARM)
 static void ImageHelpStackWalk(HANDLE LogFile, HANDLE hThread)
 {
 
@@ -885,6 +890,7 @@ print_param:
 	hprintf(LogFile, _T("\r\n"));
 	ResumeThread(hThread);
 }
+#endif
 
 int XIOException::Filter(LPEXCEPTION_POINTERS pExp)
 {
@@ -961,10 +967,12 @@ void	XIOException::DumpStack(int nThread, HANDLE *hThread, unsigned *nThreadId)
 		if ((dwOpts & ( SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS)) != 
 			(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS))
 			SymSetOptions ( (dwOpts & ~SYMOPT_UNDNAME) | (SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS));
+#if !defined(_M_ARM64) && !defined(_M_ARM)
 		for (int i = 0; i < nThread; i++) {
 			hprintf(LogFile, _T("Call Stack Information %d %#x(%d):\r\n"), i, nThreadId[i], nThreadId[i]);
 			ImageHelpStackWalk(LogFile, hThread[i]);
-		}
+	}
+#endif // !defined(_M_ARM64)
 		RecordModuleList(LogFile);
 		SymCleanup(GetCurrentProcess());
 	}
@@ -1154,7 +1162,7 @@ extern "C" void * _ReturnAddress(void);
 
 #pragma intrinsic(_ReturnAddress)
 
-
+#if !defined(_M_ARM64) && !defined(_M_ARM)
 DWORD NAKED  SnapCurrentProcessMiniDump(LPCONTEXT lpContext)
 {
     CONTEXT stInitialCtx;
@@ -1184,8 +1192,7 @@ DWORD NAKED  SnapCurrentProcessMiniDump(LPCONTEXT lpContext)
         COPYKEYCONTEXTREGISTERS ((*lpContext), stInitialCtx ) ;
 
         UINT_PTR nRetAddr = (UINT_PTR)_ReturnAddress ( ) ;
-
-        *(PDWORD_PTR) &lpContext->RIP = nRetAddr ;
+		* (PDWORD_PTR)&lpContext->RIP = nRetAddr;
 		eRet = TRUE;            
     }
 	else
@@ -1193,6 +1200,7 @@ DWORD NAKED  SnapCurrentProcessMiniDump(LPCONTEXT lpContext)
     // Do the epilog.
     SNAPEPILOG ( eRet ) ;
 }
+#endif // !defined(_M_ARM64)
 
 static void GenerateExceptionReport()
 {
@@ -1200,7 +1208,7 @@ static void GenerateExceptionReport()
     EXCEPTION_RECORD stExRec ;
     EXCEPTION_POINTERS stExpPtrs ;
 
-#ifdef _WIN64
+#if defined(_WIN64) || defined(_M_ARM)
 	RtlCaptureContext(&stContext);
 #else
 	SnapCurrentProcessMiniDump(&stContext);
@@ -1210,7 +1218,12 @@ static void GenerateExceptionReport()
 	ZeroMemory ( &stExRec , sizeof ( EXCEPTION_RECORD )) ;
 	ZeroMemory ( &stExpPtrs , sizeof ( EXCEPTION_POINTERS ) ) ;
 
-	stExRec.ExceptionAddress = (PVOID)(DWORD_PTR) (stContext.RIP) ;
+#if defined(_M_ARM64) || defined(_M_ARM)
+	stExRec.ExceptionAddress = (PVOID)(DWORD_PTR)(stContext.Pc);
+#else
+	stExRec.ExceptionAddress = (PVOID)(DWORD_PTR)(stContext.RIP);
+#endif // defined(_M_ARM64)
+
 
 	// Set the exception pointers.
 	stExpPtrs.ContextRecord = &stContext;
@@ -1230,7 +1243,7 @@ void __stdcall EBREAK()
 		DebugBreak();
 
 	long nBreak = InterlockedIncrement(&g_nBreak);
-#ifndef	_WIN64
+#if !defined(_WIN64) && !defined(_M_ARM)
 	_asm {
 		push edx
 		push ecx
@@ -1244,7 +1257,7 @@ void __stdcall EBREAK()
 		sendMail();
 		XIOException::Unlock();
 	}
-#ifndef	_WIN64
+#if !defined(_WIN64) && !defined(_M_ARM)
 	_asm {
 		pop eax
 		pop ecx
