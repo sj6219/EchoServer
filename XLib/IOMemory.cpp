@@ -200,7 +200,7 @@ void XIOMemory::_free(void * pBlock)
 #if		DEBUG_LEAK
 	if (pHeader+1 == (HEAP_HEADER *) DEBUG_LEAK) {
 		TCHAR buff[512];
-		_stprintf_s(buff, sizeof(buff)/sizeof(TCHAR), _T("free %p %d\n"), pHeader+1, header.size);
+		_stprintf_s(buff,  _T("free %p %d\n"), pHeader+1, header.size);
 		OutputDebugString(buff);
 	}
 #endif
@@ -1156,7 +1156,7 @@ void *	XIOMemory::_malloc(size_t size)
 #if		DEBUG_LEAK
 		if (pHeader == (HEAP_HEADER *) DEBUG_LEAK) {
 			TCHAR buff[128];
-			_stprintf_s(buff, sizeof(buff)/sizeof(TCHAR), _T("malloc %p %d\n"), pHeader, size);
+			_stprintf_s(buff, _T("malloc %p %d\n"), pHeader, size);
 			OutputDebugString(buff);
 			DebugBreak();
 		}

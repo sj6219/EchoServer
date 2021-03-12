@@ -24,9 +24,6 @@
     <ClInclude Include="EchoServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="revision.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Server.h">
       <Filter>Header Files</Filter>
     </ClInclude>

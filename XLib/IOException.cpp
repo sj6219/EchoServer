@@ -538,8 +538,8 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 		LPCTSTR readwrite = _T("Read from");
 		if (Exception->ExceptionInformation[0])
 			readwrite = _T("Write to");
-		_stprintf_s(DebugMessage,  _T("%s location %08llx caused an access violation.\r\n"),
-				readwrite, Exception->ExceptionInformation[1]);
+		_stprintf_s(DebugMessage,  _T("%s location %08p caused an access violation.\r\n"),
+				readwrite, (void *) Exception->ExceptionInformation[1]);
 
 #ifdef	_DEBUG
 		// The VisualC++ debugger doesn't actually tell you whether a read
@@ -901,9 +901,9 @@ void	XIOException::Open(LPCTSTR szMailServer, LPCTSTR szMailFrom, LPCTSTR szMail
 {
 #ifdef	UNICODE
 	if (szMailServer && szMailServer[0]
-		&& WideCharToMultiByte(CP_ACP, 0, szMailServer, -1, g_szMailServer, sizeof(g_szMailServer), NULL, NULL) 
-		&& WideCharToMultiByte(CP_ACP, 0, szMailFrom, -1, g_szMailFrom, sizeof(g_szMailFrom), NULL, NULL)
-		&& WideCharToMultiByte(CP_ACP, 0, szMailTo, -1, g_szMailTo, sizeof(g_szMailTo), NULL, NULL))
+		&& WideCharToMultiByte(CP_UTF8, 0, szMailServer, -1, g_szMailServer, sizeof(g_szMailServer), NULL, NULL) 
+		&& WideCharToMultiByte(CP_UTF8, 0, szMailFrom, -1, g_szMailFrom, sizeof(g_szMailFrom), NULL, NULL)
+		&& WideCharToMultiByte(CP_UTF8, 0, szMailTo, -1, g_szMailTo, sizeof(g_szMailTo), NULL, NULL))
 		;
 
 #else

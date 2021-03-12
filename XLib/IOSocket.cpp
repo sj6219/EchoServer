@@ -36,7 +36,7 @@ long XIOSocket::s_nRunningThread;
 HANDLE XIOSocket::s_hCompletionPort;
 static long g_nTerminating;
 static HANDLE g_hTimer;
-XIOCriticalSection g_lockTimer;
+XLock g_lockTimer;
 static DWORD g_dwTopTime;
 
 typedef std::vector<XIOSocket::XIOTimer> TimerVector;
@@ -50,30 +50,31 @@ XIOSocket::CInit::~CInit()
 
 BOOL	XIOObject::RegisterWait(HANDLE handle)
 {
-	g_lockTimer.Lock();
+	g_lockTimer.lock();
 	if (g_nHandle >= MAXIMUM_WAIT_OBJECTS)
 	{
-		g_lockTimer.Unlock();
+		g_lockTimer.unlock();
 		return FALSE;
 	}
 	g_vHandle[g_nHandle] = handle;
 	g_vObject[g_nHandle] = this;
 	g_nHandle++;
 	SetEvent(g_hTimer);
-	g_lockTimer.Unlock();
+	g_lockTimer.unlock();
 	return TRUE;
 }
+
 
 void XIOObject::AddTimer(DWORD dwTime, int nId)
 {
 	AddRefTimer();	// ¢¾TimerRef
 	dwTime += GetTickCount();
 
-	g_lockTimer.Lock();
+	g_lockTimer.lock();
 	if (!IsValidObject(this))
 	{
 		EBREAK();
-		g_lockTimer.Unlock();
+		g_lockTimer.unlock();
 		return;
 	}
 
@@ -81,11 +82,11 @@ void XIOObject::AddTimer(DWORD dwTime, int nId)
 	if ((LONG)+(g_dwTopTime - dwTime) > 0)
 	{
 		g_dwTopTime = dwTime;
-		g_lockTimer.Unlock();
+		g_lockTimer.unlock();
 		SetEvent(g_hTimer);
 	}
 	else
-		g_lockTimer.Unlock();
+		g_lockTimer.unlock();
 }
 
 void XIOObject::OnTimerCallback(int nId)
@@ -248,7 +249,7 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 		LONG nWait = (LONG)(g_dwTopTime - dwTick);
 		if (nWait <= 0)
 		{
-			g_lockTimer.Lock();
+			g_lockTimer.lock();
 			const XIOTimer &top = g_timerQueue.top();
 			XIOObject *pObject = top.m_pObject;
 			int id = top.m_nId;
@@ -267,14 +268,14 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				pObject = top.m_pObject;
 				id = top.m_nId;
 			}
-			g_lockTimer.Unlock();
+			g_lockTimer.unlock();
 		}
 
 		DWORD dwWaitResult = WaitForMultipleObjects(g_nHandle, g_vHandle, FALSE, nWait);
 
 		if (g_nTerminating)
 		{
-			g_lockTimer.Lock();
+			g_lockTimer.lock();
 			for ( ; ; )
 			{
 				if (g_timerQueue.empty())
@@ -283,7 +284,7 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				pObject->ReleaseTimer();	
 				g_timerQueue.pop();
 			}
-			g_lockTimer.Unlock();
+			g_lockTimer.unlock();
 			// wait IOThread 
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
@@ -417,11 +418,11 @@ fail:
 }
 void XIOSocket::WriteCallback(DWORD dwTransferred)
 {
-	m_lock.Lock();
+	m_lock.lock();
 	if (dwTransferred != m_pFirstBuf->m_dwSize)
 	{
 		LOG_ERR(_T("different write count %x(%x) %d != %d"), m_hSocket, this, dwTransferred, m_pFirstBuf->m_dwSize);
-		m_lock.Unlock();
+		m_lock.unlock();
 		FreeBuffer();
 		return;	    
 	}
@@ -429,7 +430,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 	XIOBuffer* pFirstBuf = m_pFirstBuf;
 	if ((m_pFirstBuf = m_pFirstBuf->m_pNext) != NULL)
 	{
-		//m_lock.Unlock();
+		//m_lock.unlock();
 		AddRefIO();
 		WSABUF wsabuf;
 		wsabuf.len = m_pFirstBuf->m_dwSize;
@@ -439,7 +440,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 			&& GetLastError() != ERROR_IO_PENDING)
 		{
 			int nErr = GetLastError();
-			m_lock.Unlock();
+			m_lock.unlock();
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::WriteCallback %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
@@ -447,11 +448,11 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 			ReleaseIO();
 		}
 		else
-			m_lock.Unlock();
+			m_lock.unlock();
 	}
 	else
 	{
-		m_lock.Unlock();
+		m_lock.unlock();
 	}
 	pFirstBuf->Free();
 }
@@ -461,7 +462,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 {
 	if (pBuffer->m_dwSize == 0)
 	{
-		m_lock.Unlock();
+		m_lock.unlock();
 		pBuffer->Free();
 		return;
 	}
@@ -470,7 +471,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 	if (m_pFirstBuf == NULL)
 	{
 		m_pFirstBuf = m_pLastBuf = pBuffer;
-//		m_lock.Unlock();
+//		m_lock.unlock();
 		AddRefIO();
 		WSABUF wsabuf;
 		wsabuf.len = pBuffer->m_dwSize;
@@ -480,7 +481,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 			&& GetLastError() != ERROR_IO_PENDING)
 		{
 			int nErr = GetLastError();
-			m_lock.Unlock();
+			m_lock.unlock();
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::Write %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
@@ -488,20 +489,20 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 			ReleaseIO(); 
 		}
 		else
-			m_lock.Unlock();
+			m_lock.unlock();
 	}
 	else if (m_pFirstBuf != m_pLastBuf && m_pLastBuf->m_dwSize + pBuffer->m_dwSize <= BUFFER_SIZE)
 	{
 		memcpy(m_pLastBuf->m_buffer + m_pLastBuf->m_dwSize, pBuffer->m_buffer, pBuffer->m_dwSize);
 		m_pLastBuf->m_dwSize += pBuffer->m_dwSize;
-		m_lock.Unlock();
+		m_lock.unlock();
 		pBuffer->Free();
 	}
 	else
 	{
 		m_pLastBuf->m_pNext = pBuffer;
 		m_pLastBuf = pBuffer;
-		m_lock.Unlock();
+		m_lock.unlock();
 	}
 }
 
@@ -520,7 +521,7 @@ XIOSocket::~XIOSocket()
 
 void XIOSocket::FreeBuffer()
 {
-	m_lock.Lock();
+	m_lock.lock();
 	while (m_pFirstBuf)
 	{
 		XIOBuffer *pBuf = m_pFirstBuf;
@@ -528,7 +529,7 @@ void XIOSocket::FreeBuffer()
 		m_nPendingWrite -= pBuf->m_dwSize;
 		pBuf->Free();
 	}
-	m_lock.Unlock();
+	m_lock.unlock();
 }
 
 void XIOSocket::OnClose()
@@ -537,10 +538,10 @@ void XIOSocket::OnClose()
 
 void XIOSocket::Close()
 {
-	m_lock.Lock();
+	m_lock.lock();
 	SOCKET hSocket = m_hSocket;
 	m_hSocket = INVALID_SOCKET;
-	m_lock.Unlock();
+	m_lock.unlock();
 	if (hSocket != INVALID_SOCKET)
 	{
 		OnClose();
@@ -717,10 +718,10 @@ void XIOServer::Close()
 
 void XIOSocket::GracefulClose()
 {
-	m_lock.Lock();
+	m_lock.lock();
 	SOCKET hSocket = m_hSocket;
 	m_hSocket = INVALID_SOCKET;
-	m_lock.Unlock();
+	m_lock.unlock();
 	if (hSocket != INVALID_SOCKET)
 	{
 		OnClose();
@@ -731,12 +732,12 @@ void XIOSocket::GracefulClose()
 
 void XIOSocket::Disconnect()
 {
-	m_lock.Lock();
+	m_lock.lock();
 	SOCKET hSocket = m_hSocket; 
 	if (hSocket != INVALID_SOCKET) {
 		m_hSocket = 0;
 	}
-	m_lock.Unlock();
+	m_lock.unlock();
 
 //	LINGER linger;
 //	linger.l_onoff = 1;
@@ -796,7 +797,7 @@ BOOL XIOSocket::CreateIOThread(int nThread)
 	g_nThread = nThread;
 	for (int i = 0; i < nThread; i++)
 	{
-		g_hThread[i] = (HANDLE)_beginthreadex( NULL, 0, IOThread, (void *)i, 0, &g_nThreadId[i]);
+		g_hThread[i] = (HANDLE)_beginthreadex( NULL, 0, IOThread, (void *)(INT_PTR)i, 0, &g_nThreadId[i]);
 	}
 
 #if 0
@@ -815,7 +816,7 @@ unsigned XIOSocket::AddIOThread()
 	g_hThread = (HANDLE *)realloc(g_hThread, sizeof(HANDLE) * (g_nThread + 1));
 	g_nThreadId = (unsigned *)realloc(g_nThreadId, sizeof(unsigned) * (g_nThread + 1));
 	unsigned nThreadID;
-	g_hThread[g_nThread] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void *)g_nThread, 0, &nThreadID);
+	g_hThread[g_nThread] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void *)(INT_PTR)g_nThread, 0, &nThreadID);
 	g_nThreadId[g_nThread] = nThreadID;
 	g_nThread++;
 	return nThreadID;
@@ -863,19 +864,19 @@ void XIOSocket::Read(DWORD dwLeft)
 	wsabuf.buf = m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize;
 	DWORD dwRecv;
 	DWORD dwFlag = 0;
-	m_lock.Lock();
+	m_lock.lock();
 	if (WSARecv(m_hSocket, &wsabuf, 1, &dwRecv, &dwFlag, &m_overlappedRead, NULL)
 		&& GetLastError() != ERROR_IO_PENDING)
 	{
 		int nErr = GetLastError();
-		m_lock.Unlock();
+		m_lock.unlock();
 		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
 			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD *)this, nErr);
 		Close();
 		ReleaseIO();
 	}
 	else
-		m_lock.Unlock();
+		m_lock.unlock();
 }
 
 void XIOSocket::Start()

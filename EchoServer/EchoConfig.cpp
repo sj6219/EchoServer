@@ -37,8 +37,6 @@ template <typename T> T GetValue(lisp::var var, LPCTSTR name, T defaultValue)
 
 BOOL CEchoConfig::Open()
 {
-	CONVERT;
-
 	LPCTSTR str;
 
 	XParser parser;
@@ -87,7 +85,7 @@ BOOL CEchoConfig::Open()
 	lisp::var addrs = var.get(_T("Address")).cdr();
 	for ( ; !addrs.null(); ) {
 		LPCTSTR szAddr = addrs.pop();
-		ULONG nAddr = inet_addr( T_A(szAddr));
+		ULONG nAddr = inet_addr(TtoA(szAddr));
 		if( nAddr != INADDR_NONE) 
 			s_vector.push_back( nAddr);
 		else

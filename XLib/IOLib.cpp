@@ -13,7 +13,7 @@ void TRACE(LPCTSTR lpszFormat, ...)
 	TCHAR buff[1024];
 	va_list args;
 	va_start(args, lpszFormat);
-	StringCbVPrintf(buff, sizeof(buff), lpszFormat, args);
+	_stprintf_s(buff,  lpszFormat, args);
 	OutputDebugString(buff);
 	va_end(args);
 }

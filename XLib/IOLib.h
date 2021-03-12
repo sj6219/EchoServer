@@ -16,11 +16,9 @@
 #pragma warning(disable: 4244) // 'conversion' conversion from 'type1' to 'type2', possible loss of data
 
 #ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC
+//#define _CRTDBG_MAP_ALLOC
 #else
-#define _HAS_EXCEPTIONS 0
-#define _SECURE_SCL 0
-#define _HAS_ITERATOR_DEBUGGING 0
+//#define _HAS_EXCEPTIONS 0
 #endif
 
 #include <windows.h>
@@ -86,49 +84,9 @@ public:
 #pragma warning(disable: 4995)
 
 #ifdef	UNICODE
-
 typedef	std::wstring tstring;
-
-inline LPTSTR WINAPI A_TCopy(LPTSTR lpt, LPCSTR lpa, int nChars)
-{
-	ASSERT(lpa != NULL);
-	ASSERT(lpt != NULL);
-	MultiByteToWideChar(CP_ACP, 0, lpa, -1, lpt, nChars);
-	return lpt;
-}
-
-inline LPSTR WINAPI T_ACopy(LPSTR lpa, LPCTSTR lpt, int nChars) 
-{
-	ASSERT(lpt != NULL);
-	ASSERT(lpa != NULL);
-	WideCharToMultiByte(CP_ACP, 0, lpt, -1, lpa, nChars, NULL, NULL);
-	return lpa;
-}
-
-#define CONVERT	int _convert; (_convert); LPCSTR _lpa; (_lpa); LPCWSTR _lpt; (_lpt);
-#define A_T(lpa) (lpa ? (_convert = (lstrlenA((_lpa = lpa)) + 1), A_TCopy((LPWSTR)_alloca(_convert * 2), _lpa, _convert)) : NULL)
-#define T_A(lpt) (lpt ? (_convert = (lstrlenW((_lpt = lpt)) + 1) * 2, T_ACopy((LPSTR)_alloca(_convert), _lpt, _convert)) : NULL)
-
 #else
-
 typedef	std::string tstring;
-
-inline LPTSTR WINAPI A_TCopy(LPTSTR lpt, LPCSTR lpa, int nChars)
-{
-	StringCchCopy(lpt, nChars, lpa);
-	return lpt;
-}
-
-inline LPSTR WINAPI T_ACopy(LPSTR lpa, LPCTSTR lpt, int nChars) 
-{
-	StringCchCopy(lpa, nChars, lpt);
-	return lpa;
-}
-
-#define CONVERT
-#define A_T(lpa) (lpa)
-#define T_A(lpt) (lpt)
-
 #endif // UNICODE
 
 tstring Format(LPCTSTR format, ...);
@@ -272,6 +230,21 @@ public:
 	void lock() { EnterCriticalSection(&m_lock); }
 	void unlock() { LeaveCriticalSection(&m_lock); }
 	bool try_lock() { return TryEnterCriticalSection(&m_lock); }
+};
+
+template <typename T> class XUniqueLock
+{
+private:
+	typename T* m_pT;
+public:
+	XUniqueLock(typename T & rT) : m_pT(&rT)
+	{
+		m_pT->lock();
+	}
+	~XUniqueLock()
+	{
+		m_pT->unlock();
+	}
 };
 
 #endif

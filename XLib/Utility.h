@@ -184,20 +184,6 @@ public:
 	}
 };
 
-template <typename T> class XUniqueLock
-{
-private:
-	typename T* m_pT;
-public:
-	XUniqueLock(typename T* pT) : m_pT(pT)
-	{
-		m_pT->lock();
-	}
-	~XUniqueLock()
-	{
-		m_pT->unlock();
-	}
-};
 
 
 class XMemoryPage;

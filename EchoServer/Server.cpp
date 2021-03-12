@@ -35,9 +35,8 @@ void CServer::Start()
 
 void CServer::Remove( CSocket *pSocket)
 {
-	g_lock.lock();
+	XUniqueLock<XLock> lock(g_lock);
 	g_link.erase(pSocket);
-	g_lock.unlock();
 }
 
 int	CServer::Size()
@@ -59,8 +58,7 @@ XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 
 void CServer::Add( CSocket *pSocket)
 {
-	g_lock.lock();
+	XUniqueLock<XLock> lock(g_lock);
 	g_link.push_front(pSocket);
-	g_lock.unlock();
 }
 

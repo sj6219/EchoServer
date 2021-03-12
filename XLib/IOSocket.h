@@ -125,17 +125,6 @@ public:
 };
 
 class XIOBuffer;
-class XIOCriticalSection 
-{
-public:
-	void Lock() { EnterCriticalSection(&m_critical_section); }
-	BOOL TryLock() { return TryEnterCriticalSection(&m_critical_section); }
-	void Unlock() { LeaveCriticalSection(&m_critical_section); }
-	XIOCriticalSection() { InitializeCriticalSection(&m_critical_section); }
-	XIOCriticalSection(DWORD dwSpinCount) { InitializeCriticalSectionAndSpinCount(&m_critical_section, dwSpinCount); }
-	~XIOCriticalSection() { DeleteCriticalSection(&m_critical_section); }
-	CRITICAL_SECTION m_critical_section;
-};
 
 class XIOSocket;
 class XIOServer : public XIOObject
@@ -197,7 +186,7 @@ class XIOSocket : public XIOObject
 public :
 
 
-	XIOCriticalSection m_lock;
+	XLock m_lock;
 	OVERLAPPED m_overlappedRead;
 	OVERLAPPED m_overlappedWrite;
 	XIOBuffer *m_pReadBuf;
@@ -230,7 +219,7 @@ public :
 	void ReleaseIO() { Release(); }
 #endif
 	void WriteWithLock(XIOBuffer *pBuffer);
-	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
+	void Write(XIOBuffer *pBuffer) { m_lock.lock(); WriteWithLock(pBuffer); }
 	void Write(void *buf, DWORD size);
 	void Initialize();
 	long PendingWrite() { return m_nPendingWrite; }

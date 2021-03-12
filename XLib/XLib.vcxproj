@@ -295,9 +295,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AuthProtocol.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="DBProtocol.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="IOException.h" />
     <ClInclude Include="IOLib.h" />
@@ -307,10 +304,7 @@
     <ClInclude Include="Link.h" />
     <ClInclude Include="LinkEx.h" />
     <ClInclude Include="Lisp.h" />
-    <ClInclude Include="MainProtocol.h" />
-    <ClInclude Include="ModelHeader.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Update.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="XFile.h" />
     <ClInclude Include="XParser.h" />

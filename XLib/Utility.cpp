@@ -927,7 +927,7 @@ BOOL CreatePath(LPCTSTR szPath)
 	LPCTSTR str = _tcsrchr(szPath, '\\');
 	if (str == 0)
 		return FALSE;
-	StringCbCopyN(szParent, sizeof(szParent), szPath, (char *)str - (char *)szPath);
+	_tcsncpy_s(szParent, szPath, (char *)str - (char *)szPath);
 	if (CreateDirectory(szParent, NULL))
 		return TRUE;
 	if (GetLastError() != ERROR_PATH_NOT_FOUND)
@@ -1078,9 +1078,9 @@ std::wstring ToWString(LPCSTR lpa)
 
 std::string ToString(LPCWSTR lpw)
 {
-	int len = (int) wcslen(lpw);
-	LPSTR lpa = (LPSTR) _alloca(len * 4+1);
-	len = WideCharToMultiByte(CP_ACP, 0, lpw, len, lpa, len * 2, 0, 0);
+	int len = (int) wcslen(lpw)+1;
+	LPSTR lpa = (LPSTR) _alloca(len * 4);
+	len = WideCharToMultiByte(CP_UTF8, 0, lpw, len, lpa, len * 4, 0, 0);
 	return lpa;
 }
 #endif
