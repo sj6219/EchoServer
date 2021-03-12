@@ -1325,30 +1325,25 @@ static void RecordModuleList(HANDLE LogFile)
 	hprintf(LogFile, _T("Module list:\r\n"));
 	ShowModuleInfo(LogFile, GetModuleHandle(0));
 
+#if 0
+	PBYTE pb = NULL;
+	MEMORY_BASIC_INFORMATION mbi;
 
-	//PBYTE pb = NULL;
-	//MEMORY_BASIC_INFORMATION mbi;
+	while (VirtualQuery(pb, &mbi, sizeof(mbi)) == sizeof(mbi)) {
 
-	//while (VirtualQuery(pb, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+		if (	mbi.State != MEM_FREE && (mbi.AllocationBase == mbi.BaseAddress) &&
+			(mbi.AllocationBase != NULL)) {
+			// Do not add the module name to the list
+			// if any of the following is true:
+			// 1. state is free
+			// 2. If this block is NOT the beginning of a region
+			// 3. If the address is NULL
+			ShowModuleInfo(LogFile, (HINSTANCE)mbi.AllocationBase);
+		}
 
-	//	if (mbi.State == MEM_FREE)
-	//		mbi.AllocationBase = mbi.BaseAddress;
-
-	//	if (	(mbi.AllocationBase != mbi.BaseAddress) ||
-	//		(mbi.AllocationBase == NULL)) {
-	//		// Do not add the module name to the list
-	//		// if any of the following is true:
-	//		// 1. If this block is NOT the beginning of a region
-	//		// 2. If the address is NULL
-	//	}
-	//	else {
-	//		ShowModuleInfo(LogFile, (HINSTANCE)mbi.AllocationBase);
-	//	}
-
-	//	pb += mbi.RegionSize;
-	//}
-
-
+		pb += mbi.RegionSize;
+	}
+#endif
 }
 
 static LPTSTR GetFilePart(LPTSTR source)

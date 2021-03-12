@@ -10,11 +10,17 @@
 #include <process.h>
 #include <mswsock.h>
 
+#define BUFFER_POOL_SIZE 16
+
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
-static XIOSocket::CInit theInit;
 
-#define BUFFER_POOL_SIZE 16
+static XIOBuffer::CSlot g_slotBuffer[BUFFER_POOL_SIZE];
+// g_slotBuffer shoud be initialized before theInit 
+// because g_slotBuffer shold be freed after XIOBuffer freed
+static XIOSocket::CInit theInit;
+// XIOBuffer cache shoud be freed after all XIOSocket freed
+
 
 
 //#pragma optimize("gt", on)
@@ -37,6 +43,10 @@ typedef std::vector<XIOSocket::XIOTimer> TimerVector;
 typedef std::priority_queue<XIOSocket::XIOTimer, TimerVector> TimerQueue;
 static TimerQueue g_timerQueue;
 
+XIOSocket::CInit::~CInit()
+{
+	XIOSocket::Stop();
+}
 
 BOOL	XIOObject::RegisterWait(HANDLE handle)
 {
@@ -143,7 +153,6 @@ void XIOSocket::DumpStack()
 
 
 
-static XIOBuffer::CSlot g_slotBuffer[BUFFER_POOL_SIZE];
 static long g_nBufferIndex = -1;
 long XIOBuffer::s_nCount;
 
@@ -545,10 +554,6 @@ void XIOSocket::Close()
 }
 
 
-XIOSocket::CInit::~CInit()
-{
-	XIOSocket::Stop();
-}
 
 
 void XIOServer::OnWaitCallback()
