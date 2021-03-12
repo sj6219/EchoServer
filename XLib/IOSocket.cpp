@@ -39,8 +39,7 @@ static HANDLE g_hTimer;
 XLock g_lockTimer;
 static DWORD g_dwTopTime;
 
-typedef std::vector<XIOSocket::XIOTimer> TimerVector;
-typedef std::priority_queue<XIOSocket::XIOTimer, TimerVector> TimerQueue;
+typedef std::priority_queue<XIOSocket::XIOTimer> TimerQueue;
 static TimerQueue g_timerQueue;
 
 XIOSocket::CInit::~CInit()

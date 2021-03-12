@@ -1,10 +1,10 @@
 #include "Stdafx.h"
-#include "IOLib.h"
+//#include "IOLib.h"
 #include "IOScreen.h"
-#include "Status.h"
-#include "Server.h"
 #include <perflib.h>
 #include <winperf.h>
+#include "Status.h"
+#include "Server.h"
 #include "echocounter.h"
 
 // ctrpp -o echocounter.h -rc echocounter.rc -ch echocountersymbol.h echo.man

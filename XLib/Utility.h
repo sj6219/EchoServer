@@ -10,99 +10,45 @@
 #include <math.h>
 #include <synchapi.h>
 
-#define ITERATE(T, it, container) for (T::iterator it = (container).begin(); it != (container).end(); it++)
-
-#ifdef	_DEBUG
-#define OBFUSCATE
-#else
-
-#define __PASTE__(a, b)	a ## b
-#define _PASTE_(a, b)  __PASTE__(a, b)
-
-#define OBFUSCATE \
-	__asm mov eax, __LINE__ * 0x635186f1		\
-	__asm cmp eax, __LINE__ * 0x9cb16d48		\
-	__asm je _PASTE_(junk, __LINE__)			\
-	__asm mov eax, _PASTE_(after, __LINE__)		\
-	__asm jmp eax								\
-	__asm _PASTE_(junk, __LINE__):				\
-	__asm _emit(0xd8 + __LINE__ % 8)			\
-	__asm _PASTE_(after, __LINE__):
-#endif
-
 
 int	ExpandStringV(char * buffer, size_t count, const char * format, const char ** argptr);
 int	ExpandStringV(wchar_t * buffer, size_t count, const wchar_t * format, const wchar_t **argptr);
 int ExpandString(char * buffer, size_t count, const char *format, ...);
 int ExpandString(wchar_t * buffer, size_t count, const wchar_t * format, ...);
 
-#define CHGSIGN(f) (*(DWORD *) &f ^= 0x80000000)
-#define NEGATIVE(f) (*(int *) &f < 0)
-
-int _stdcall mbstricmp( const char* s1, const char* s2);
 
 class iless
 {
 public:
-#ifdef	UNICODE
-	bool operator()(const std::wstring& a, const std::wstring& b) const {
+	bool operator()(const tstring& a, const tstring& b) const {
 		return _tcsicmp(a.c_str(), b.c_str()) < 0;
 	}
-	bool operator()(LPCTSTR a, const std::wstring& b) const {
+	bool operator()(LPCTSTR a, const tstring& b) const {
 		return _tcsicmp(a, b.c_str()) < 0;
 	}
-	bool operator()(const std::wstring& a, LPCTSTR b) const {
+	bool operator()(const tstring& a, LPCTSTR b) const {
 		return _tcsicmp(a.c_str(), b) < 0;
 	}
 	bool operator()(LPCTSTR a, LPCTSTR b) const {
 		return _tcsicmp(a, b) < 0;
 	}
-#else
-	bool operator()(const std::string& a, const std::string& b) const {
-		return mbstricmp(a.c_str(), b.c_str()) < 0;
-	}
-	bool operator()(LPCTSTR a, const std::string& b) const {
-		return mbstricmp(a, b.c_str()) < 0;
-	}
-	bool operator()(const std::string& a, LPCTSTR b) const {
-		return mbstricmp(a.c_str(), b) < 0;
-	}
-	bool operator()(LPCTSTR a, LPCTSTR b) const {
-		return mbstricmp(a, b) < 0;
-	}
-#endif
 };
 
 class StrCmp
 {
 public:
-#ifdef	UNICODE
-	bool operator()(const std::wstring& a, const std::wstring& b) const {
+	bool operator()(const tstring& a, const tstring& b) const {
 		return _tcscmp(a.c_str(), b.c_str()) < 0;
 	}
-	bool operator()(LPCTSTR a, const std::wstring& b) const {
+	bool operator()(LPCTSTR a, const tstring& b) const {
 		return _tcscmp(a, b.c_str()) < 0;
 	}
-	bool operator()(const std::wstring& a, LPCTSTR b) const {
+	bool operator()(tstring& a, LPCTSTR b) const {
 		return _tcscmp(a.c_str(), b) < 0;
 	}
 	bool operator()(LPCTSTR a, LPCTSTR b) const {
 		return _tcscmp(a, b) < 0;
 	}
-#else
-	bool operator()(const std::string& a, const std::string& b) const {
-		return _tcscmp(a.c_str(), b.c_str()) < 0;
-	}
-	bool operator()(LPCTSTR a, const std::string& b) const {
-		return _tcscmp(a, b.c_str()) < 0;
-	}
-	bool operator()(const std::string& a, LPCTSTR b) const {
-		return _tcscmp(a.c_str(), b) < 0;
-	}
-	bool operator()(LPCTSTR a, LPCTSTR b) const {
-		return _tcscmp(a, b) < 0;
-	}
-#endif
 };
 
 
@@ -174,7 +120,7 @@ template <typename T> class XSharedLock
 private:
 	typename T* m_pT;
 public:
-	XSharedLock(typename T* pT) : m_pT(pT)
+	XSharedLock(typename T& rT) : m_pT(&rT)
 	{
 		m_pT->lock_shared();
 	}
@@ -224,8 +170,8 @@ public:
 	PAGELIST	m_listPage;
 #ifdef	_MT
 	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.Lock();}
-	static void Unlock()	{ s_self.m_lock.Unlock();}
+	static void Lock()		{ s_self.m_lock.lock();}
+	static void Unlock()	{ s_self.m_lock.unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -316,9 +262,9 @@ public:
 
 	U* m_pU;
 #ifdef	_MT
-	XSpinLock	m_lock;
-	static void Lock()		{ s_self.m_lock.Lock();}
-	static void Unlock()	{ s_self.m_lock.Unlock();}
+	XLock	m_lock;
+	static void Lock()		{ s_self.m_lock.lock();}
+	static void Unlock()	{ s_self.m_lock.unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -390,9 +336,9 @@ template <class T> class ZMemoryPool {
 public:
 	T *	m_pT;
 #ifdef	_MT
-	XSpinLock	m_lock;
-	static void Lock()		{ s_self.m_lock.Lock();}
-	static void Unlock()	{ s_self.m_lock.Unlock();}
+	XLock	m_lock;
+	static void Lock()		{ s_self.m_lock.lock();}
+	static void Unlock()	{ s_self.m_lock.unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -450,25 +396,9 @@ template <typename TYPE> void ZDestruct(TYPE *ptr)
 
 
 
-void InitRandom();
-unsigned _Random();
-inline int Random()
-{
-	return _Random() >> 1;
-}
 
-inline int Random( int nMin, int nMax)
-{
-	if( nMin < nMax)
-		return _Random() % (nMax - nMin + 1) + nMin;
-	else
-		return nMin;
-}
-
-#ifndef LPPACKET
 #define LPCPACKET LPCSTR
 #define LPPACKET LPSTR
-#endif
 
 char*	__stdcall WritePacketV(char *packet, va_list va);
 char*	WritePacket(char *packet, const char *, ...);
@@ -480,7 +410,6 @@ LPCPACKET	ScanPacket(LPCPACKET packet, LPCPACKET end, const char *, ...);
 LPCPACKET	__stdcall GetString(LPCPACKET packet, LPTSTR str, int size);
 LPCPACKET	__stdcall ScanString(LPCPACKET packet, LPCPACKET end, LPTSTR str, int size);
 char*	__stdcall PutString(char *packet, LPCTSTR str);
-
 char*	__stdcall PutBuffer(char *packet, LPCTSTR str, int size);
 
 template <class TYPE>
@@ -532,19 +461,7 @@ LPPACKET PutNumeric(LPPACKET packet, const TYPE* Num, const int nArry)
 BOOL CreatePath( LPCTSTR szPath);
 BOOL MovePath( LPCTSTR szOldFile, LPCTSTR szNewFile);
 BOOL DeletePath( LPCTSTR ofname);
-FILE* FOpen(LPCTSTR filename);
-BOOL CheckResidentNum( char* szResident, char* szNum1, char* szNum2);	//	주민번호 검사.('-' 포함 14Byte)
-BOOL CheckResidentNum( char* szNum1, char* szNum2);	//	주민번호 검사.
-BOOL CheckResidentNum( char* szNum);	//	주민번호 검사.
-BOOL	__stdcall IsValidString(LPCTSTR str, LPCTSTR = _T(" \n"));
-BOOL	__stdcall IsValidName(LPCTSTR name);
-BOOL	__stdcall IsValidAdminName(LPCTSTR name, LPCTSTR = _T("<>"));
-BOOL	__stdcall IsValidAddress(void* p);
 
-inline BOOL	IsValidAddress(DWORD_PTR p)
-{
-	return IsValidAddress( (void*)p);
-}
 
 inline BOOL IsValidObject(void *p)
 {
@@ -556,37 +473,6 @@ inline BOOL IsValidObject(void *p)
 #endif
 }
 
-
-inline double Distance(const POINT& ptP1, const POINT& ptP2)
-{
-	double dx = ptP1.x - ptP2.x;
-	double dy = ptP1.y - ptP2.y;
-	return sqrt(dx * dx + dy * dy);
-}
-
-inline double Distance(double dx, double dy)
-{
-	return sqrt(dx * dx + dy * dy);
-}
-
-inline double Distance(double dx, double dy, double dz)
-{
-	return sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-inline int PowDistance( const POINT& ptP1, const POINT& ptP2)
-{
-	int dx = ptP1.x - ptP2.x;
-	int dy = ptP1.y - ptP2.y;
-	return dx * dx + dy * dy;
-}
-
-inline __int64 PowDistance64( const POINT& ptP1, const POINT& ptP2)
-{
-	__int64 dx = ptP1.x - ptP2.x;
-	__int64 dy = ptP1.y - ptP2.y;
-	return dx * dx + dy * dy;
-}
 
 void LogPacket( int nType, int nSize, char* buffer);
 
@@ -605,20 +491,6 @@ tstring GetUniqueName();
 LPCTSTR	GetNamePart(LPCTSTR szPath);
 __forceinline LPTSTR	GetNamePart(LPTSTR szPath) { return (LPTSTR) GetNamePart((LPCTSTR) szPath); }
 
-template <typename TYPE>  class Secure
-{
-public:	
-	TYPE m_nValue;
-	static TYPE m_nKey;
-
-	Secure() {}
-	Secure(TYPE nValue) { m_nValue = nValue ^ m_nKey; }
-
-	operator TYPE () { return m_nValue ^ m_nKey; }
-	void	operator = (TYPE nValue) { m_nValue = nValue ^ m_nKey; }
-};
-
-template <typename TYPE> TYPE Secure<TYPE>::m_nKey;
 
 template <typename TYPE> class deque
 {
@@ -894,60 +766,6 @@ template <typename T> void	minmaximize(T &left, const T& min, const T& max)
 		left = min;
 }
 
-class CReserveVoid
-{
-public:
-	void	*m_pMemory;
-	void	*m_pAlloc;
-	size_t	m_nSize;
-
-	CReserveVoid()
-	{
-		m_nSize = 0;
-		m_pMemory = 0;
-		m_pAlloc = 0;
-	}
-
-	CReserveVoid(size_t nSize, void *pMemory)
-	{
-		m_nSize = nSize;
-		m_pMemory = pMemory;
-		m_pAlloc = 0;
-	}
-
-	~CReserveVoid()
-	{
-		free(m_pAlloc);
-	}
-
-	void	Reserve(size_t nSize, void *pMemory)
-	{
-		free(m_pAlloc);
-		m_nSize = nSize;
-		m_pMemory = pMemory;
-		m_pAlloc = 0;
-	}
-
-	void	*Alloc(size_t nSize)
-	{
-		if (nSize <= m_nSize)
-			return m_pMemory;
-		m_pMemory = m_pAlloc = realloc(m_pAlloc, nSize);
-		m_nSize = nSize;
-		return m_pMemory;
-	}
-};
-
-template <typename TYPE> class CReserveMemory : public CReserveVoid
-{
-public:
-	CReserveMemory() {}
-	CReserveMemory(size_t nSize, TYPE *pMemory) : CReserveVoid(sizeof(TYPE)*nSize, pMemory) {}
-	void	Reserve(size_t nSize, TYPE *pMemory) { CReserveVoid::Reserve(sizeof(TYPE)*nSize, pMemory); }
-	TYPE* Alloc(size_t nSize) { return (TYPE*) CReserveVoid::Alloc(sizeof(TYPE)*nSize); }
-	operator TYPE* () { return (TYPE*) m_pMemory; }
-	TYPE * operator -> () { return (TYPE*) m_pMemory; }
-};
 
 namespace util
 {	

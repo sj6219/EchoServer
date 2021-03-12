@@ -25,29 +25,25 @@ void	BREAK()
 }
 #endif
 
-class XIOLibInit
-{
-public:
-	XIOLibInit()
-	{
-		//XIOMemory::Start();
-		//XIOException::Start();
-	}
-	~XIOLibInit()
-	{
-		//XIOLog::Stop();
-		//XIOException::Stop();
-		//XIOSocket::Stop();
-		//XIOMemory::Stop();
-	}
-};
-#pragma warning(disable: 4073) 
-#pragma init_seg(lib)
-XIOLibInit	theInit;
-
-
-
-
+//class XIOLibInit
+//{
+//public:
+//	XIOLibInit()
+//	{
+//		//XIOMemory::Start();
+//		//XIOException::Start();
+//	}
+//	~XIOLibInit()
+//	{
+//		//XIOLog::Stop();
+//		//XIOException::Stop();
+//		//XIOSocket::Stop();
+//		//XIOMemory::Stop();
+//	}
+//};
+//#pragma warning(disable: 4073) 
+//#pragma init_seg(lib)
+//XIOLibInit	theInit;
 
 tstring Format(LPCTSTR format, ...)
 {

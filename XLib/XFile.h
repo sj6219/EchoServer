@@ -42,11 +42,4 @@ public:
 	DWORD	Touch();
 };
 
-class XFileCRC : public XFileEx
-{
-public:
-	DWORD	m_nCRC;
-
-	UINT Read(void *lpBuf, UINT uiCount);
-	UINT Skip(UINT uiCount);
-};
+;

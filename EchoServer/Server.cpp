@@ -4,7 +4,7 @@
 #include "Socket.h"
 #include "EchoConfig.h"
 
-static XLock g_lock;
+static XRWLock g_lock;
 static LINKED_LIST(CSocket, m_link) g_link;
 
 static CServer g_server;
@@ -14,14 +14,14 @@ void CServer::Shutdown()
 {
 	for( ; ; )
 	{
-		g_lock.lock();
+		g_lock.lock_shared();
 		if (g_link.empty()) {
-			g_lock.unlock();
+			g_lock.unlock_shared();
 			return;
 		}
 		CSocket* pSocket = g_link.front();
 		pSocket->AddRef();
-		g_lock.unlock();
+		g_lock.unlock_shared();
 		pSocket->Close();
 		pSocket->Release();
 	}
@@ -35,7 +35,7 @@ void CServer::Start()
 
 void CServer::Remove( CSocket *pSocket)
 {
-	XUniqueLock<XLock> lock(g_lock);
+	XUniqueLock<XRWLock> lock(g_lock);
 	g_link.erase(pSocket);
 }
 
@@ -58,7 +58,7 @@ XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 
 void CServer::Add( CSocket *pSocket)
 {
-	XUniqueLock<XLock> lock(g_lock);
-	g_link.push_front(pSocket);
+	XUniqueLock<XRWLock> lock(g_lock);
+	g_link.push_back(pSocket);
 }
 

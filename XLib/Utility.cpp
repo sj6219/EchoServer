@@ -558,33 +558,6 @@ int ExpandString(wchar_t * buffer, size_t count, const wchar_t * format, ...)
 	return n;
 }
 
-UINT ACP_ID;
-
-
-static long g_nRandtable[32];
-static long g_nRandIndex;
-
-void InitRandom()
-{
-	srand((unsigned)time(0));
-
-	int i;
-	g_nRandtable[0] = (long) time(0);
-	for (i = 1; i < 32; i++)
-	{
-		g_nRandtable[i] = 1103515245 * g_nRandtable[i - 1] + 12345;
-	}
-	g_nRandIndex = 2;
-	for (i = 0; i < 310; i++)
-		Random();
-}
-
-unsigned _Random()
-{
-	long i = InterlockedIncrement(&g_nRandIndex);
-	return (g_nRandtable[i & 31] += g_nRandtable[(i - 3) & 31]);
-}
-
 #if	0
 __declspec(naked) BOOL __fastcall _interlockedbittestandset(DWORD *pBit, int nOffset)
 {
@@ -958,79 +931,6 @@ BOOL DeletePath(LPCTSTR ofname)
     (void)_tchmod(ofname, 0777);
 	return (_tunlink(ofname) == 0);
 }
-
-FILE* FOpen(LPCTSTR filename)
-{
-	FILE* pFile;
-	if (_tfopen_s(&pFile, filename, _T("wb")) == 0)
-	{
-		return pFile;
-	}
-	if (errno != ENOENT)
-		return NULL;
-	if (CreatePath(filename) && _tfopen_s(&pFile, filename, _T("wb")) == 0)
-		return pFile;
-	else
-		return NULL;
-}
-
-//static unsigned char lead_table[256];
-static signed char lower_table[256];
-
-void init_codepage(UINT codepage)
-{
-#if 0
-	CPINFO cpinfo;
-	GetCPInfo(codepage, &cpinfo);
-	if (cpinfo.MaxCharSize > 1)
-	{
-		for (int i = 0; cpinfo.LeadByte[i] || cpinfo.LeadByte[i+1]; i += 2)
-		{
-			for (int j = cpinfo.LeadByte[i]; j <= cpinfo.LeadByte[i+1]; j++)
-			{
-				lead_table[j] = 1;
-			}
-		}
-	}
-#endif
-	for (int i = 0; i < 256; i++)
-	{
-		lower_table[i] = IsDBCSLeadByte(i) ? -1 : (tolower(i) & 0x7f);
-	}
-}
-
-#ifndef	UNICODE
-
-int _stdcall mbstricmp(const char *s1, const char *s2)
-{
-	int c1, c2, c3;
-
-	for ( ; ; )
-	{
-		c1 = *(unsigned char *)s1++;
-		c2 = *(unsigned char *)s2++;
-		if (lower_table[c1] < 0)
-		{
-			if ((c1 -= c2) == 0)
-			{
-				c1 = *(unsigned char *)s1++;
-				c2 = *(unsigned char *)s2++;
-				if ((c1 -= c2) == 0)
-					continue;
-			}
-			return c1;
-		}
-		if ((c3 = lower_table[c1] - lower_table[c2]) == 0)
-		{
-			if (c1)
-				continue;
-			return 0;
-		}
-		return c3;
-	}
-}
-#endif
-
 
 
 void LogPacket(int nType, int nSize, char *buffer)

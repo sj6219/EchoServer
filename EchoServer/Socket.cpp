@@ -3,7 +3,7 @@
 #include "Socket.h"
 #include "Server.h"
 #include "EchoConfig.h"
-#define LOCAL_ADDRESS 0x0100007f
+
 #pragma comment(lib, "Mswsock.lib")
 
 CSocket::CSocket(SOCKET socket, in_addr addr) : XIOSocket(socket)
@@ -44,15 +44,21 @@ void CSocket::OnCreate()
 
 void CSocket::OnRead()
 {
-		int		len = m_pReadBuf->m_dwSize;
-		if( len == 0)
-		{
-			Read(len);
-			return;
-		}
-		Write(m_pReadBuf->m_buffer, len);
+	char* buffer = m_pReadBuf->m_buffer;
+	int		len = m_pReadBuf->m_dwSize;
+
+	if( len == 0)
+	{
+		Read(len);
+		return;
+	}
+	if (m_nPendingWrite > 100 * 1024) {
+		Close();
+		return;
+	}
+	Write(buffer, len);
 #ifdef USE_IOBUFFER
-		Read(0);
+	Read(0);
 #endif
 }
 

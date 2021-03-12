@@ -127,27 +127,4 @@ DWORD	XFileEx::Touch()
 	return checksum;
 }
 
-UINT	XFileCRC::Read(void *lpBuf, UINT uiCount)
-{
-	minimize(uiCount, (UINT) (m_pViewEnd - m_pView));
-	register BYTE *end = (BYTE *) lpBuf + uiCount;
-	register DWORD nCRC = m_nCRC;
-	for (register BYTE *ptr = (BYTE *) lpBuf; ptr != end; ) {
-		nCRC = util::m_vCRC32Table[(BYTE)(nCRC ^ (*ptr++ = *m_pView++))] ^ (nCRC >> 8);
-    }
-	m_nCRC = nCRC;
-	return uiCount;
-}
-
-UINT	XFileCRC::Skip(UINT uiCount)
-{
-	minimize(uiCount, (UINT) (m_pViewEnd - m_pView));
-	register char *end = m_pView + uiCount;
-	register DWORD nCRC = m_nCRC;
-	for (; m_pView != end; ) {
-		nCRC = util::m_vCRC32Table[(BYTE)(nCRC ^ *m_pView++)] ^ (nCRC >> 8);
-    }
-	m_nCRC = nCRC;
-	return uiCount;
-}
 

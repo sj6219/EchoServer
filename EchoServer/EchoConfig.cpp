@@ -1,6 +1,6 @@
 #include "Stdafx.h"
 #include "EchoConfig.h"
-#include "IOLib.h"
+//#include "IOLib.h"
 #include "IOScreen.h"
 #include "Utility.h"
 #include "Lisp.h"

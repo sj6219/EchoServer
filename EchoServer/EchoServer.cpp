@@ -2,16 +2,16 @@
 //
 
 #include "Stdafx.h"
-#include "IOLib.h"
+//#include "IOLib.h"
 #include "IOException.h"
 #include "IOScreen.h"
 #include "Utility.h"
+#include <commctrl.h>
 #include "EchoServer.h"
 #include "Resource.h"
 #include "Status.h"
 #include "EchoConfig.h"
 #include "Server.h"
-#include <commctrl.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -183,7 +183,7 @@ void TestException()
 {
 	ELOG( _T("Exception Test"));
 	XIOException::Enable();
-	EBREAK();
+	EASSERT(0);
 	XIOException::Enable();
 }
 

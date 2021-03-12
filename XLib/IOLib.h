@@ -47,9 +47,6 @@
 
 #include <memory>
 
-#define LPCPACKET LPCSTR
-#define LPPACKET LPSTR
-
 #undef TRACE
 #undef ASSERT
 
