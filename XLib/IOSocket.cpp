@@ -47,6 +47,11 @@ XIOSocket::CInit::~CInit()
 	XIOSocket::Stop();
 }
 
+
+XIOObject::~XIOObject()
+{
+}
+
 BOOL	XIOObject::RegisterWait(HANDLE handle)
 {
 	g_lockTimer.Lock();
@@ -96,53 +101,6 @@ void XIOObject::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpO
 	ASSERT(!lpOverlapped);
 	OnTimer(dwTransferred);
 	ReleaseTimer();
-}
-
-XIOObject::~XIOObject()
-{
-}
-
-void XIOSocket::OnCreate()
-{
-	Read(0); // Read must be called last because that can cause OnRead()
-}
-
-void XIOSocket::ReadCallback(DWORD dwTransferred)
-{
-	if (dwTransferred == 0)
-	{
-		Close();
-		return;
-	}
-	m_pReadBuf->m_dwSize += dwTransferred;
-	OnRead();
-}
-
-
-unsigned __stdcall XIOSocket::IOThread(void *arglist)
-{
-	SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS);
-	for ( ; ; )
-	{
-		DWORD dwTransferred;
-		XIOObject *pObject;
-		LPOVERLAPPED lpOverlapped;
-
-		BOOL bSuccess = GetQueuedCompletionStatus(s_hCompletionPort, &dwTransferred, (PULONG_PTR)&pObject, &lpOverlapped, INFINITE);
-
-//		if (InterlockedIncrement(&s_nRunningThread) == g_nThread)
-//			    EASSERT(g_nThread);
-		InterlockedIncrement(&s_nRunningThread);
-		pObject->OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
-		InterlockedDecrement(&s_nRunningThread);
-	}
-//	return 0;
-}
-
-void XIOSocket::DumpStack()
-{
-	XIOException::DumpStack(g_nThread, g_hThread, g_nThreadId);
-	XIOException::SendMail();
 }
 
 
@@ -200,6 +158,16 @@ void XIOBuffer::FreeAll()
 	}
 }
 
+void XIOSocket::Start()
+{
+}
+
+void XIOSocket::Stop()
+{
+	XIOSocket::FreeIOThread();
+	XIOBuffer::FreeAll();	// #pragma init_seg(lib) required
+}
+
 XIOSocket::XIOSocket(SOCKET s)
 {
 	m_hSocket = s;
@@ -212,15 +180,93 @@ XIOSocket::XIOSocket(SOCKET s)
 	m_pFirstBuf = NULL;
 }
 
+XIOSocket::~XIOSocket()
+{
+	m_pReadBuf->Release();
+	if (!EASSERT(!m_pFirstBuf))
+		FreeBuffer();
+}
+
+void XIOSocket::Initialize()
+{
+	if (CreateIoCompletionPort((HANDLE)m_hSocket, s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
+	{
+		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hSocket, s_hCompletionPort);
+		Close();
+		return;
+	}
+	//int zero = 0;
+	//setsockopt(m_hSocket, SOL_SOCKET, SO_RCVBUF, (char *)&zero, sizeof(zero));
+	//zero = 0;
+	//setsockopt(m_hSocket, SOL_SOCKET, SO_SNDBUF, (char *)&zero, sizeof(zero));
+
+	OnCreate();
+}
+void XIOSocket::Write(void* buffer, DWORD size)
+{
+	char* buf = (char*)buffer;
+	while (size)
+	{
+		XIOBuffer* pBuffer = XIOBuffer::Alloc();
+		DWORD n = min(BUFFER_SIZE, size);
+		memcpy(pBuffer->m_buffer, buf, n);
+		pBuffer->m_dwSize = n;
+		Write(pBuffer);
+		buf += n;
+		size -= n;
+	}
+}
+
+void XIOSocket::OnCreate()
+{
+	Read(0); // Read must be called last because that can cause OnRead()
+}
+
+void XIOSocket::ReadCallback(DWORD dwTransferred)
+{
+	if (dwTransferred == 0)
+	{
+		Close();
+		return;
+	}
+	m_pReadBuf->m_dwSize += dwTransferred;
+	OnRead();
+}
+
+unsigned __stdcall XIOSocket::IOThread(void* arglist)
+{
+	SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS);
+	for (; ; )
+	{
+		DWORD dwTransferred;
+		XIOObject* pObject;
+		LPOVERLAPPED lpOverlapped;
+
+		BOOL bSuccess = GetQueuedCompletionStatus(s_hCompletionPort, &dwTransferred, (PULONG_PTR)&pObject, &lpOverlapped, INFINITE);
+
+		//		if (InterlockedIncrement(&s_nRunningThread) == g_nThread)
+		//			    EASSERT(g_nThread);
+		InterlockedIncrement(&s_nRunningThread);
+		pObject->OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
+		InterlockedDecrement(&s_nRunningThread);
+	}
+	//	return 0;
+}
+
+void XIOSocket::DumpStack()
+{
+	XIOException::DumpStack(g_nThread, g_hThread, g_nThreadId);
+	XIOException::SendMail();
+}
+
+
+static XIOSocket::XIOTimerInstance g_instance;
 
 void XIOSocket::XIOTimerInstance::OnTimerCallback(int nId)
 {
 	g_timerQueue.push(XIOSocket::XIOTimer(this, GetTickCount() + 24 * 3600 * 1000, nId));
 	g_dwTopTime = g_timerQueue.top().m_dwTime;
 }
-
-static XIOSocket::XIOTimerInstance g_instance;
-
 
 void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
@@ -338,77 +384,6 @@ void XIOObject::Release(LONG volatile *pRef)
 
 #endif	// XIOOBJECT_DEBUG
 
-BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
-{
-	m_hSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_hSocket == INVALID_SOCKET)
-	{
-		LOG_ERR(_T("socket error %d"), WSAGetLastError());
-		return FALSE;
-	}
-	struct sockaddr_in sin;
-	sin.sin_family = AF_INET;
-	if (lpszSocketAddr == NULL)
-		sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	else
-	{
-		ADDRINFOT *res;
-		if (GetAddrInfo(lpszSocketAddr, 0, 0, &res) != 0 && res->ai_family != AF_INET) {
-			LOG_ERR(_T("IP Address error: %d\n"), GetLastError());
-			goto fail;
-		}
-		sin.sin_addr = ((sockaddr_in *)res->ai_addr)->sin_addr;
-	}
-
-	//sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	sin.sin_port = htons( nPort);
-
-	if (bind(m_hSocket, (struct sockaddr *)&sin, sizeof(sin)))
-	{
-		LOG_ERR(_T("bind error %d"), WSAGetLastError());
-		goto fail;
-	}
-	if (listen(m_hSocket, 5))
-	{
-		LOG_ERR(_T("listen error %d"), WSAGetLastError());
-		goto fail;
-	}
-
-#if ACCEPT_SIZE
-	if (CreateIoCompletionPort((HANDLE)m_hSocket, XIOSocket::s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
-	{
-		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hSocket, XIOSocket::s_hCompletionPort);
-		goto fail;
-	}
-	for (int i = 0; i < ACCEPT_SIZE; i++) {
-		m_hAcceptSocket[i] = socket(AF_INET, SOCK_STREAM, 0);
-		if (m_hAcceptSocket[i] == INVALID_SOCKET)
-		{
-			LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
-			goto fail;
-		}
-		DWORD dwRecv;
-		if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16,
-			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
-		{
-			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
-			goto fail;
-		}
-	}
-#else
-	m_hAcceptEvent = WSACreateEvent();
-	WSAEventSelect(m_hSocket, m_hAcceptEvent, FD_ACCEPT);
-	if (!RegisterWait(m_hAcceptEvent))
-	{
-		LOG_ERR(_T("RegisterWait error on port %d"), nPort);
-		goto fail;
-	}
-#endif
-	return TRUE;
-fail:
-	Close();
-	return FALSE;
-}
 void XIOSocket::WriteCallback(DWORD dwTransferred)
 {
 	m_lock.Lock();
@@ -500,18 +475,6 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 }
 
 
-
-
-
-
-
-XIOSocket::~XIOSocket()
-{
-	m_pReadBuf->Release();
-	if (!EASSERT(!m_pFirstBuf))
-		FreeBuffer();
-}
-
 void XIOSocket::FreeBuffer()
 {
 	m_lock.Lock();
@@ -527,6 +490,155 @@ void XIOSocket::FreeBuffer()
 
 void XIOSocket::OnClose()
 {
+}
+
+void XIOSocket::Disconnect()
+{
+	m_lock.Lock();
+	SOCKET hSocket = m_hSocket;
+	if (hSocket != INVALID_SOCKET) {
+		m_hSocket = 0;
+	}
+	m_lock.Unlock();
+
+	//	LINGER linger;
+	//	linger.l_onoff = 1;
+	//	linger.l_linger = 0;
+	//	setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
+	closesocket(hSocket);
+}
+
+void XIOSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
+{
+	if (!bSuccess)
+	{
+		if (lpOverlapped == &m_overlappedRead) // closed only at read
+			Close();
+		else if (lpOverlapped == &m_overlappedWrite)
+			FreeBuffer();
+		ReleaseIO();
+	}
+	else if (lpOverlapped == &m_overlappedWrite)
+	{
+		WriteCallback(dwTransferred);
+		ReleaseIO();
+	}
+	else if (lpOverlapped == &m_overlappedRead)
+	{
+		ReadCallback(dwTransferred);
+		ReleaseIO();
+	}
+	else
+	{
+		_ASSERT(lpOverlapped == NULL);
+		OnTimer(dwTransferred);
+		ReleaseTimer();
+	}
+}
+
+
+
+BOOL XIOSocket::CreateIOThread(int nThread)
+{
+	SetProcessPriorityBoost(GetCurrentProcess(), TRUE);
+	g_nTerminating = 0;
+	g_hTimer = CreateEvent(NULL, FALSE, FALSE, NULL);
+	s_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+
+	g_instance.OnTimerCallback();
+	g_instance.AddRefTimer();
+
+	if (!g_instance.RegisterWait(g_hTimer))
+	{
+		LOG_ERR(_T("RegisterWait error for timer"));
+		return FALSE;
+	}
+
+	g_hThread = (HANDLE*)malloc(sizeof(HANDLE) * nThread);
+	g_nThreadId = (unsigned*)malloc(sizeof(unsigned) * nThread);
+	g_nThread = nThread;
+	for (int i = 0; i < nThread; i++)
+	{
+		g_hThread[i] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void*)(INT_PTR)i, 0, &g_nThreadId[i]);
+	}
+
+#if 0
+	UINT threadId;
+	HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, WaitThread, NULL, 0, &threadId);
+	CloseHandle(hThread);
+#endif
+	return TRUE;
+}
+
+unsigned XIOSocket::AddIOThread()
+{
+	if (!s_hCompletionPort)
+		return 0;
+
+	g_hThread = (HANDLE*)realloc(g_hThread, sizeof(HANDLE) * (g_nThread + 1));
+	g_nThreadId = (unsigned*)realloc(g_nThreadId, sizeof(unsigned) * (g_nThread + 1));
+	unsigned nThreadID;
+	g_hThread[g_nThread] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void*)(INT_PTR)g_nThread, 0, &nThreadID);
+	g_nThreadId[g_nThread] = nThreadID;
+	g_nThread++;
+	return nThreadID;
+}
+
+BOOL XIOSocket::CloseIOThread()
+{
+	if (InterlockedExchange(&g_nTerminating, 1))
+		return FALSE;
+	SetEvent(g_hTimer);
+	return TRUE;
+}
+
+void XIOSocket::FreeIOThread()
+{
+	//  CloseHandle(g_hTerminate);
+	//  CloseHandle(g_hCompletionPort);
+	free(g_hThread);
+	free(g_nThreadId);
+	g_hThread = 0;
+	g_nThreadId = 0;
+}
+
+
+void XIOSocket::Read(DWORD dwLeft)
+{
+	_ASSERT(m_pReadBuf->m_dwSize >= dwLeft);
+	m_pReadBuf->m_dwSize -= dwLeft;
+	if (m_pReadBuf->m_nRef != 1)
+	{
+		XIOBuffer* pNextBuf = XIOBuffer::Alloc();
+		memcpy(pNextBuf->m_buffer, m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize, dwLeft);
+		m_pReadBuf->Release();
+		m_pReadBuf = pNextBuf;
+	}
+	else
+	{
+		memmove(m_pReadBuf->m_buffer, m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize, dwLeft);
+	}
+	m_pReadBuf->m_dwSize = dwLeft;
+
+	AddRefIO();
+	WSABUF wsabuf;
+	wsabuf.len = BUFFER_SIZE - m_pReadBuf->m_dwSize;
+	wsabuf.buf = m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize;
+	DWORD dwRecv;
+	DWORD dwFlag = 0;
+	m_lock.Lock();
+	if (WSARecv(m_hSocket, &wsabuf, 1, &dwRecv, &dwFlag, &m_overlappedRead, NULL)
+		&& GetLastError() != ERROR_IO_PENDING)
+	{
+		int nErr = GetLastError();
+		m_lock.Unlock();
+		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
+			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD*)this, nErr);
+		Close();
+		ReleaseIO();
+	}
+	else
+		m_lock.Unlock();
 }
 
 void XIOSocket::Close()
@@ -547,8 +659,110 @@ void XIOSocket::Close()
 	}
 }
 
+void XIOSocket::GracefulClose()
+{
+	m_lock.Lock();
+	SOCKET hSocket = m_hSocket;
+	m_hSocket = INVALID_SOCKET;
+	m_lock.Unlock();
+	if (hSocket != INVALID_SOCKET)
+	{
+		OnClose();
+		closesocket(hSocket);
+		ReleaseSelf();
+	}
+}
 
 
+XIOServer::XIOServer()
+{
+	m_hSocket = INVALID_SOCKET;
+#if ACCEPT_SIZE
+	for (int i = 0; i < ACCEPT_SIZE; ++i) {
+		m_hAcceptSocket[i] = INVALID_SOCKET;
+	}
+	memset(&m_overlappedAccept, 0, sizeof(m_overlappedAccept));
+#else
+	m_hAcceptEvent = WSA_INVALID_EVENT;
+#endif
+}
+
+XIOServer::~XIOServer()
+{
+	Close();
+}
+
+BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
+{
+	m_hSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_hSocket == INVALID_SOCKET)
+	{
+		LOG_ERR(_T("socket error %d"), WSAGetLastError());
+		return FALSE;
+}
+	struct sockaddr_in sin;
+	sin.sin_family = AF_INET;
+	if (lpszSocketAddr == NULL)
+		sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	else
+	{
+		ADDRINFOT* res;
+		if (GetAddrInfo(lpszSocketAddr, 0, 0, &res) != 0 && res->ai_family != AF_INET) {
+			LOG_ERR(_T("IP Address error: %d\n"), GetLastError());
+			goto fail;
+		}
+		sin.sin_addr = ((sockaddr_in*)res->ai_addr)->sin_addr;
+	}
+
+	//sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = htons(nPort);
+
+	if (bind(m_hSocket, (struct sockaddr*)&sin, sizeof(sin)))
+	{
+		LOG_ERR(_T("bind error %d"), WSAGetLastError());
+		goto fail;
+	}
+	if (listen(m_hSocket, 5))
+	{
+		LOG_ERR(_T("listen error %d"), WSAGetLastError());
+		goto fail;
+	}
+
+#if ACCEPT_SIZE
+	if (CreateIoCompletionPort((HANDLE)m_hSocket, XIOSocket::s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
+	{
+		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hSocket, XIOSocket::s_hCompletionPort);
+		goto fail;
+	}
+	for (int i = 0; i < ACCEPT_SIZE; i++) {
+		m_hAcceptSocket[i] = socket(AF_INET, SOCK_STREAM, 0);
+		if (m_hAcceptSocket[i] == INVALID_SOCKET)
+		{
+			LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+			goto fail;
+		}
+		DWORD dwRecv;
+		if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16,
+			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
+		{
+			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
+			goto fail;
+		}
+	}
+#else
+	m_hAcceptEvent = WSACreateEvent();
+	WSAEventSelect(m_hSocket, m_hAcceptEvent, FD_ACCEPT);
+	if (!RegisterWait(m_hAcceptEvent))
+	{
+		LOG_ERR(_T("RegisterWait error on port %d"), nPort);
+		goto fail;
+	}
+#endif
+	return TRUE;
+fail:
+	Close();
+	return FALSE;
+}
 
 void XIOServer::OnWaitCallback()
 {
@@ -644,54 +858,6 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 	}
 }
 
-void XIOSocket::Initialize()
-{
-	if (CreateIoCompletionPort((HANDLE)m_hSocket, s_hCompletionPort, (ULONG_PTR)this, 0) == NULL)
-	{
-		ELOG(_T("CreateIoCompletionPort: %d %x %x"), GetLastError(), m_hSocket, s_hCompletionPort);
-		Close();
-		return;
-	}
-	//int zero = 0;
-	//setsockopt(m_hSocket, SOL_SOCKET, SO_RCVBUF, (char *)&zero, sizeof(zero));
-	//zero = 0;
-	//setsockopt(m_hSocket, SOL_SOCKET, SO_SNDBUF, (char *)&zero, sizeof(zero));
-
-	OnCreate();
-}
-void XIOSocket::Write(void *buffer, DWORD size)
-{
-	char* buf = (char*) buffer;
-	while (size)
-	{
-		XIOBuffer *pBuffer = XIOBuffer::Alloc();
-		DWORD n = min(BUFFER_SIZE, size);
-		memcpy(pBuffer->m_buffer, buf, n);
-		pBuffer->m_dwSize = n;
-		Write(pBuffer);
-		buf += n;
-		size -= n;
-	}
-}
-
-XIOServer::XIOServer()
-{
-	m_hSocket = INVALID_SOCKET;
-#if ACCEPT_SIZE
-	for (int i = 0; i < ACCEPT_SIZE; ++i) {
-		m_hAcceptSocket[i] = INVALID_SOCKET;
-	}
-	memset(&m_overlappedAccept, 0, sizeof(m_overlappedAccept));
-#else
-	m_hAcceptEvent = WSA_INVALID_EVENT;
-#endif
-}
-
-XIOServer::~XIOServer()
-{
-	Close();
-}
-
 void XIOServer::Close()
 {
 	if (m_hSocket != INVALID_SOCKET)
@@ -717,177 +883,7 @@ void XIOServer::Close()
 }
 
 
-void XIOSocket::GracefulClose()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket;
-	m_hSocket = INVALID_SOCKET;
-	m_lock.Unlock();
-	if (hSocket != INVALID_SOCKET)
-	{
-		OnClose();
-		closesocket(hSocket);
-		ReleaseSelf();
-	}
-}
-
-void XIOSocket::Disconnect()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket; 
-	if (hSocket != INVALID_SOCKET) {
-		m_hSocket = 0;
-	}
-	m_lock.Unlock();
-
-//	LINGER linger;
-//	linger.l_onoff = 1;
-//	linger.l_linger = 0;
-//	setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
-	closesocket(hSocket);
-}
-
-void XIOSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
-{
-	if (!bSuccess)
-	{ 
-		if (lpOverlapped == &m_overlappedRead) // closed only at read
-			Close();
-		else if (lpOverlapped == &m_overlappedWrite)
-			FreeBuffer();
-		ReleaseIO();
-	}
-	else if(lpOverlapped == &m_overlappedWrite)
-	{
-		WriteCallback(dwTransferred);
-		ReleaseIO();
-	}
-	else if (lpOverlapped == &m_overlappedRead)
-	{
-		ReadCallback(dwTransferred);
-		ReleaseIO();
-	}
-	else
-	{
-		_ASSERT(lpOverlapped == NULL);
-		OnTimer(dwTransferred);
-		ReleaseTimer();	
-	}
-}
 
 
-
-BOOL XIOSocket::CreateIOThread(int nThread)
-{
-	SetProcessPriorityBoost(GetCurrentProcess(), TRUE);
-	g_nTerminating = 0;
-	g_hTimer = CreateEvent(NULL, FALSE, FALSE, NULL);
-	s_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-
-	g_instance.OnTimerCallback();
-	g_instance.AddRefTimer();
-
-	if (!g_instance.RegisterWait(g_hTimer))
-	{
-		LOG_ERR(_T("RegisterWait error for timer"));
-		return FALSE;
-	}
-
-	g_hThread = (HANDLE *)malloc( sizeof(HANDLE) * nThread);
-	g_nThreadId = (unsigned *)malloc(sizeof(unsigned) * nThread);
-	g_nThread = nThread;
-	for (int i = 0; i < nThread; i++)
-	{
-		g_hThread[i] = (HANDLE)_beginthreadex( NULL, 0, IOThread, (void *)(INT_PTR)i, 0, &g_nThreadId[i]);
-	}
-
-#if 0
-	UINT threadId;
-    HANDLE hThread = (HANDLE)_beginthreadex( NULL, 0, WaitThread, NULL, 0, &threadId);
-    CloseHandle( hThread);
-#endif
-	return TRUE;
-}
-
-unsigned XIOSocket::AddIOThread()
-{
-	if (!s_hCompletionPort) 
-		return 0;
-
-	g_hThread = (HANDLE *)realloc(g_hThread, sizeof(HANDLE) * (g_nThread + 1));
-	g_nThreadId = (unsigned *)realloc(g_nThreadId, sizeof(unsigned) * (g_nThread + 1));
-	unsigned nThreadID;
-	g_hThread[g_nThread] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void *)(INT_PTR)g_nThread, 0, &nThreadID);
-	g_nThreadId[g_nThread] = nThreadID;
-	g_nThread++;
-	return nThreadID;
-}
-
-BOOL XIOSocket::CloseIOThread()
-{
-	if (InterlockedExchange(&g_nTerminating, 1)) 
-		return FALSE;
-	SetEvent(g_hTimer);
-	return TRUE;
-}
-
-void XIOSocket::FreeIOThread()
-{
-//  CloseHandle(g_hTerminate);
-//  CloseHandle(g_hCompletionPort);
-	free(g_hThread);
-	free(g_nThreadId);
-	g_hThread = 0;
-	g_nThreadId = 0;
-}
-
-
-void XIOSocket::Read(DWORD dwLeft)
-{
-	_ASSERT(m_pReadBuf->m_dwSize >= dwLeft);
-	m_pReadBuf->m_dwSize -= dwLeft;
-	if (m_pReadBuf->m_nRef != 1)
-	{
-		XIOBuffer *pNextBuf = XIOBuffer::Alloc();
-		memcpy(pNextBuf->m_buffer, m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize, dwLeft);
-		m_pReadBuf->Release();
-		m_pReadBuf = pNextBuf;
-	}
-	else
-	{
-		memmove(m_pReadBuf->m_buffer, m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize, dwLeft);
-	}
-	m_pReadBuf->m_dwSize = dwLeft;
-
-	AddRefIO();
-	WSABUF wsabuf;
-	wsabuf.len = BUFFER_SIZE - m_pReadBuf->m_dwSize;
-	wsabuf.buf = m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize;
-	DWORD dwRecv;
-	DWORD dwFlag = 0;
-	m_lock.Lock();
-	if (WSARecv(m_hSocket, &wsabuf, 1, &dwRecv, &dwFlag, &m_overlappedRead, NULL)
-		&& GetLastError() != ERROR_IO_PENDING)
-	{
-		int nErr = GetLastError();
-		m_lock.Unlock();
-		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
-			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD *)this, nErr);
-		Close();
-		ReleaseIO();
-	}
-	else
-		m_lock.Unlock();
-}
-
-void XIOSocket::Start()
-{
-}
-
-void XIOSocket::Stop()
-{
-	XIOSocket::FreeIOThread();
-	XIOBuffer::FreeAll();	// #pragma init_seg(lib) required
-}
 
 
