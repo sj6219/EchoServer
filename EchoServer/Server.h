@@ -12,8 +12,9 @@ public:
 	static void Stop();
 	static void Shutdown();
 	static void Start();
-	virtual XIOSocket* CreateSocket( SOCKET newSocket, sockaddr_in* addr);
 	static void Add( CSocket *pSocket);
 	static void Remove( CSocket *pSocket);
+	virtual XIOSocket* CreateSocket(SOCKET newSocket, sockaddr_in* addr);
+	virtual void OnTimer(int nId);
 };
 

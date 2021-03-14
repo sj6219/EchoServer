@@ -10,6 +10,9 @@ class CSocket : public XIOSocket
 {
 public:
 	XLink	m_link;
+	in_addr m_addr;
+	DWORD m_dwTimeout;
+
 	CSocket(SOCKET socket, in_addr addr);
 	virtual ~CSocket();
 
@@ -24,9 +27,7 @@ public:
 
 	in_addr GetAddr() { return m_addr; }
 	void	Read(DWORD dwLeft);
-	virtual void OnTimer(int nId);
+	void Shutdown();
 	
-	in_addr m_addr;
-	DWORD m_dwTimeout;
 };
 

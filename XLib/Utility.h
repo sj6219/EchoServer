@@ -60,12 +60,12 @@ protected:
 	void wait();
 public:
 	XSpinLock() { m_lock = 0; }
-	void lock()
+	void Lock()
 	{
 		if (InterlockedCompareExchange(&m_lock, 1, 0))
 			wait();
 	}
-	void unlock()
+	void Unlock()
 	{
 		InterlockedExchange(&m_lock, 0);
 	}
@@ -82,27 +82,27 @@ class XRWLock
 	SRWLOCK m_lock;
 public:
 	XRWLock() { InitializeSRWLock(&m_lock); }
-	void lock() { AcquireSRWLockExclusive(&m_lock); }
-	void unlock() { ReleaseSRWLockExclusive(&m_lock); }
+	void Lock() { AcquireSRWLockExclusive(&m_lock); }
+	void Unlock() { ReleaseSRWLockExclusive(&m_lock); }
 	BOOL try_lock() { return TryAcquireSRWLockExclusive(&m_lock); }
-	void lock_shared() { AcquireSRWLockShared(&m_lock); }
-	void unlock_shared() { ReleaseSRWLockShared(&m_lock);  }
+	void LockShared() { AcquireSRWLockShared(&m_lock); }
+	void UnlockShared() { ReleaseSRWLockShared(&m_lock);  }
 #else
 public:
 	XRWLock();
 	~XRWLock();
-	void lock();
-	void unlock();
+	void Lock();
+	void Unlock();
 	BOOL try_lock();
-	void lock_shared();
-	void unlock_shared();
+	void LockShared();
+	void UnlockShared();
 
-	void Lock()
+	void _Lock()
 	{
 		if (InterlockedCompareExchange(&m_nLock, 1, 0))
 			Wait();
 	}
-	void Unlock()
+	void _Unlock()
 	{
 		InterlockedExchange(&m_nLock, 0);
 	}
@@ -122,11 +122,11 @@ private:
 public:
 	XSharedLock(typename T& rT) : m_pT(&rT)
 	{
-		m_pT->lock_shared();
+		m_pT->LockShared();
 	}
 	~XSharedLock()
 	{
-		m_pT->unlock_shared();
+		m_pT->UnlockShared();
 	}
 };
 
@@ -170,8 +170,8 @@ public:
 	PAGELIST	m_listPage;
 #ifdef	_MT
 	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.lock();}
-	static void Unlock()	{ s_self.m_lock.unlock();}
+	static void Lock()		{ s_self.m_lock.Lock();}
+	static void Unlock()	{ s_self.m_lock.Unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -263,8 +263,8 @@ public:
 	U* m_pU;
 #ifdef	_MT
 	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.lock();}
-	static void Unlock()	{ s_self.m_lock.unlock();}
+	static void Lock()		{ s_self.m_lock.Lock();}
+	static void Unlock()	{ s_self.m_lock.Unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -337,8 +337,8 @@ public:
 	T *	m_pT;
 #ifdef	_MT
 	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.lock();}
-	static void Unlock()	{ s_self.m_lock.unlock();}
+	static void Lock()		{ s_self.m_lock.Lock();}
+	static void Unlock()	{ s_self.m_lock.Unlock();}
 #else
 	static void Lock()		{}
 	static void Unlock()	{}
@@ -462,20 +462,7 @@ BOOL CreatePath( LPCTSTR szPath);
 BOOL MovePath( LPCTSTR szOldFile, LPCTSTR szNewFile);
 BOOL DeletePath( LPCTSTR ofname);
 
-
-inline BOOL IsValidObject(void *p)
-{
-	DWORD_PTR vptr = *(DWORD_PTR *)p;
-#ifdef _WIN64
-	return (vptr >= 0x400000 && vptr < 0x7ff0000000000000 && (vptr & 3) == 0);
-#else
-	return (vptr >= 0x400000 && vptr < 0x7ffe0000 && (vptr & 3) == 0);
-#endif
-}
-
-
 void LogPacket( int nType, int nSize, char* buffer);
-
 
 #ifdef	UNICODE
 std::wstring ToWString(LPCSTR lpa);

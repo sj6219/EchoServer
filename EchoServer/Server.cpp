@@ -14,14 +14,14 @@ void CServer::Shutdown()
 {
 	for( ; ; )
 	{
-		g_lock.lock_shared();
+		g_lock.LockShared();
 		if (g_link.empty()) {
-			g_lock.unlock_shared();
+			g_lock.UnlockShared();
 			return;
 		}
 		CSocket* pSocket = g_link.front();
 		pSocket->AddRef();
-		g_lock.unlock_shared();
+		g_lock.UnlockShared();
 		pSocket->Close();
 		pSocket->Release();
 	}
@@ -31,6 +31,7 @@ void CServer::Shutdown()
 void CServer::Start()
 {
 	g_server.XIOServer::Start( CEchoConfig::s_nPort);
+	g_server.AddTimer(1000);
 }
 
 void CServer::Remove( CSocket *pSocket)
@@ -60,5 +61,21 @@ void CServer::Add( CSocket *pSocket)
 {
 	XUniqueLock<XRWLock> lock(g_lock);
 	g_link.push_back(pSocket);
+}
+
+void	CServer::OnTimer(int nId)
+{
+	{
+		XSharedLock<XRWLock> lock(g_lock);
+
+		DWORD dwTick = GetTickCount();
+		for (CSocket* pSocket : g_link) {
+			int dwTimeout = dwTick - pSocket->m_dwTimeout;
+			if (dwTimeout > 0) {
+				pSocket->Shutdown();
+			}
+		}
+	}
+	AddTimer(1000);
 }
 

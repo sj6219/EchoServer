@@ -15,17 +15,6 @@ CSocket::~CSocket()
 {
 }
 
-void	CSocket::OnTimer(int nId)
-{
-	int dwTimeout = GetTickCount() - m_dwTimeout;
-	if (dwTimeout > 0) {
-		Close(); 
-		return;
-	}
-	if (m_hSocket != INVALID_SOCKET)
-		AddTimer(1000);
-}
-
 void	CSocket::Read(DWORD dwLeft)
 {
 	m_dwTimeout = GetTickCount() + 60000;
@@ -36,9 +25,9 @@ void	CSocket::Read(DWORD dwLeft)
 void CSocket::OnCreate()
 {
 	LOG_INFO(_T("new connection %s"), AtoT(inet_ntoa(m_addr)));
+	m_dwTimeout = GetTickCount() + 0x7fffffff;
 	CServer::Add(this);
 
-	AddTimer(1000);
 	Read(0);
 }
 
@@ -67,6 +56,11 @@ void CSocket::OnClose()
 	CServer::Remove( this);
 }
 
+void CSocket::Shutdown()
+{
+	XUniqueLock<XLock> lock(m_lock);
+	shutdown(m_hSocket, SD_BOTH);
+}
 
 #ifndef USE_IOBUFFER
 void CSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
@@ -105,11 +99,11 @@ void CSocket::Write(void* buf, int len)
 	wsabuf.len = len;
 	DWORD dwSent;
 	m_dwTimeout = GetTickCount() + 0x7fffffff;
-	m_lock.lock();
+	m_lock.Lock();
 	if (WSASend(m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
 		&& GetLastError() != ERROR_IO_PENDING)
 	{
-		m_lock.unlock();
+		m_lock.Unlock();
 		int nErr = GetLastError();
 		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
 			LOG_ERR(_T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
@@ -117,7 +111,7 @@ void CSocket::Write(void* buf, int len)
 		ReleaseIO();
 	}
 	else
-		m_lock.unlock();
+		m_lock.Unlock();
 }
 
 void CSocket::OnWrite()

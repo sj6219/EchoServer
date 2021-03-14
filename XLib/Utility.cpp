@@ -88,7 +88,7 @@ void XRWLock::Wait(/*int mode*/)
 	}
 }
 
-void XRWLock::lock_shared()
+void XRWLock::LockShared()
 {
 	//	InterlockedExchangeAdd(&m_nRWCount, 0x10000);
 	int nCount;
@@ -96,7 +96,7 @@ void XRWLock::lock_shared()
 	nCount = InterlockedIncrement(&m_nCount);
 	if (nCount & 0xff00)
 	{
-		Lock();
+		_Lock();
 		nCount = m_nCount;
 		do
 		{
@@ -105,13 +105,13 @@ void XRWLock::lock_shared()
 				nCount = InterlockedExchangeAdd(&m_nCount, 0x80000000 - 1) + 0x80000000 - 1;
 				if ((short)nCount == 0)
 				{
-					Unlock();
+					_Unlock();
 					SetEvent(m_hWEvent);
 				}
 				else
-					Unlock();
+					_Unlock();
 				WaitForSingleObject(m_hWEvent, INFINITE);
-				Lock();
+				_Lock();
 				nCount = InterlockedExchangeAdd(&m_nCount, -0x80000000 + 1) - 0x80000000 + 1;
 			}
 			else
@@ -119,29 +119,29 @@ void XRWLock::lock_shared()
 				nCount = InterlockedExchangeAdd(&m_nCount, 0x10000 - 1) + 0x10000 - 1;
 				if ((short)nCount == 0)
 				{
-					Unlock();
+					_Unlock();
 					SetEvent(m_hWEvent);
 				}
 				else
-					Unlock();
+					_Unlock();
 				WaitForSingleObject(m_hREvent, INFINITE);
-				Lock();
+				_Lock();
 				nCount = InterlockedExchangeAdd(&m_nCount, -0x10000 + 1) - 0x10000 + 1;
 			}
 		} 		while ((nCount & 0xff00) != 0);
 
 		if (nCount & 0xff0000)
 		{
-			Unlock();
+			_Unlock();
 			SetEvent(m_hREvent);
 		}
 		else
-			Unlock();
+			_Unlock();
 	}
 	//	InterlockedExchangeAdd(&m_nRWCount, -0x10000 + 1);
 }
 
-void XRWLock::unlock_shared()
+void XRWLock::UnlockShared()
 {
 	//	InterlockedExchangeAdd(&m_nRWCount, 0x100000 - 1);
 
@@ -154,7 +154,7 @@ void XRWLock::unlock_shared()
 	//	InterlockedExchangeAdd(&m_nRWCount, -0x100000);
 }
 
-void XRWLock::lock()
+void XRWLock::Lock()
 {
 	int nCount;
 
@@ -162,28 +162,28 @@ void XRWLock::lock()
 	nCount = InterlockedExchangeAdd(&m_nCount, 0x100);
 	if ((short)nCount)
 	{
-		Lock();
+		_Lock();
 		do
 		{
 			nCount = InterlockedExchangeAdd(&m_nCount, 0x1000000 - 0x100) + 0x1000000 - 0x100;
 			if ((short)nCount == 0)
 			{
-				Unlock();
+				_Unlock();
 				SetEvent(m_hWEvent);
 			}
 			else
-				Unlock();
+				_Unlock();
 			WaitForSingleObject(m_hWEvent, INFINITE);
-			Lock();
+			_Lock();
 			nCount = InterlockedExchangeAdd(&m_nCount, -0x1000000 + 0x100);
 
 		} 		while ((short)nCount);
-		Unlock();
+		_Unlock();
 	}
 	//	InterlockedExchangeAdd(&m_nRWCount, -0x1000000 + 0x10);
 }
 
-void XRWLock::unlock()
+void XRWLock::Unlock()
 {
 	//	InterlockedExchangeAdd(&m_nRWCount, 0x10000000 - 0x10);
 	int	nCount = InterlockedExchangeAdd(&m_nCount, -0x100) - 0x100;
@@ -215,8 +215,8 @@ namespace util
 	int		m_nAllocPage;
 #ifdef	_MT
 	XLock		m_lockMemory;
-	inline void	MemoryLock() { m_lockMemory.lock(); }
-	inline void	MemoryUnlock() { m_lockMemory.unlock(); }
+	inline void	MemoryLock() { m_lockMemory.Lock(); }
+	inline void	MemoryUnlock() { m_lockMemory.Unlock(); }
 #else
 	inline void	MemoryLock() {}
 	inline void	MemoryUnlock() {}

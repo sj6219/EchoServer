@@ -219,7 +219,7 @@ public :
 	void ReleaseIO() { Release(); }
 #endif
 	void WriteWithLock(XIOBuffer *pBuffer);
-	void Write(XIOBuffer *pBuffer) { m_lock.lock(); WriteWithLock(pBuffer); }
+	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
 	void Write(void *buf, DWORD size);
 	void Initialize();
 	long PendingWrite() { return m_nPendingWrite; }

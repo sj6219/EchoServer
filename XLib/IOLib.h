@@ -224,8 +224,8 @@ protected:
 public:
 	XLock() { InitializeCriticalSectionAndSpinCount(&m_lock, 0x00000400); }
 	~XLock() { DeleteCriticalSection(&m_lock); }
-	void lock() { EnterCriticalSection(&m_lock); }
-	void unlock() { LeaveCriticalSection(&m_lock); }
+	void Lock() { EnterCriticalSection(&m_lock); }
+	void Unlock() { LeaveCriticalSection(&m_lock); }
 	bool try_lock() { return TryEnterCriticalSection(&m_lock); }
 };
 
@@ -236,11 +236,11 @@ private:
 public:
 	XUniqueLock(typename T & rT) : m_pT(&rT)
 	{
-		m_pT->lock();
+		m_pT->Lock();
 	}
 	~XUniqueLock()
 	{
-		m_pT->unlock();
+		m_pT->Unlock();
 	}
 };
 

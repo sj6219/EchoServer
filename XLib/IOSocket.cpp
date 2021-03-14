@@ -49,17 +49,17 @@ XIOSocket::CInit::~CInit()
 
 BOOL	XIOObject::RegisterWait(HANDLE handle)
 {
-	g_lockTimer.lock();
+	g_lockTimer.Lock();
 	if (g_nHandle >= MAXIMUM_WAIT_OBJECTS)
 	{
-		g_lockTimer.unlock();
+		g_lockTimer.Unlock();
 		return FALSE;
 	}
 	g_vHandle[g_nHandle] = handle;
 	g_vObject[g_nHandle] = this;
 	g_nHandle++;
 	SetEvent(g_hTimer);
-	g_lockTimer.unlock();
+	g_lockTimer.Unlock();
 	return TRUE;
 }
 
@@ -69,23 +69,17 @@ void XIOObject::AddTimer(DWORD dwTime, int nId)
 	AddRefTimer();	// ¢¾TimerRef
 	dwTime += GetTickCount();
 
-	g_lockTimer.lock();
-	if (!IsValidObject(this))
-	{
-		EBREAK();
-		g_lockTimer.unlock();
-		return;
-	}
+	g_lockTimer.Lock();
 
 	g_timerQueue.push(XIOSocket::XIOTimer(this, dwTime, nId));
 	if ((LONG)+(g_dwTopTime - dwTime) > 0)
 	{
 		g_dwTopTime = dwTime;
-		g_lockTimer.unlock();
+		g_lockTimer.Unlock();
 		SetEvent(g_hTimer);
 	}
 	else
-		g_lockTimer.unlock();
+		g_lockTimer.Unlock();
 }
 
 void XIOObject::OnTimerCallback(int nId)
@@ -162,15 +156,15 @@ XIOBuffer *XIOBuffer::Alloc()
 	CSlot *pSlot = &g_slotBuffer[nBufferIndex & (BUFFER_POOL_SIZE - 1)];
 //	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
 	XIOBuffer *newBuffer;
-	pSlot->m_lock.lock();
+	pSlot->m_lock.Lock();
 	if ((newBuffer = pSlot->m_pBuffer) != NULL)
 	{
 		pSlot->m_pBuffer = newBuffer->m_pNext;
-		pSlot->m_lock.unlock();
+		pSlot->m_lock.Unlock();
 	}
 	else
 	{
-		pSlot->m_lock.unlock();
+		pSlot->m_lock.Unlock();
 		newBuffer = new XIOBuffer;
 	}
 	newBuffer->m_dwSize = 0;
@@ -184,10 +178,10 @@ void XIOBuffer::Free()
 {
 	CSlot *pSlot = &g_slotBuffer[m_nBufferIndex & (BUFFER_POOL_SIZE - 1)];
 //	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
-	pSlot->m_lock.lock();
+	pSlot->m_lock.Lock();
 	m_pNext = pSlot->m_pBuffer;
 	pSlot->m_pBuffer = this;
-	pSlot->m_lock.unlock();
+	pSlot->m_lock.Unlock();
 }
 
 void XIOBuffer::FreeAll()
@@ -195,14 +189,14 @@ void XIOBuffer::FreeAll()
 	for (int i = 0; i < BUFFER_POOL_SIZE; i++)
 	{
 		CSlot *pSlot = &g_slotBuffer[i];
-		pSlot->m_lock.lock();
+		pSlot->m_lock.Lock();
 		XIOBuffer *pBuffer;
 		while ((pBuffer = pSlot->m_pBuffer) != NULL)
 		{
 			pSlot->m_pBuffer = pBuffer->m_pNext;
 			delete pBuffer;
 		}
-		pSlot->m_lock.unlock();
+		pSlot->m_lock.Unlock();
 	}
 }
 
@@ -248,7 +242,7 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 		LONG nWait = (LONG)(g_dwTopTime - dwTick);
 		if (nWait <= 0)
 		{
-			g_lockTimer.lock();
+			g_lockTimer.Lock();
 			const XIOTimer &top = g_timerQueue.top();
 			XIOObject *pObject = top.m_pObject;
 			int id = top.m_nId;
@@ -267,14 +261,14 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				pObject = top.m_pObject;
 				id = top.m_nId;
 			}
-			g_lockTimer.unlock();
+			g_lockTimer.Unlock();
 		}
 
 		DWORD dwWaitResult = WaitForMultipleObjects(g_nHandle, g_vHandle, FALSE, nWait);
 
 		if (g_nTerminating)
 		{
-			g_lockTimer.lock();
+			g_lockTimer.Lock();
 			for ( ; ; )
 			{
 				if (g_timerQueue.empty())
@@ -283,7 +277,7 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				pObject->ReleaseTimer();	
 				g_timerQueue.pop();
 			}
-			g_lockTimer.unlock();
+			g_lockTimer.Unlock();
 			// wait IOThread 
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
@@ -417,11 +411,11 @@ fail:
 }
 void XIOSocket::WriteCallback(DWORD dwTransferred)
 {
-	m_lock.lock();
+	m_lock.Lock();
 	if (dwTransferred != m_pFirstBuf->m_dwSize)
 	{
 		LOG_ERR(_T("different write count %x(%x) %d != %d"), m_hSocket, this, dwTransferred, m_pFirstBuf->m_dwSize);
-		m_lock.unlock();
+		m_lock.Unlock();
 		FreeBuffer();
 		return;	    
 	}
@@ -429,7 +423,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 	XIOBuffer* pFirstBuf = m_pFirstBuf;
 	if ((m_pFirstBuf = m_pFirstBuf->m_pNext) != NULL)
 	{
-		//m_lock.unlock();
+		//m_lock.Unlock();
 		AddRefIO();
 		WSABUF wsabuf;
 		wsabuf.len = m_pFirstBuf->m_dwSize;
@@ -439,7 +433,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 			&& GetLastError() != ERROR_IO_PENDING)
 		{
 			int nErr = GetLastError();
-			m_lock.unlock();
+			m_lock.Unlock();
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::WriteCallback %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
@@ -447,11 +441,11 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 			ReleaseIO();
 		}
 		else
-			m_lock.unlock();
+			m_lock.Unlock();
 	}
 	else
 	{
-		m_lock.unlock();
+		m_lock.Unlock();
 	}
 	pFirstBuf->Free();
 }
@@ -461,7 +455,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 {
 	if (pBuffer->m_dwSize == 0)
 	{
-		m_lock.unlock();
+		m_lock.Unlock();
 		pBuffer->Free();
 		return;
 	}
@@ -470,7 +464,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 	if (m_pFirstBuf == NULL)
 	{
 		m_pFirstBuf = m_pLastBuf = pBuffer;
-//		m_lock.unlock();
+//		m_lock.Unlock();
 		AddRefIO();
 		WSABUF wsabuf;
 		wsabuf.len = pBuffer->m_dwSize;
@@ -480,7 +474,7 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 			&& GetLastError() != ERROR_IO_PENDING)
 		{
 			int nErr = GetLastError();
-			m_lock.unlock();
+			m_lock.Unlock();
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::Write %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
@@ -488,20 +482,20 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 			ReleaseIO(); 
 		}
 		else
-			m_lock.unlock();
+			m_lock.Unlock();
 	}
 	else if (m_pFirstBuf != m_pLastBuf && m_pLastBuf->m_dwSize + pBuffer->m_dwSize <= BUFFER_SIZE)
 	{
 		memcpy(m_pLastBuf->m_buffer + m_pLastBuf->m_dwSize, pBuffer->m_buffer, pBuffer->m_dwSize);
 		m_pLastBuf->m_dwSize += pBuffer->m_dwSize;
-		m_lock.unlock();
+		m_lock.Unlock();
 		pBuffer->Free();
 	}
 	else
 	{
 		m_pLastBuf->m_pNext = pBuffer;
 		m_pLastBuf = pBuffer;
-		m_lock.unlock();
+		m_lock.Unlock();
 	}
 }
 
@@ -520,7 +514,7 @@ XIOSocket::~XIOSocket()
 
 void XIOSocket::FreeBuffer()
 {
-	m_lock.lock();
+	m_lock.Lock();
 	while (m_pFirstBuf)
 	{
 		XIOBuffer *pBuf = m_pFirstBuf;
@@ -528,7 +522,7 @@ void XIOSocket::FreeBuffer()
 		m_nPendingWrite -= pBuf->m_dwSize;
 		pBuf->Free();
 	}
-	m_lock.unlock();
+	m_lock.Unlock();
 }
 
 void XIOSocket::OnClose()
@@ -537,10 +531,10 @@ void XIOSocket::OnClose()
 
 void XIOSocket::Close()
 {
-	m_lock.lock();
+	m_lock.Lock();
 	SOCKET hSocket = m_hSocket;
 	m_hSocket = INVALID_SOCKET;
-	m_lock.unlock();
+	m_lock.Unlock();
 	if (hSocket != INVALID_SOCKET)
 	{
 		OnClose();
@@ -575,71 +569,79 @@ void XIOServer::Stop()
 
 void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
+	_ASSERT(bSuccess);
+	if (lpOverlapped) {
 #if ACCEPT_SIZE
-	XIOSocket *pSocket;
-	int i = lpOverlapped - m_overlappedAccept;
-	EASSERT(i < ACCEPT_SIZE);
-	if (!bSuccess)
-	{
-		if (m_hSocket == INVALID_SOCKET) 
-			return;
-		LOG_ERR(_T("accept callback error %d"), GetLastError());
-		closesocket(m_hAcceptSocket[i]);
-		goto retry;
-	}
-	struct sockaddr_in *paddrLocal, *paddrRemote;
-	int	nLocalLen, nRemoteLen;
-	GetAcceptExSockaddrs(m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
-		(LPSOCKADDR *)&paddrLocal, &nLocalLen, (LPSOCKADDR *)&paddrRemote, &nRemoteLen); 
+		XIOSocket* pSocket;
+		int i = lpOverlapped - m_overlappedAccept;
+		EASSERT(i < ACCEPT_SIZE);
+		if (!bSuccess)
+		{
+			if (m_hSocket == INVALID_SOCKET)
+				return;
+			LOG_ERR(_T("accept callback error %d"), GetLastError());
+			closesocket(m_hAcceptSocket[i]);
+			goto retry;
+		}
+		struct sockaddr_in* paddrLocal, * paddrRemote;
+		int	nLocalLen, nRemoteLen;
+		GetAcceptExSockaddrs(m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+			(LPSOCKADDR*)&paddrLocal, &nLocalLen, (LPSOCKADDR*)&paddrRemote, &nRemoteLen);
 
-	pSocket = CreateSocket(m_hAcceptSocket[i], paddrRemote);
-	if (pSocket == NULL)
-	{
-		closesocket(m_hAcceptSocket[i]);
-		goto retry;
-	}
-	pSocket->Initialize();
-	pSocket->ReleaseSelf();
-retry:
-	m_hAcceptSocket[i] = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_hAcceptSocket[i] == INVALID_SOCKET)
-	{
-		LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
-		return;
-	}
-	DWORD dwRecv;
-	if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16, 
-		sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
-	{
-		LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
-		return;
-	}
+		pSocket = CreateSocket(m_hAcceptSocket[i], paddrRemote);
+		if (pSocket == NULL)
+		{
+			closesocket(m_hAcceptSocket[i]);
+			goto retry;
+		}
+		setsockopt(m_hAcceptSocket[i], SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&m_hSocket, sizeof(m_hSocket));
+		pSocket->Initialize();
+		pSocket->ReleaseSelf();
+	retry:
+		m_hAcceptSocket[i] = socket(AF_INET, SOCK_STREAM, 0);
+		if (m_hAcceptSocket[i] == INVALID_SOCKET)
+		{
+			LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+			return;
+		}
+		DWORD dwRecv;
+		if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16,
+			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
+		{
+			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
+			return;
+		}
 #else	// ACCEPT_SIZE
-	struct sockaddr_in clientAddress;
-	int clientAddressLength = sizeof(clientAddress);
-	SOCKET newSocket = accept(m_hSocket, (struct sockaddr *)&clientAddress, &clientAddressLength);
-	if (newSocket == INVALID_SOCKET)
-	{
-		if (WSAGetLastError() == WSAEWOULDBLOCK)
+		struct sockaddr_in clientAddress;
+		int clientAddressLength = sizeof(clientAddress);
+		SOCKET newSocket = accept(m_hSocket, (struct sockaddr*)&clientAddress, &clientAddressLength);
+		if (newSocket == INVALID_SOCKET)
 		{
+			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			{
+				return;
+			}
+			else
+			{
+				if (m_hSocket != INVALID_SOCKET)
+					LOG_ERR(_T("accept error: %d"), WSAGetLastError());
+				return;
+			}
+		}
+		XIOSocket* pSocket = CreateSocket(newSocket, &clientAddress);
+		if (pSocket == NULL)
+		{
+			closesocket(newSocket);
 			return;
 		}
-		else
-		{
-			if (m_hSocket != INVALID_SOCKET) 
-				LOG_ERR(_T("accept error: %d"), WSAGetLastError());
-			return;
-		}
-	}
-	XIOSocket *pSocket = CreateSocket(newSocket, &clientAddress);
-	if (pSocket == NULL)
-	{
-		closesocket(newSocket);
-		return;
-	}
-	pSocket->Initialize();
-	pSocket->ReleaseSelf();
+		pSocket->Initialize();
+		pSocket->ReleaseSelf();
 #endif // ACCEPT_SIZE
+	}
+	else {
+		OnTimer(dwTransferred);
+		ReleaseTimer();
+	}
 }
 
 void XIOSocket::Initialize()
@@ -650,10 +652,10 @@ void XIOSocket::Initialize()
 		Close();
 		return;
 	}
-	int zero = 0;
-	setsockopt(m_hSocket, SOL_SOCKET, SO_RCVBUF, (char *)&zero, sizeof(zero));
-	zero = 0;
-	setsockopt(m_hSocket, SOL_SOCKET, SO_SNDBUF, (char *)&zero, sizeof(zero));
+	//int zero = 0;
+	//setsockopt(m_hSocket, SOL_SOCKET, SO_RCVBUF, (char *)&zero, sizeof(zero));
+	//zero = 0;
+	//setsockopt(m_hSocket, SOL_SOCKET, SO_SNDBUF, (char *)&zero, sizeof(zero));
 
 	OnCreate();
 }
@@ -717,10 +719,10 @@ void XIOServer::Close()
 
 void XIOSocket::GracefulClose()
 {
-	m_lock.lock();
+	m_lock.Lock();
 	SOCKET hSocket = m_hSocket;
 	m_hSocket = INVALID_SOCKET;
-	m_lock.unlock();
+	m_lock.Unlock();
 	if (hSocket != INVALID_SOCKET)
 	{
 		OnClose();
@@ -731,12 +733,12 @@ void XIOSocket::GracefulClose()
 
 void XIOSocket::Disconnect()
 {
-	m_lock.lock();
+	m_lock.Lock();
 	SOCKET hSocket = m_hSocket; 
 	if (hSocket != INVALID_SOCKET) {
 		m_hSocket = 0;
 	}
-	m_lock.unlock();
+	m_lock.Unlock();
 
 //	LINGER linger;
 //	linger.l_onoff = 1;
@@ -863,19 +865,19 @@ void XIOSocket::Read(DWORD dwLeft)
 	wsabuf.buf = m_pReadBuf->m_buffer + m_pReadBuf->m_dwSize;
 	DWORD dwRecv;
 	DWORD dwFlag = 0;
-	m_lock.lock();
+	m_lock.Lock();
 	if (WSARecv(m_hSocket, &wsabuf, 1, &dwRecv, &dwFlag, &m_overlappedRead, NULL)
 		&& GetLastError() != ERROR_IO_PENDING)
 	{
 		int nErr = GetLastError();
-		m_lock.unlock();
+		m_lock.Unlock();
 		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
 			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD *)this, nErr);
 		Close();
 		ReleaseIO();
 	}
 	else
-		m_lock.unlock();
+		m_lock.Unlock();
 }
 
 void XIOSocket::Start()
