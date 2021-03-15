@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IOLib.h"
-#include "IOSocket.h"
+#include "IOSocketEx.h"
 #include "Link.h"
 
 #define USE_IOBUFFER
@@ -28,19 +28,7 @@ public:
 	
 };
 
-class CConnectSocket : public XIOSocket
-{
-	OVERLAPPED m_overlappedConnect;
-public:
-	CConnectSocket(SOCKET socket);
-	virtual ~CConnectSocket();
-	virtual void OnCreate();
-	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
-	virtual void OnConnect() = 0;
-	bool Connect(LPCTSTR server, int port);
-};
-
-class CForwardSocket : public CConnectSocket
+class CForwardSocket : public XIOSocketEx
 {
 
 public:

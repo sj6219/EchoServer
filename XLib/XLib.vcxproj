@@ -298,6 +298,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="IOSocketEx.h" />
     <ClInclude Include="IOException.h" />
     <ClInclude Include="IOLib.h" />
     <ClInclude Include="IOMemory.h" />
@@ -312,6 +313,7 @@
     <ClInclude Include="XParser.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="IOSocketEx.cpp" />
     <ClCompile Include="IOException.cpp" />
     <ClCompile Include="IOLib.cpp" />
     <ClCompile Include="IOMemory.cpp" />

@@ -3,7 +3,6 @@
 #include "Socket.h"
 #include "Server.h"
 #include "ForwardConfig.h"
-#include <MSWSock.h>
 
 #pragma comment(lib, "Mswsock.lib")
 
@@ -62,7 +61,7 @@ void CSocket::OnClose()
 
 
 CForwardSocket::CForwardSocket(CSocket* pSocket, SOCKET socket)
-	: CConnectSocket(socket),
+	: XIOSocketEx(socket),
 	m_pSocket(pSocket)
 {
 }
@@ -98,88 +97,4 @@ void CForwardSocket::OnRead()
 void CForwardSocket::OnClose()
 {
 	m_pSocket->Shutdown();
-}
-
-
-
-CConnectSocket::CConnectSocket(SOCKET socket)
-	: XIOSocket(socket)
-{
-}
-
-CConnectSocket::~CConnectSocket()
-{
-
-}
-
-void CConnectSocket::OnCreate()
-{
-
-}
-
-bool CConnectSocket::Connect(LPCTSTR server, int port)
-{
-	LPFN_CONNECTEX ConnectEx;
-	GUID guid = WSAID_CONNECTEX;
-	DWORD dwBytes;
-	WSAIoctl(m_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
-		&guid, sizeof(guid),
-		&ConnectEx, sizeof(ConnectEx),
-		&dwBytes, NULL, NULL);
-
-	/* ConnectEx requires the socket to be initially bound. */
-	{
-		struct sockaddr_in addr;
-		ZeroMemory(&addr, sizeof(addr));
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = INADDR_ANY;
-		addr.sin_port = 0;
-		bind(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
-	}
-
-	/* Issue ConnectEx and wait for the operation to complete. */
-	{
-		ZeroMemory(&m_overlappedConnect, sizeof(m_overlappedConnect));
-
-		sockaddr_in addr;
-		ZeroMemory(&addr, sizeof(addr));
-		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = inet_addr(TtoA(server));
-		addr.sin_port = htons(port);
-
-		//connect(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
-		AddRefIO();
-		if (!ConnectEx(m_hSocket, (SOCKADDR*)&addr, sizeof(addr), NULL, 0, NULL, &m_overlappedConnect)
-			&& GetLastError() != ERROR_IO_PENDING)
-		{
-			ReleaseIO();
-			LOG_ERR(_T("ConnectEx error %d"), WSAGetLastError());
-			goto fail;
-		}
-	}
-	return true;
-fail:
-	Close();
-	return false;
-
-}
-
-void CConnectSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
-{
-	if (lpOverlapped == &m_overlappedConnect) {
-		if (!bSuccess)
-		{
-			if (m_hSocket == INVALID_SOCKET)
-				return;
-			LOG_ERR(_T("connect callback error %d"), GetLastError());
-			Close();
-			return;
-		}
-		setsockopt(m_hSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-		OnConnect();
-		ReleaseIO();
-	}
-	else {
-		XIOSocket::OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
-	}
 }
