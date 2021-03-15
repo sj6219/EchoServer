@@ -12,6 +12,7 @@ class CServer : public XIOServer
 	XRWLock m_lock;
 	LINKED_LIST(CSocket, m_link) m_link;
 
+	friend class CSocket;
 	friend class CForwardSocket;
 
 public:

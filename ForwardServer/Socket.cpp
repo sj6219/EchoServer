@@ -29,10 +29,13 @@ void CSocket::OnCreate()
 		LOG_ERR(_T("connect socket error %d"), WSAGetLastError());
 		return;
 	}
+	
+	CServer* pServer = m_pServer;
+
 	m_pForwardSocket = new CForwardSocket(this, hConnectSocket);
 	m_pForwardSocket->Initialize();
-	m_pServer->CServer::Add(this);
-	m_pForwardSocket->Connect();
+	pServer->CServer::Add(this);
+	m_pForwardSocket->Connect(pServer->m_forward_server, pServer->m_forward_port);
 	m_pForwardSocket->ReleaseSelf();
 }
 
@@ -57,8 +60,9 @@ void CSocket::OnClose()
 	m_pForwardSocket = 0;
 }
 
+
 CForwardSocket::CForwardSocket(CSocket* pSocket, SOCKET socket)
-	:	XIOSocket(socket), 
+	: CConnectSocket(socket),
 	m_pSocket(pSocket)
 {
 }
@@ -74,7 +78,46 @@ void CForwardSocket::OnConnect()
 	m_pSocket->Read(0);
 }
 
-bool CForwardSocket::Connect()
+
+
+
+void CForwardSocket::OnRead()
+{
+	char* buffer = m_pReadBuf->m_buffer;
+	int		len = m_pReadBuf->m_dwSize;
+
+	//if( len == 0)
+	//{
+	//	Read(len);
+	//	return;
+	//}
+	m_pSocket->Write(buffer, len);
+	Read(0);
+}
+
+void CForwardSocket::OnClose()
+{
+	m_pSocket->Shutdown();
+}
+
+
+
+CConnectSocket::CConnectSocket(SOCKET socket)
+	: XIOSocket(socket)
+{
+}
+
+CConnectSocket::~CConnectSocket()
+{
+
+}
+
+void CConnectSocket::OnCreate()
+{
+
+}
+
+bool CConnectSocket::Connect(LPCTSTR server, int port)
 {
 	LPFN_CONNECTEX ConnectEx;
 	GUID guid = WSAID_CONNECTEX;
@@ -98,12 +141,11 @@ bool CForwardSocket::Connect()
 	{
 		ZeroMemory(&m_overlappedConnect, sizeof(m_overlappedConnect));
 
-		CServer* pServer = m_pSocket->m_pServer;
 		sockaddr_in addr;
 		ZeroMemory(&addr, sizeof(addr));
 		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = inet_addr(TtoA(pServer->m_forward_server));
-		addr.sin_port = htons(pServer->m_forward_port);
+		addr.sin_addr.s_addr = inet_addr(TtoA(server));
+		addr.sin_port = htons(port);
 
 		//connect(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
 		AddRefIO();
@@ -113,17 +155,16 @@ bool CForwardSocket::Connect()
 			ReleaseIO();
 			LOG_ERR(_T("ConnectEx error %d"), WSAGetLastError());
 			goto fail;
-		}	
+		}
 	}
 	return true;
 fail:
-		Close();
+	Close();
 	return false;
 
 }
 
-
-void CForwardSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
+void CConnectSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
 	if (lpOverlapped == &m_overlappedConnect) {
 		if (!bSuccess)
@@ -141,28 +182,4 @@ void CForwardSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPP
 	else {
 		XIOSocket::OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
 	}
-}
-
-void CForwardSocket::OnCreate()
-{
-
-}
-
-void CForwardSocket::OnRead()
-{
-	char* buffer = m_pReadBuf->m_buffer;
-	int		len = m_pReadBuf->m_dwSize;
-
-	//if( len == 0)
-	//{
-	//	Read(len);
-	//	return;
-	//}
-	m_pSocket->Write(buffer, len);
-	Read(0);
-}
-
-void CForwardSocket::OnClose()
-{
-	m_pSocket->Shutdown();
 }

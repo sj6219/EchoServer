@@ -28,20 +28,29 @@ public:
 	
 };
 
-class CForwardSocket : public XIOSocket
+class CConnectSocket : public XIOSocket
 {
 	OVERLAPPED m_overlappedConnect;
+public:
+	CConnectSocket(SOCKET socket);
+	virtual ~CConnectSocket();
+	virtual void OnCreate();
+	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
+	virtual void OnConnect() = 0;
+	bool Connect(LPCTSTR server, int port);
+};
+
+class CForwardSocket : public CConnectSocket
+{
 
 public:
 	XAutoVar<CSocket> m_pSocket;
+
 	CForwardSocket(CSocket* pSocket, SOCKET socket);
 	virtual ~CForwardSocket();
 
-	virtual void OnCreate();
 	virtual void OnRead();
 	virtual void OnClose();
-	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
 	void	OnConnect();
-	bool Connect();
 
 };
