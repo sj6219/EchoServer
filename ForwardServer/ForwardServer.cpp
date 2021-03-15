@@ -64,7 +64,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	{
 		CStatus::Stop();
 		CServer::Stop();
-		CServer::Shutdown();
 	}
 	XIOSocket::CloseIOThread();
 	WaitForSingleObject( g_hStartThread, INFINITE);

@@ -22,14 +22,14 @@ void	CStatus::Update()
 
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
 		_ASSERT(Status == ERROR_SUCCESS);
-		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
+		//Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
 
 	}
 	if (XIOScreen::s_pScreen == &CStatus::s_screen) {
 		s_screen.Lock();
 		s_screen.Empty();
 		s_screen.Add(RGB(0, 0, 0), _T("Running Thread : %d"), XIOSocket::s_nRunningThread);
-		s_screen.Add(RGB(0, 0, 0), _T("Connection : %d"), CServer::Size());
+		//s_screen.Add(RGB(0, 0, 0), _T("Connection : %d"), CServer::Size());
 		s_screen.Unlock();
 		InvalidateRect(XIOScreen::s_hWnd, NULL, TRUE);
 	}

@@ -6,14 +6,16 @@
 
 #define USE_IOBUFFER
 
+class CServer;
 class CSocket : public XIOSocket
 {
 public:
 	XLink	m_link;
 	in_addr m_addr;
 	DWORD m_dwTimeout;
+	XAutoVar<CServer> m_pServer;
 
-	CSocket(SOCKET socket, in_addr addr);
+	CSocket(CServer *pServer, SOCKET socket, in_addr addr);
 	virtual ~CSocket();
 
 	virtual void OnCreate();

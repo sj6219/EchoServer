@@ -48,6 +48,7 @@ int	CServer::Size()
 void CServer::Stop()
 {
 	g_server.XIOServer::Stop();
+	CServer::Shutdown();
 }
 
 XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)

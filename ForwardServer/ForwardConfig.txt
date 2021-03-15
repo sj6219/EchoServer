@@ -8,3 +8,6 @@
 ;(MailFrom "sjpark@silverpotion.co.kr")
 ;(MailTo "sjpark@silverpotion.co.kr")
 (AutoStart 1)
+(ForwardList
+	(50005 "127.0.0.1" 50004)
+)

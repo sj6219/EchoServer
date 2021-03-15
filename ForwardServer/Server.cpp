@@ -4,78 +4,73 @@
 #include "Socket.h"
 #include "ForwardConfig.h"
 
-static XRWLock g_lock;
-static LINKED_LIST(CSocket, m_link) g_link;
 
-static CServer g_server;
+static std::vector<CServer*> g_server_list;
 
+
+CServer::CServer(LPCTSTR server, int port)
+	: m_server(server),
+	m_port(port)
+{
+
+}
+
+void CServer::Start()
+{
+	for (auto forward : CForwardConfig::s_vForwardList) {
+		CServer* pServer = new CServer(forward.m_forward_server.c_str(), forward.m_forward_port);
+		pServer->XIOServer::Start(forward.m_port);
+		g_server_list.push_back(pServer);
+	}
+}
+
+void CServer::Stop()
+{
+	for (CServer* pServer : g_server_list) {
+		pServer->XIOServer::Stop();
+		pServer->Shutdown();
+	}
+}
 
 void CServer::Shutdown()
 {
-	for( ; ; )
+	for (; ; )
 	{
-		g_lock.LockShared();
-		if (g_link.empty()) {
-			g_lock.UnlockShared();
+		m_lock.LockShared();
+		if (m_link.empty()) {
+			m_lock.UnlockShared();
 			return;
 		}
-		CSocket* pSocket = g_link.front();
+		CSocket* pSocket = m_link.front();
 		pSocket->AddRef();
-		g_lock.UnlockShared();
+		m_lock.UnlockShared();
 		pSocket->Close();
 		pSocket->Release();
 	}
 }
 
-
-void CServer::Start()
-{
-	g_server.XIOServer::Start(50004);
-	g_server.AddTimer(1000);
-}
-
 void CServer::Remove( CSocket *pSocket)
 {
-	XUniqueLock<XRWLock> lock(g_lock);
-	g_link.erase(pSocket);
+	XUniqueLock<XRWLock> lock(m_lock);
+	m_link.erase(pSocket);
 }
 
 int	CServer::Size()
 {
-	return g_link.size();
+	return m_link.size();
 }
 
-void CServer::Stop()
-{
-	g_server.XIOServer::Stop();
-}
 
 XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 {
 	if( CForwardConfig::s_nMaxUser <= Size())
 		return NULL;
-	return new CSocket( newSocket, addr->sin_addr);
+	return new CSocket( this, newSocket, addr->sin_addr);
 }
 
 void CServer::Add( CSocket *pSocket)
 {
-	XUniqueLock<XRWLock> lock(g_lock);
-	g_link.push_back(pSocket);
-}
-
-void	CServer::OnTimer(int nId)
-{
-	{
-		XSharedLock<XRWLock> lock(g_lock);
-
-		DWORD dwTick = GetTickCount();
-		for (CSocket* pSocket : g_link) {
-			int dwTimeout = dwTick - pSocket->m_dwTimeout;
-			if (dwTimeout > 0) {
-				pSocket->Shutdown();
-			}
-		}
-	}
-	AddTimer(1000);
+	XUniqueLock<XRWLock> lock(m_lock);
+	m_link.push_back(pSocket);
 }
 

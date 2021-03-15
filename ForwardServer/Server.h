@@ -2,19 +2,24 @@
 
 #include "IOLib.h"
 #include "IOSocket.h"
-
-class CSocket;
+#include "Socket.h"
+#include "Utility.h"
 
 class CServer : public XIOServer
 {
+	LPCTSTR m_server;
+	int		m_port;
+	XRWLock m_lock;
+	LINKED_LIST(CSocket, m_link) m_link;
+
 public:
-	static int Size();
-	static void Stop();
-	static void Shutdown();
+	CServer(LPCTSTR server, int port);
+	int Size();
 	static void Start();
-	static void Add( CSocket *pSocket);
-	static void Remove( CSocket *pSocket);
+	static void Stop();
+	void Shutdown();
+	void Add( CSocket *pSocket);
+	void Remove( CSocket *pSocket);
 	virtual XIOSocket* CreateSocket(SOCKET newSocket, sockaddr_in* addr);
-	virtual void OnTimer(int nId);
 };
 

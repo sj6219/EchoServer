@@ -123,49 +123,26 @@ void LOG_HACK(LPCTSTR format, ...);
 void LOG_INFO(LPCTSTR format, ...);
 void LOG_NORMAL(LPCTSTR format, ...);
 
-
-
-
-
-template <class T> class XIOAutoPtr
+template <class T> class XAutoVar
 {
 public:
 	T* m_p;
 
-	XIOAutoPtr(T* p) : m_p(p) { if (m_p) m_p->AddRefTemp(); }
-	~XIOAutoPtr() { if (m_p) m_p->ReleaseTemp(); }
-	operator T* () const { return m_p; }
-	T& operator * () const { return *m_p; }
-	T* operator -> () const { return m_p; }
-	T** operator & () const { return &m_p; }
-	bool operator ! () const { return m_p == 0; }
-private:
-	XIOAutoPtr(XIOAutoPtr<T> const &copy);
-	T* operator = (XIOAutoPtr<T> const &copy);
-	
-};
-
-template <class T> class XIOAutoVar
-{
-public:
-	T* m_p;
-
-	XIOAutoVar() : m_p(0) {}
-	XIOAutoVar(XIOAutoVar<T> const & copy) : m_p(copy.m_p)
+	XAutoVar() : m_p(0) {}
+	XAutoVar(XAutoVar<T> const & copy) : m_p(copy.m_p)
 	{
 		if (m_p)
 			m_p->AddRefVar(); 
 	}
-	XIOAutoVar(T* p) : m_p(p) 
+	XAutoVar(T* p) : m_p(p)
 	{
 		if (p)
 			p->AddRefVar(); 
 	}
-	~XIOAutoVar()
+	~XAutoVar()
 	{
-		T* pOld = (T*) InterlockedExchangePointer((void **)&m_p, 0);
-		if (pOld)
-			pOld->ReleaseVar();
+		if (m_p)
+			m_p->ReleaseVar();
 	}
 	T* operator = (T* p)
 	{
@@ -176,7 +153,7 @@ public:
 			pOld->ReleaseVar();
 		return p;
 	}
-	T* operator = (XIOAutoVar<T> const &copy)
+	T* operator = (XAutoVar<T> const &copy)
 	{
 		T* p = copy.m_p;
 		if (p)

@@ -782,7 +782,6 @@ void XIOServer::Stop()
 
 void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
-	_ASSERT(bSuccess);
 	if (lpOverlapped) {
 #if ACCEPT_SIZE
 		XIOSocket* pSocket;
@@ -794,7 +793,9 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 				return;
 			LOG_ERR(_T("accept callback error %d"), GetLastError());
 			closesocket(m_hAcceptSocket[i]);
-			goto retry;
+			m_hAcceptSocket[i] = INVALID_SOCKET;
+			//goto retry;
+			return;
 		}
 		struct sockaddr_in* paddrLocal, * paddrRemote;
 		int	nLocalLen, nRemoteLen;
@@ -852,6 +853,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 #endif // ACCEPT_SIZE
 	}
 	else {
+		_ASSERT(bSuccess);
 		OnTimer(dwTransferred);
 		ReleaseTimer();
 	}

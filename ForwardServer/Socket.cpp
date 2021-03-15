@@ -6,7 +6,9 @@
 
 #pragma comment(lib, "Mswsock.lib")
 
-CSocket::CSocket(SOCKET socket, in_addr addr) : XIOSocket(socket)
+CSocket::CSocket(CServer *pServer, SOCKET socket, in_addr addr) : 
+	XIOSocket(socket),
+	m_pServer(pServer)
 {
 	m_addr = addr;
 }
@@ -26,7 +28,7 @@ void CSocket::OnCreate()
 {
 	LOG_INFO(_T("new connection %s"), AtoT(inet_ntoa(m_addr)));
 	m_dwTimeout = GetTickCount() + 0x7fffffff;
-	CServer::Add(this);
+	m_pServer->CServer::Add(this);
 
 	Read(0);
 }
@@ -53,7 +55,7 @@ void CSocket::OnRead()
 
 void CSocket::OnClose()
 {
-	CServer::Remove( this);
+	m_pServer->CServer::Remove( this);
 }
 
 void CSocket::Shutdown()
