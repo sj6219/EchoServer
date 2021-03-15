@@ -75,7 +75,7 @@ BOOL CForwardConfig::Open()
 		list = list.cdr();
 
 		CForwardConfig::CForward forward;
-		forward.m_forward_port = (int)item.car();
+		forward.m_port = (int)item.car();
 		item = item.cdr();
 		forward.m_forward_server = (LPCTSTR)item.car();
 		item = item.cdr();

@@ -29,6 +29,7 @@ void CServer::Stop()
 	for (CServer* pServer : g_server_list) {
 		pServer->XIOServer::Stop();
 		pServer->Shutdown();
+		pServer->ReleaseSelf();
 	}
 }
 
