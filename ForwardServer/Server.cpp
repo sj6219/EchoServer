@@ -35,19 +35,9 @@ void CServer::Stop()
 
 void CServer::Shutdown()
 {
-	for (; ; )
-	{
-		m_lock.LockShared();
-		if (m_link.empty()) {
-			m_lock.UnlockShared();
-			return;
-		}
-		CSocket* pSocket = m_link.front();
-		pSocket->AddRef();
-		m_lock.UnlockShared();
-		pSocket->Close();
-		pSocket->Release();
-	}
+	XSharedLock<XRWLock> lock(m_lock);
+	for (CSocket* pSocket : m_link)
+		pSocket->Shutdown();
 }
 
 void CServer::Remove( CSocket *pSocket)

@@ -12,19 +12,9 @@ static CServer g_server;
 
 void CServer::Shutdown()
 {
-	for( ; ; )
-	{
-		g_lock.LockShared();
-		if (g_link.empty()) {
-			g_lock.UnlockShared();
-			return;
-		}
-		CSocket* pSocket = g_link.front();
-		pSocket->AddRef();
-		g_lock.UnlockShared();
-		pSocket->Close();
-		pSocket->Release();
-	}
+	XSharedLock<XRWLock> lock(g_lock);
+	for (CSocket* pSocket : g_link)
+		pSocket->Shutdown();
 }
 
 
