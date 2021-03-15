@@ -16,7 +16,13 @@
 #include <windows.h>
 #include <tchar.h>
 
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
+#define DBG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DBG_NEW
+#endif
+
 #ifdef _DEBUG
 #ifdef _UNICODE
 #define _RPT(...)  _RPT_BASE_W(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)

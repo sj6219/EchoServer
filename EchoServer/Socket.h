@@ -27,7 +27,6 @@ public:
 
 	in_addr GetAddr() { return m_addr; }
 	void	Read(DWORD dwLeft);
-	void Shutdown();
 	
 };
 

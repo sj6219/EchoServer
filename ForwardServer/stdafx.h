@@ -29,4 +29,12 @@
 //#include <sys/utime.h>
 
 
-// TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
+#ifdef _DEBUG
+#ifdef _UNICODE
+#define _RPT(...)  _RPT_BASE_W(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
+#else
+#define _RPT(...)   _RPT_BASE(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
+#endif
+#else
+#define _RPT(...)
+#endif

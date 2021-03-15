@@ -25,7 +25,6 @@ public:
 	virtual void OnClose();
 
 	in_addr GetAddr() { return m_addr; }
-	void Shutdown();
 	
 };
 
@@ -40,7 +39,9 @@ public:
 
 	virtual void OnCreate();
 	virtual void OnRead();
+	virtual void OnClose();
 	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
+	void	OnConnect();
 	bool Connect();
 
 };

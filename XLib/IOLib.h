@@ -15,9 +15,7 @@
 #pragma warning(disable: 4127) // conditional expression is constant
 #pragma warning(disable: 4244) // 'conversion' conversion from 'type1' to 'type2', possible loss of data
 
-#ifdef _DEBUG
-//#define _CRTDBG_MAP_ALLOC
-#else
+#ifndef _DEBUG
 //#define _HAS_EXCEPTIONS 0
 #endif
 
@@ -30,7 +28,7 @@
 #include <winsock2.h>
 #include <Ws2tcpip.h>
 #include <process.h>
-#include <crtdbg.h>
+//#include <crtdbg.h>
 #include <dbghelp.h>
 #include <Sql.h>
 #include <Sqlext.h>

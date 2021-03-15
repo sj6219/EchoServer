@@ -204,6 +204,7 @@ public :
 	void Close();
 	void GracefulClose();
 	void Disconnect();
+	void Shutdown();
 	void Read( DWORD dwLeft);
 	void FreeBuffer();
 	void ReadCallback(DWORD dwTransferred);

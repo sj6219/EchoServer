@@ -673,6 +673,13 @@ void XIOSocket::Disconnect()
 	closesocket(hSocket);
 }
 
+void XIOSocket::Shutdown()
+{
+	m_lock.Lock();
+	shutdown(m_hSocket, SD_BOTH);
+	m_lock.Unlock();
+}
+
 XIOServer::XIOServer()
 {
 	m_hSocket = INVALID_SOCKET;

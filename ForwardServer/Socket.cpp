@@ -26,15 +26,14 @@ void CSocket::OnCreate()
 	SOCKET hConnectSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (hConnectSocket == INVALID_SOCKET)
 	{
-		LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+		LOG_ERR(_T("connect socket error %d"), WSAGetLastError());
 		return;
 	}
 	m_pForwardSocket = new CForwardSocket(this, hConnectSocket);
 	m_pForwardSocket->Initialize();
-	m_pForwardSocket->Connect();
-
 	m_pServer->CServer::Add(this);
-
+	m_pForwardSocket->Connect();
+	m_pForwardSocket->ReleaseSelf();
 }
 
 void CSocket::OnRead()
@@ -42,40 +41,37 @@ void CSocket::OnRead()
 	char* buffer = m_pReadBuf->m_buffer;
 	int		len = m_pReadBuf->m_dwSize;
 
-	if( len == 0)
-	{
-		Read(len);
-		return;
-	}
-	if (m_nPendingWrite > 100 * 1024) {
-		Close();
-		return;
-	}
-	Write(buffer, len);
-#ifdef USE_IOBUFFER
+	//if( len == 0)
+	//{
+	//	Read(len);
+	//	return;
+	//}
+	m_pForwardSocket->Write(buffer, len);
 	Read(0);
-#endif
 }
 
 void CSocket::OnClose()
 {
 	m_pServer->CServer::Remove( this);
-}
-
-void CSocket::Shutdown()
-{
-	XUniqueLock<XLock> lock(m_lock);
-	shutdown(m_hSocket, SD_BOTH);
+	m_pForwardSocket->Shutdown();
+	m_pForwardSocket = 0;
 }
 
 CForwardSocket::CForwardSocket(CSocket* pSocket, SOCKET socket)
 	:	XIOSocket(socket), 
 	m_pSocket(pSocket)
-{}
+{
+}
 
 CForwardSocket::~CForwardSocket()
 {
 
+}
+
+void CForwardSocket::OnConnect()
+{
+	Read(0);
+	m_pSocket->Read(0);
 }
 
 bool CForwardSocket::Connect()
@@ -110,9 +106,11 @@ bool CForwardSocket::Connect()
 		addr.sin_port = htons(pServer->m_forward_port);
 
 		//connect(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
+		AddRefIO();
 		if (!ConnectEx(m_hSocket, (SOCKADDR*)&addr, sizeof(addr), NULL, 0, NULL, &m_overlappedConnect)
 			&& GetLastError() != ERROR_IO_PENDING)
 		{
+			ReleaseIO();
 			LOG_ERR(_T("ConnectEx error %d"), WSAGetLastError());
 			goto fail;
 		}	
@@ -137,7 +135,8 @@ void CForwardSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPP
 			return;
 		}
 		setsockopt(m_hSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-		OnCreate();
+		OnConnect();
+		ReleaseIO();
 	}
 	else {
 		XIOSocket::OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
@@ -151,5 +150,19 @@ void CForwardSocket::OnCreate()
 
 void CForwardSocket::OnRead()
 {
+	char* buffer = m_pReadBuf->m_buffer;
+	int		len = m_pReadBuf->m_dwSize;
 
+	//if( len == 0)
+	//{
+	//	Read(len);
+	//	return;
+	//}
+	m_pSocket->Write(buffer, len);
+	Read(0);
+}
+
+void CForwardSocket::OnClose()
+{
+	m_pSocket->Shutdown();
 }

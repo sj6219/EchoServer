@@ -56,12 +56,6 @@ void CSocket::OnClose()
 	CServer::Remove( this);
 }
 
-void CSocket::Shutdown()
-{
-	XUniqueLock<XLock> lock(m_lock);
-	shutdown(m_hSocket, SD_BOTH);
-}
-
 #ifndef USE_IOBUFFER
 void CSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
