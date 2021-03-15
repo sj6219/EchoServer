@@ -1,12 +1,8 @@
-(Title "Echo Server")
+(Title "Forward Server")
 
 (NumberOfThreads  2)
 (MaxUser 3000)
-;(Server "192.168.11.4")
-(ConnectPort 50004)
-(BindPort 3389)
 
-;(Address "192.168.11.2")
 ;(MailServer "mail.silverpotion.co.kr")
 ;(MailPort 20000)
 ;(MailFrom "sjpark@silverpotion.co.kr")

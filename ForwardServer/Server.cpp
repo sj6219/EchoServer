@@ -30,7 +30,7 @@ void CServer::Shutdown()
 
 void CServer::Start()
 {
-	g_server.XIOServer::Start( CEchoConfig::s_nPort);
+	g_server.XIOServer::Start(50004);
 	g_server.AddTimer(1000);
 }
 
@@ -52,7 +52,7 @@ void CServer::Stop()
 
 XIOSocket* CServer::CreateSocket( SOCKET newSocket, sockaddr_in* addr)
 {
-	if( CEchoConfig::s_nMaxUser <= Size())
+	if( CForwardConfig::s_nMaxUser <= Size())
 		return NULL;
 	return new CSocket( newSocket, addr->sin_addr);
 }

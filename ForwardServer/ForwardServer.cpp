@@ -68,7 +68,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	}
 	XIOSocket::CloseIOThread();
 	WaitForSingleObject( g_hStartThread, INFINITE);
-	CEchoConfig::Close();
+	CForwardConfig::Close();
 
 	return (int) msg.wParam;
 }
@@ -157,8 +157,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		return 0;
 	}
 
-	CEchoConfig::Open();
-	XIOException::Open( CEchoConfig::s_strMailServer.c_str(), CEchoConfig::s_strMailFrom.c_str(), CEchoConfig::s_strMailTo.c_str(), CEchoConfig::s_nMailBindPort);
+	CForwardConfig::Open();
+	XIOException::Open( CForwardConfig::s_strMailServer.c_str(), CForwardConfig::s_strMailFrom.c_str(), CForwardConfig::s_strMailTo.c_str(), CForwardConfig::s_nMailBindPort);
 
 
 	WSADATA wsaData;
@@ -169,11 +169,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		return 0;
 	}
 	
-	XIOSocket::CreateIOThread( CEchoConfig::s_nNumberOfThreads);
+	XIOSocket::CreateIOThread( CForwardConfig::s_nNumberOfThreads);
 
 	unsigned nStartThreadId;
 	g_hStartThread = (HANDLE)_beginthreadex( NULL, 0, XIOSocket::WaitThread, 0, 0, &nStartThreadId);
-	if (CEchoConfig::s_bAutoStart)
+	if (CForwardConfig::s_bAutoStart)
 		SendMessage(hWnd, WM_COMMAND, IDM_START, 0);
 
 	return TRUE;
@@ -220,9 +220,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					{
 						CServer::Start();
 						CStatus::Start();
-						struct tm* tm = localtime( &CEchoConfig::s_nTimeStamp);
-						LOG_NORMAL( _T("Server is ready on port %d (time stamp: %02d/%02d/%02d %02d:%02d:%02d)"), CEchoConfig::s_nPort, 
-							tm->tm_year % 100, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+						struct tm* tm = localtime( &CForwardConfig::s_nTimeStamp);
+						//LOG_NORMAL( _T("Server is ready on port %d (time stamp: %02d/%02d/%02d %02d:%02d:%02d)"), CForwardConfig::s_nPort, 
+						//	tm->tm_year % 100, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 						g_bStarted = TRUE;
 						SetTimer(hWnd, 1, 3000, NULL);
 					}
