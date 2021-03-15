@@ -7,10 +7,12 @@
 
 class CServer : public XIOServer
 {
-	LPCTSTR m_server;
-	int		m_port;
+	LPCTSTR m_forward_server;
+	int		m_forward_port;
 	XRWLock m_lock;
 	LINKED_LIST(CSocket, m_link) m_link;
+
+	friend class CForwardSocket;
 
 public:
 	CServer(LPCTSTR server, int port);

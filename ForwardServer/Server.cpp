@@ -9,15 +9,15 @@ static std::vector<CServer*> g_server_list;
 
 
 CServer::CServer(LPCTSTR server, int port)
-	: m_server(server),
-	m_port(port)
+	: m_forward_server(server),
+	m_forward_port(port)
 {
 
 }
 
 void CServer::Start()
 {
-	for (auto forward : CForwardConfig::s_vForwardList) {
+	for (auto &forward : CForwardConfig::s_vForwardList) {
 		CServer* pServer = new CServer(forward.m_forward_server.c_str(), forward.m_forward_port);
 		pServer->XIOServer::Start(forward.m_port);
 		g_server_list.push_back(pServer);

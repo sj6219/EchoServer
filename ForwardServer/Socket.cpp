@@ -3,6 +3,7 @@
 #include "Socket.h"
 #include "Server.h"
 #include "ForwardConfig.h"
+#include <MSWSock.h>
 
 #pragma comment(lib, "Mswsock.lib")
 
@@ -17,20 +18,23 @@ CSocket::~CSocket()
 {
 }
 
-void	CSocket::Read(DWORD dwLeft)
-{
-	m_dwTimeout = GetTickCount() + 60000;
-	XIOSocket::Read(dwLeft);
-}
-
 
 void CSocket::OnCreate()
 {
 	LOG_INFO(_T("new connection %s"), AtoT(inet_ntoa(m_addr)));
-	m_dwTimeout = GetTickCount() + 0x7fffffff;
+	
+	SOCKET hConnectSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (hConnectSocket == INVALID_SOCKET)
+	{
+		LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+		return;
+	}
+	m_pForwardSocket = new CForwardSocket(this, hConnectSocket);
+	m_pForwardSocket->Initialize();
+	m_pForwardSocket->Connect();
+
 	m_pServer->CServer::Add(this);
 
-	Read(0);
 }
 
 void CSocket::OnRead()
@@ -64,61 +68,88 @@ void CSocket::Shutdown()
 	shutdown(m_hSocket, SD_BOTH);
 }
 
-#ifndef USE_IOBUFFER
-void CSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
+CForwardSocket::CForwardSocket(CSocket* pSocket, SOCKET socket)
+	:	XIOSocket(socket), 
+	m_pSocket(pSocket)
+{}
+
+CForwardSocket::~CForwardSocket()
 {
-	if (!bSuccess)
-	{
-		if (lpOverlapped == &m_overlappedRead) // closed only at read
-			Close();
-		else if (lpOverlapped == &m_overlappedWrite)
-			FreeBuffer();
-		ReleaseIO();
-	}
-	else if (lpOverlapped == &m_overlappedRead)
-	{
-		ReadCallback(dwTransferred);
-		ReleaseIO();
-	}
-	else if (lpOverlapped == &m_overlappedWrite)
-	{
-		OnWrite(); // WriteCallback(dwTransferred);
-		ReleaseIO();
-	}
-	else
-	{
-		_ASSERT(lpOverlapped == NULL);
-		OnTimer(dwTransferred);
-		ReleaseTimer();	// ��TimerRef
-	}
+
 }
 
-void CSocket::Write(void* buf, int len)
+bool CForwardSocket::Connect()
 {
-	AddRefIO();
-	WSABUF wsabuf;
-	wsabuf.buf = (char*)buf;
-	wsabuf.len = len;
-	DWORD dwSent;
-	m_dwTimeout = GetTickCount() + 0x7fffffff;
-	m_lock.Lock();
-	if (WSASend(m_hSocket, &wsabuf, 1, &dwSent, 0, &m_overlappedWrite, NULL)
-		&& GetLastError() != ERROR_IO_PENDING)
+	LPFN_CONNECTEX ConnectEx;
+	GUID guid = WSAID_CONNECTEX;
+	DWORD dwBytes;
+	WSAIoctl(m_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&guid, sizeof(guid),
+		&ConnectEx, sizeof(ConnectEx),
+		&dwBytes, NULL, NULL);
+
+	/* ConnectEx requires the socket to be initially bound. */
 	{
-		m_lock.Unlock();
-		int nErr = GetLastError();
-		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED)
-			LOG_ERR(_T("CSocket::WritePacket %x(%x) err=%d"), m_hSocket, this, nErr);
+		struct sockaddr_in addr;
+		ZeroMemory(&addr, sizeof(addr));
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = INADDR_ANY;
+		addr.sin_port = 0;
+		bind(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
+	}
+
+	/* Issue ConnectEx and wait for the operation to complete. */
+	{
+		ZeroMemory(&m_overlappedConnect, sizeof(m_overlappedConnect));
+
+		CServer* pServer = m_pSocket->m_pServer;
+		sockaddr_in addr;
+		ZeroMemory(&addr, sizeof(addr));
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = inet_addr(TtoA(pServer->m_forward_server));
+		addr.sin_port = htons(pServer->m_forward_port);
+
+		//connect(m_hSocket, (SOCKADDR*)&addr, sizeof(addr));
+		if (!ConnectEx(m_hSocket, (SOCKADDR*)&addr, sizeof(addr), NULL, 0, NULL, &m_overlappedConnect)
+			&& GetLastError() != ERROR_IO_PENDING)
+		{
+			LOG_ERR(_T("ConnectEx error %d"), WSAGetLastError());
+			goto fail;
+		}	
+	}
+	return true;
+fail:
 		Close();
-		ReleaseIO();
-	}
-	else
-		m_lock.Unlock();
+	return false;
+
 }
 
-void CSocket::OnWrite()
+
+void CForwardSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
-	Read(0);
+	if (lpOverlapped == &m_overlappedConnect) {
+		if (!bSuccess)
+		{
+			if (m_hSocket == INVALID_SOCKET)
+				return;
+			LOG_ERR(_T("connect callback error %d"), GetLastError());
+			Close();
+			return;
+		}
+		setsockopt(m_hSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+		OnCreate();
+	}
+	else {
+		XIOSocket::OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
+	}
 }
 
-#endif
+void CForwardSocket::OnCreate()
+{
+
+}
+
+void CForwardSocket::OnRead()
+{
+
+}

@@ -7,13 +7,15 @@
 #define USE_IOBUFFER
 
 class CServer;
+class CForwardSocket;
+
 class CSocket : public XIOSocket
 {
 public:
 	XLink	m_link;
 	in_addr m_addr;
-	DWORD m_dwTimeout;
 	XAutoVar<CServer> m_pServer;
+	XAutoVar<CForwardSocket> m_pForwardSocket;
 
 	CSocket(CServer *pServer, SOCKET socket, in_addr addr);
 	virtual ~CSocket();
@@ -21,15 +23,24 @@ public:
 	virtual void OnCreate();
 	virtual void OnRead();
 	virtual void OnClose();
-#ifndef USE_IOBUFFER
-	void	Write(void* buf, int len);
-	virtual void OnWrite();
-	virtual void OnIOCallback( BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
-#endif
 
 	in_addr GetAddr() { return m_addr; }
-	void	Read(DWORD dwLeft);
 	void Shutdown();
 	
 };
 
+class CForwardSocket : public XIOSocket
+{
+	OVERLAPPED m_overlappedConnect;
+
+public:
+	XAutoVar<CSocket> m_pSocket;
+	CForwardSocket(CSocket* pSocket, SOCKET socket);
+	virtual ~CForwardSocket();
+
+	virtual void OnCreate();
+	virtual void OnRead();
+	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
+	bool Connect();
+
+};
