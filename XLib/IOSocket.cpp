@@ -492,22 +492,6 @@ void XIOSocket::OnClose()
 {
 }
 
-void XIOSocket::Disconnect()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket;
-	if (hSocket != INVALID_SOCKET) {
-		m_hSocket = 0;
-	}
-	m_lock.Unlock();
-
-	//	LINGER linger;
-	//	linger.l_onoff = 1;
-	//	linger.l_linger = 0;
-	//	setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
-	closesocket(hSocket);
-}
-
 void XIOSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
 	if (!bSuccess)
@@ -673,6 +657,21 @@ void XIOSocket::GracefulClose()
 	}
 }
 
+void XIOSocket::Disconnect()
+{
+	m_lock.Lock();
+	SOCKET hSocket = m_hSocket;
+	if (hSocket != INVALID_SOCKET) {
+		m_hSocket = 0;
+	}
+	m_lock.Unlock();
+
+	//	LINGER linger;
+	//	linger.l_onoff = 1;
+	//	linger.l_linger = 0;
+	//	setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
+	closesocket(hSocket);
+}
 
 XIOServer::XIOServer()
 {

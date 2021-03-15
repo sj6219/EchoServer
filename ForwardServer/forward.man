@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes'?>
+<instrumentationManifest
+    xmlns="http://schemas.microsoft.com/win/2004/08/events"
+    xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    >
+  <instrumentation>
+    <counters
+        xmlns="http://schemas.microsoft.com/win/2005/12/counters"
+        schemaVersion="2.0"
+        >
+            <provider callback            = "custom"
+                      applicationIdentity = "EchoServer.exe"
+                      symbol              = "EchoUserModeCounters"
+                      providerType        = "userMode"
+                      providerGuid        = "{9C1006FE-C71F-4B5B-ADF9-D55DB47DD902}">
+                <counterSet    guid        = "{AD216274-AB2A-47DD-8FF3-4539EF4127AB}"
+                               uri         = "Microsoft.Windows.EchoCounterSet1"
+                               symbol      = "EchoCounterSet1"
+                               name        = "Echo Counter Set1"
+							   nameID="200"
+                               description = "This is counter set for Echo Server"
+							   descriptionID="202"
+                               instances   = "multiple">
+                  <counter id           = "1"
+                               uri         = "Microsoft.Windows.EchoCounterSet1.RunningThread"
+                               symbol      = "EchoRunningThread"
+                            name         = "Echo Running Thread"
+							   nameID="204"
+                           description  = "This counter displays running thread"
+							   descriptionID="206"
+                           type         = "perf_counter_rawcount"
+                           detailLevel  = "standard"
+						   defaultScale ="1"
+						   >
+                    </counter>
+                    <counter id           = "2"
+                               uri         = "Microsoft.Windows.EchoCounterSet1.Connections"
+                               symbol      = "EchoConnections"
+                            name         = "Echo Connections"
+							   nameID="208"
+                           description  = "This counter displays connections"
+							   descriptionID="210"
+                           type         = "perf_counter_rawcount"
+                           detailLevel  = "standard"
+						   defaultScale ="1"
+                            >
+                    </counter>
+                </counterSet>
+            </provider>
+        </counters>
+    </instrumentation>
+</instrumentationManifest>
+
