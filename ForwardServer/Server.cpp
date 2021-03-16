@@ -19,6 +19,7 @@ void CServer::Start()
 {
 	for (auto &forward : CForwardConfig::s_vForwardList) {
 		CServer* pServer = new CServer(forward.m_forward_server.c_str(), forward.m_forward_port);
+		LOG_NORMAL(_T("Server is ready on port %d (forward %s:%d)"), forward.m_port, forward.m_forward_server.c_str(), forward.m_forward_port);
 		pServer->XIOServer::Start(forward.m_port);
 		g_server_list.push_back(pServer);
 	}

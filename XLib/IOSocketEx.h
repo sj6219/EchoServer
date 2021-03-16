@@ -11,5 +11,7 @@ public:
 	virtual void OnCreate();
 	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
 	virtual void OnConnect();
+	virtual void OnCloseEx();
 	bool Connect(LPCTSTR server, int port);
+	void CloseEx();
 };

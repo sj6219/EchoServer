@@ -77,10 +77,11 @@ void XIOSocketEx::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED 
 	if (lpOverlapped == &m_overlappedConnect) {
 		if (!bSuccess)
 		{
-			if (m_hSocket == INVALID_SOCKET)
-				return;
-			LOG_ERR(_T("connect callback error %d"), GetLastError());
-			Close();
+			if (m_hSocket != INVALID_SOCKET) {
+				LOG_ERR(_T("connect callback error %d"), GetLastError());
+				CloseEx();
+			}
+			ReleaseIO();
 			return;
 		}
 		setsockopt(m_hSocket, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
@@ -90,4 +91,27 @@ void XIOSocketEx::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED 
 	else {
 		XIOSocket::OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
 	}
+}
+
+void XIOSocketEx::CloseEx()
+{
+	m_lock.Lock();
+	SOCKET hSocket = m_hSocket;
+	m_hSocket = INVALID_SOCKET;
+	m_lock.Unlock();
+	if (hSocket != INVALID_SOCKET)
+	{
+		OnCloseEx();
+		//		LINGER linger;
+		//		linger.l_onoff = 1;
+		//		linger.l_linger = 0;
+		//		setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
+		closesocket(hSocket);
+		ReleaseSelf();
+	}
+}
+
+void XIOSocketEx::OnCloseEx()
+{
+
 }

@@ -12,6 +12,8 @@
 #include "Status.h"
 #include "ForwardConfig.h"
 #include "Server.h"
+//#include <commctrl.h>
+#include <shellapi.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Comctl32.lib")
 
@@ -72,21 +74,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	return (int) msg.wParam;
 }
 
-
-
-//
-
-//
-
-//
-
-//
-
-
-
-
-
-//
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex;
@@ -108,16 +95,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-//
-
-//
-
-//
-
-//
-
-
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 
@@ -175,6 +152,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	if (CForwardConfig::s_bAutoStart)
 		SendMessage(hWnd, WM_COMMAND, IDM_START, 0);
 
+	NOTIFYICONDATA nid;
+	memset(&nid, 0, sizeof(NOTIFYICONDATA));
+	nid.cbSize = sizeof(NOTIFYICONDATA);
+
+	nid.uFlags = NIF_ICON | NIF_MESSAGE;
+	nid.hWnd = hWnd;
+	nid.hIcon = LoadIcon(hInstance, (LPCTSTR)IDI_SMALL);
+	nid.uCallbackMessage = WM_USER + 1;
+
+	//LoadIconMetric(hInstance, MAKEINTRESOURCE(IDI_SMALL), LIM_SMALL, &(nid.hIcon));
+	Shell_NotifyIcon(NIM_ADD, &nid);
+
 	return TRUE;
 }
 
@@ -186,16 +175,6 @@ void TestException()
 	XIOException::Enable();
 }
 
-//
-
-//
-
-//
-
-
-
-//
-//
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -220,8 +199,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						CServer::Start();
 						CStatus::Start();
 						struct tm* tm = localtime( &CForwardConfig::s_nTimeStamp);
-						//LOG_NORMAL( _T("Server is ready on port %d (time stamp: %02d/%02d/%02d %02d:%02d:%02d)"), CForwardConfig::s_nPort, 
-						//	tm->tm_year % 100, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 						g_bStarted = TRUE;
 						SetTimer(hWnd, 1, 3000, NULL);
 					}
@@ -271,7 +248,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			XIOScreen::s_pScreen->OnPaint();
 			break;
 		case WM_DESTROY:
+		{
+			NOTIFYICONDATA nid;
+			memset(&nid, 0, sizeof(NOTIFYICONDATA));
+			nid.cbSize = sizeof(NOTIFYICONDATA);
+
+			nid.hWnd = hWnd;
+
+			//LoadIconMetric(hInstance, MAKEINTRESOURCE(IDI_SMALL), LIM_SMALL, &(nid.hIcon));
+			Shell_NotifyIcon(NIM_DELETE, &nid);
+
+		}
 			PostQuitMessage(0);
+			break;
+		case WM_SIZE:
+			if (wParam == SIZE_MINIMIZED) {
+				ShowWindow(hWnd, SW_HIDE);
+			}
+			break;
+		case WM_USER + 1:
+			switch (lParam) {
+			case WM_LBUTTONDOWN:
+			{
+				ShowWindow(hWnd, SW_SHOW);
+				ShowWindow(hWnd, SW_RESTORE);
+			}
+			break;
+			}
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

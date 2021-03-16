@@ -20,8 +20,6 @@ CSocket::~CSocket()
 
 void CSocket::OnCreate()
 {
-	LOG_INFO(_T("new connection %s"), AtoT(inet_ntoa(m_addr)));
-	
 	SOCKET hConnectSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (hConnectSocket == INVALID_SOCKET)
 	{
@@ -30,6 +28,7 @@ void CSocket::OnCreate()
 	}
 	
 	CServer* pServer = m_pServer;
+	LOG_INFO(_T("new connection %s  to  %s:%d"), AtoT(inet_ntoa(m_addr)), pServer->m_forward_server, pServer->m_forward_port);
 
 	m_pForwardSocket = new CForwardSocket(this, hConnectSocket);
 	m_pForwardSocket->Initialize();
@@ -97,4 +96,9 @@ void CForwardSocket::OnRead()
 void CForwardSocket::OnClose()
 {
 	m_pSocket->Shutdown();
+}
+
+void CForwardSocket::OnCloseEx()
+{
+	m_pSocket->Close();
 }

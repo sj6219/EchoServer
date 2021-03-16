@@ -270,12 +270,14 @@ void XIOSocket::XIOTimerInstance::OnTimerCallback(int nId)
 
 void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
+#ifdef WAIT_IO_THREAD
 	if (dwTransferred == 0)
 		SetEvent(g_hTimer);
 	else
 		g_instance.PostObject(dwTransferred - 1, 0);
 	InterlockedDecrement(&s_nRunningThread);
 	SuspendThread(GetCurrentThread());
+#endif
 }
 
 typedef void (XIOObject::*TimerFunc)(int nId);
@@ -325,8 +327,10 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 			}
 			g_lockTimer.Unlock();
 			// wait IOThread 
+#ifdef WAIT_IO_THREAD
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
+#endif // WAIT_IO_THREAD
 			CloseHandle(g_hTimer);
 			return 0;
 		}
@@ -748,10 +752,12 @@ BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
 			goto fail;
 		}
 		DWORD dwRecv;
+		//AddRefIO();
 		if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16,
 			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
 		{
 			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
+			//ReleaseIO();
 			goto fail;
 		}
 	}
@@ -801,7 +807,9 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 			LOG_ERR(_T("accept callback error %d"), GetLastError());
 			closesocket(m_hAcceptSocket[i]);
 			m_hAcceptSocket[i] = INVALID_SOCKET;
+
 			//goto retry;
+			//ReleaseIO();
 			return;
 		}
 		struct sockaddr_in* paddrLocal, * paddrRemote;
@@ -823,6 +831,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 		if (m_hAcceptSocket[i] == INVALID_SOCKET)
 		{
 			LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
+			//ReleaseIO();
 			return;
 		}
 		DWORD dwRecv;
@@ -830,6 +839,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
 		{
 			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
+			//ReleaseIO();
 			return;
 		}
 #else	// ACCEPT_SIZE

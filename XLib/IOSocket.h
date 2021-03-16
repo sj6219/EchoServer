@@ -37,6 +37,9 @@ public:
 	void Release() { Release(&m_nGeneralRef); }
 	void AddRefSelf() { AddRef(&m_nSystemRef); }
 	void ReleaseSelf() { Release(&m_nSystemRef); }
+	void AddRefIO() { AddRef(&m_nSystemRef); }
+	void ReleaseIO() { Release(&m_nSystemRef); }
+
 	long m_nRef;
 	long m_nSystemRef;
 	long m_nGeneralRef;
@@ -53,6 +56,8 @@ public:
 	void AddRefSelf() { AddRef(); }
 	void ReleaseSelf() { Release(); }
 	void AddRefTimer() { AddRef(); }
+	void AddRefIO() { AddRef(); }
+	void ReleaseIO() { Release(); }
 	long m_nRef;
 
 #endif
@@ -212,13 +217,6 @@ public :
 	XIOSocket(SOCKET s);
 	static void Start();
 	static void Stop();
-#ifdef XIOOBJECT_DEBUG
-	void AddRefIO() { AddRef(&m_nSystemRef); }
-	void ReleaseIO() { Release(&m_nSystemRef); }
-#else
-	void AddRefIO() { AddRef(); }
-	void ReleaseIO() { Release(); }
-#endif
 	void WriteWithLock(XIOBuffer *pBuffer);
 	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
 	void Write(void *buf, DWORD size);
