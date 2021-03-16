@@ -24,7 +24,7 @@ public:
 	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
 	inline BOOL PostObject(int nId, LPVOID pObject);
 #ifdef XIOOBJECT_DEBUG
-	XIOObject() : m_nRef(1), m_nGeneralRef(0), m_nSystemRef(1) {}
+	XIOObject() : m_nRef(1), m_nGeneralRef(0), m_nSystemRef(1) {} // AddRefSelf()
 	void AddRefTimer() { AddRef(&m_nSystemRef); }
 	void ReleaseTimer() { Release(&m_nSystemRef); }
 	void AddRefTemp() { AddRef(&m_nGeneralRef); }

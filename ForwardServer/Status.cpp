@@ -7,9 +7,9 @@
 #include "Server.h"
 #include "forwardcounter.h"
 
-// ctrpp -o echocounter.h -rc echocounter.rc -ch echocountersymbol.h echo.man
-// lodctr /m:echo.man C:\Users\sjpark\Documents\EchoServer\x64\Release
-// unlodctr  /m:echo.man
+// ctrpp -o forwardcounter.h -rc forwardcounter.rc -ch forwardcountersymbol.h forward.man
+// lodctr /m:forward.man C:\Users\sjpark\Documents\ForwardServer\x64\Release
+// unlodctr  /m:forward.man
 
 XIOScreen	CStatus::s_screen;
 
@@ -20,9 +20,12 @@ void	CStatus::Update()
 	{
 		ULONG Status;
 
-		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
+		Status = PerfSetULongCounterValue(ForwardUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
 		_ASSERT(Status == ERROR_SUCCESS);
-		//Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
+		//Status = PerfSetULongCounterValue(ForwardUserModeCounters, g_instance, 2, CServer::Size());
+#ifndef _DEBUG
+		PerfSetULongLongCounterValue(ForwardUserModeCounters, g_instance, 3, XIOMemory::GetTotalSize());
+#endif
 
 	}
 	if (XIOScreen::s_pScreen == &CStatus::s_screen) {
@@ -30,6 +33,9 @@ void	CStatus::Update()
 		s_screen.Empty();
 		s_screen.Add(RGB(0, 0, 0), _T("Running Thread : %d"), XIOSocket::s_nRunningThread);
 		//s_screen.Add(RGB(0, 0, 0), _T("Connection : %d"), CServer::Size());
+#ifndef _DEBUG
+		s_screen.Add(RGB(0, 0, 0), _T("Memory : %td"), XIOMemory::GetTotalSize());
+#endif
 		s_screen.Unlock();
 		InvalidateRect(XIOScreen::s_hWnd, NULL, TRUE);
 	}
@@ -45,7 +51,7 @@ bool CStatus::Start()
 		return false;
 	}
 
-	g_instance = PerfCreateInstance(EchoUserModeCounters, &EchoCounterSet1Guid, L"Instance_1", 0);
+	g_instance = PerfCreateInstance(ForwardUserModeCounters, &ForwardCounterSet1Guid, L"Instance_1", 0);
 	if (g_instance == NULL) {
 		return false;
 	}

@@ -20,5 +20,6 @@
 
 #define EchoRunningThread (1)
 #define EchoConnections (2)
+#define EchoMemory (3)
 
 

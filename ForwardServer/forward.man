@@ -10,22 +10,22 @@
         schemaVersion="2.0"
         >
             <provider callback            = "custom"
-                      applicationIdentity = "EchoServer.exe"
-                      symbol              = "EchoUserModeCounters"
+                      applicationIdentity = "ForwardServer.exe"
+                      symbol              = "ForwardUserModeCounters"
                       providerType        = "userMode"
-                      providerGuid        = "{9C1006FE-C71F-4B5B-ADF9-D55DB47DD902}">
-                <counterSet    guid        = "{AD216274-AB2A-47DD-8FF3-4539EF4127AB}"
-                               uri         = "Microsoft.Windows.EchoCounterSet1"
-                               symbol      = "EchoCounterSet1"
-                               name        = "Echo Counter Set1"
+                      providerGuid        = "{6B0B3135-4A43-4E48-84EC-F057457AC18E}">
+                <counterSet    guid        = "{05A74954-8C0E-4C42-8B18-C7430F5AD8C9}"
+                               uri         = "Microsoft.Windows.ForwardCounterSet1"
+                               symbol      = "ForwardCounterSet1"
+                               name        = "Forward Counter Set1"
 							   nameID="200"
-                               description = "This is counter set for Echo Server"
+                               description = "This is counter set for Forward Server"
 							   descriptionID="202"
                                instances   = "multiple">
                   <counter id           = "1"
-                               uri         = "Microsoft.Windows.EchoCounterSet1.RunningThread"
-                               symbol      = "EchoRunningThread"
-                            name         = "Echo Running Thread"
+                               uri         = "Microsoft.Windows.ForwardCounterSet1.RunningThread"
+                               symbol      = "ForwardRunningThread"
+                            name         = "Forward Running Thread"
 							   nameID="204"
                            description  = "This counter displays running thread"
 							   descriptionID="206"
@@ -34,10 +34,10 @@
 						   defaultScale ="1"
 						   >
                     </counter>
-                    <counter id           = "2"
-                               uri         = "Microsoft.Windows.EchoCounterSet1.Connections"
-                               symbol      = "EchoConnections"
-                            name         = "Echo Connections"
+					<counter id           = "2"
+                               uri         = "Microsoft.Windows.ForwardCounterSet1.Connections"
+                               symbol      = "ForwardConnections"
+                            name         = "Forward Connections"
 							   nameID="208"
                            description  = "This counter displays connections"
 							   descriptionID="210"
@@ -46,7 +46,20 @@
 						   defaultScale ="1"
                             >
                     </counter>
-                </counterSet>
+					<counter id           = "3"
+                               uri         = "Microsoft.Windows.ForwardCounterSet1.Memory"
+                               symbol      = "ForwardMemory"
+                            name         = "Forward Memory"
+							   nameID="212"
+                           description  = "This counter displays memory usage amount"
+							   descriptionID="214"
+                           type         = "perf_counter_large_rawcount"
+                           detailLevel  = "standard"
+						   defaultScale ="1"
+                            >
+					</counter>
+
+				</counterSet>
             </provider>
         </counters>
     </instrumentation>

@@ -46,7 +46,19 @@
 						   defaultScale ="1"
                             >
                     </counter>
-                </counterSet>
+					<counter id           = "3"
+                               uri         = "Microsoft.Windows.EchoCounterSet1.Memory"
+                               symbol      = "EchoMemory"
+                            name         = "Echo Memory"
+							   nameID="212"
+                           description  = "This counter displays memory usage amount"
+							   descriptionID="214"
+                           type         = "perf_counter_large_rawcount"
+                           detailLevel  = "standard"
+						   defaultScale ="1"
+                            >
+					</counter>
+				</counterSet>
             </provider>
         </counters>
     </instrumentation>

@@ -23,6 +23,9 @@ void	CStatus::Update()
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
 		_ASSERT(Status == ERROR_SUCCESS);
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
+#ifndef _DEBUG
+		PerfSetULongLongCounterValue(EchoUserModeCounters, g_instance, 3, XIOMemory::GetTotalSize());
+#endif
 
 	}
 	if (XIOScreen::s_pScreen == &CStatus::s_screen) {
@@ -30,6 +33,9 @@ void	CStatus::Update()
 		s_screen.Empty();
 		s_screen.Add(RGB(0, 0, 0), _T("Running Thread : %d"), XIOSocket::s_nRunningThread);
 		s_screen.Add(RGB(0, 0, 0), _T("Connection : %d"), CServer::Size());
+#ifndef _DEBUG
+		s_screen.Add(RGB(0, 0, 0), _T("Memory : %td"), XIOMemory::GetTotalSize());
+#endif
 		s_screen.Unlock();
 		InvalidateRect(XIOScreen::s_hWnd, NULL, TRUE);
 	}

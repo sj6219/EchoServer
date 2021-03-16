@@ -17,6 +17,7 @@
 
 #define EchoRunningThread (1)
 #define EchoConnections (2)
+#define EchoMemory (3)
 
 EXTERN_C DECLSPEC_SELECTANY GUID EchoUserModeCountersGuid = { 0x9c1006fe, 0xc71f, 0x4b5b, 0xad, 0xf9, 0xd5, 0x5d, 0xb4, 0x7d, 0xd9, 0x2 };
 
@@ -29,10 +30,12 @@ EXTERN_C DECLSPEC_SELECTANY struct {
     PERF_COUNTERSET_INFO CounterSet;
     PERF_COUNTER_INFO Counter0;
     PERF_COUNTER_INFO Counter1;
+    PERF_COUNTER_INFO Counter2;
 } EchoCounterSet1Info = {
-    { { 0xad216274, 0xab2a, 0x47dd, 0x8f, 0xf3, 0x45, 0x39, 0xef, 0x41, 0x27, 0xab }, { 0x9c1006fe, 0xc71f, 0x4b5b, 0xad, 0xf9, 0xd5, 0x5d, 0xb4, 0x7d, 0xd9, 0x2 }, 2, PERF_COUNTERSET_MULTI_INSTANCES },
+    { { 0xad216274, 0xab2a, 0x47dd, 0x8f, 0xf3, 0x45, 0x39, 0xef, 0x41, 0x27, 0xab }, { 0x9c1006fe, 0xc71f, 0x4b5b, 0xad, 0xf9, 0xd5, 0x5d, 0xb4, 0x7d, 0xd9, 0x2 }, 3, PERF_COUNTERSET_MULTI_INSTANCES },
     { 1, PERF_COUNTER_RAWCOUNT, 0, sizeof(ULONG), PERF_DETAIL_NOVICE, 1, 0 },
     { 2, PERF_COUNTER_RAWCOUNT, 0, sizeof(ULONG), PERF_DETAIL_NOVICE, 1, 0 },
+    { 3, PERF_COUNTER_LARGE_RAWCOUNT, 0, sizeof(ULONGLONG), PERF_DETAIL_NOVICE, 1, 0 },
 };
 
 EXTERN_C FORCEINLINE
