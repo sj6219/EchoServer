@@ -100,5 +100,6 @@ void CForwardSocket::OnClose()
 
 void CForwardSocket::OnCloseEx()
 {
+	// this function is called before m_pSocket->Read() so m_pSocket->Shutdown() is not appropriate
 	m_pSocket->Close();
 }

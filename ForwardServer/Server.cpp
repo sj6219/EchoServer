@@ -15,6 +15,11 @@ CServer::CServer(LPCTSTR server, int port)
 
 }
 
+CServer::~CServer()
+{
+	_RPT(L"CServer::~CServer() %p \n", this);
+}
+
 void CServer::Start()
 {
 	for (auto &forward : CForwardConfig::s_vForwardList) {

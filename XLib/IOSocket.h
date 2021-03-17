@@ -6,6 +6,7 @@
 
 #define BUFFER_SIZE 8000
 #define XIOOBJECT_DEBUG
+
 class XIOObject 
 {
 public:
@@ -166,6 +167,7 @@ public :
 		XLock m_lock;
 
 		CSlot() : m_pBuffer(NULL) {}
+		~CSlot();
 	};
 
 	char m_buffer[BUFFER_SIZE];

@@ -11,6 +11,7 @@
 #include <mswsock.h>
 
 #define BUFFER_POOL_SIZE 16
+#define WAIT_IO_THREAD
 
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
@@ -47,6 +48,10 @@ XIOSocket::CInit::~CInit()
 	XIOSocket::Stop();
 }
 
+XIOBuffer::CSlot::~CSlot()
+{
+	//_RPT(_T("XIOBuffer::CSlot::~CSlot %p\n"), this);
+}
 
 XIOObject::~XIOObject()
 {
@@ -276,7 +281,8 @@ void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred
 	else
 		g_instance.PostObject(dwTransferred - 1, 0);
 	InterlockedDecrement(&s_nRunningThread);
-	SuspendThread(GetCurrentThread());
+	//SuspendThread(GetCurrentThread());
+	ExitThread(0);
 #endif
 }
 
@@ -326,8 +332,9 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				g_timerQueue.pop();
 			}
 			g_lockTimer.Unlock();
-			// wait IOThread 
 #ifdef WAIT_IO_THREAD
+			//Sleep(1000); // Wait for processing pending io 
+			// wait IOThread 
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
 #endif // WAIT_IO_THREAD
@@ -582,8 +589,11 @@ BOOL XIOSocket::CloseIOThread()
 
 void XIOSocket::FreeIOThread()
 {
-	//  CloseHandle(g_hTerminate);
-	//  CloseHandle(g_hCompletionPort);
+#ifdef WAIT_IO_THREAD
+	CloseHandle(XIOSocket::s_hCompletionPort);
+#endif
+	_RPT(L"XIOSocket::FreeIOThread() \n");
+
 	free(g_hThread);
 	free(g_nThreadId);
 	g_hThread = 0;
@@ -752,12 +762,12 @@ BOOL XIOServer::Start(int nPort, LPCTSTR lpszSocketAddr)
 			goto fail;
 		}
 		DWORD dwRecv;
-		//AddRefIO();
+		XIOServer::AddRefIO(); 
 		if (!AcceptEx(m_hSocket, m_hAcceptSocket[i], m_AcceptBuf[i], 0, sizeof(struct sockaddr_in) + 16,
 			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
 		{
 			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
-			//ReleaseIO();
+			XIOServer::ReleaseIO();
 			goto fail;
 		}
 	}
@@ -802,14 +812,16 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 		EASSERT(i < ACCEPT_SIZE);
 		if (!bSuccess)
 		{
-			if (m_hSocket == INVALID_SOCKET)
+			if (m_hSocket == INVALID_SOCKET) {
+				XIOServer::ReleaseIO();
 				return;
+			}
 			LOG_ERR(_T("accept callback error %d"), GetLastError());
 			closesocket(m_hAcceptSocket[i]);
 			m_hAcceptSocket[i] = INVALID_SOCKET;
 
 			//goto retry;
-			//ReleaseIO();
+			XIOServer::ReleaseIO();
 			return;
 		}
 		struct sockaddr_in* paddrLocal, * paddrRemote;
@@ -831,7 +843,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 		if (m_hAcceptSocket[i] == INVALID_SOCKET)
 		{
 			LOG_ERR(_T("accept socket error %d"), WSAGetLastError());
-			//ReleaseIO();
+			XIOServer::ReleaseIO();
 			return;
 		}
 		DWORD dwRecv;
@@ -839,7 +851,7 @@ void XIOServer::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 			sizeof(struct sockaddr_in) + 16, &dwRecv, &m_overlappedAccept[i]) && GetLastError() != ERROR_IO_PENDING)
 		{
 			LOG_ERR(_T("AcceptEx error %d"), WSAGetLastError());
-			//ReleaseIO();
+			XIOServer::ReleaseIO();
 			return;
 		}
 #else	// ACCEPT_SIZE

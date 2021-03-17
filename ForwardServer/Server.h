@@ -17,6 +17,7 @@ class CServer : public XIOServer
 
 public:
 	CServer(LPCTSTR server, int port);
+	~CServer();
 	int Size();
 	static void Start();
 	static void Stop();
