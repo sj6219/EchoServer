@@ -11,7 +11,7 @@
 #include <mswsock.h>
 
 #define BUFFER_POOL_SIZE 16
-#define WAIT_IO_THREAD
+#define EXIT_IO_THREAD
 
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
@@ -279,7 +279,7 @@ void XIOSocket::XIOTimerInstance::OnTimerCallback(int nId)
 
 void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
-#ifdef WAIT_IO_THREAD
+#ifdef EXIT_IO_THREAD
 	if (dwTransferred == 0)
 		SetEvent(g_hTimer);
 	else
@@ -336,11 +336,25 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				g_timerQueue.pop();
 			}
 			g_lockTimer.Unlock();
-#ifdef WAIT_IO_THREAD
+#ifdef EXIT_IO_THREAD
 			// wait IOThread 
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
-#endif // WAIT_IO_THREAD
+#endif 
+
+			// processing pending io
+			for (; ; )
+			{
+				DWORD dwTransferred;
+				XIOObject* pObject;
+				LPOVERLAPPED lpOverlapped;
+
+				BOOL bSuccess = GetQueuedCompletionStatus(s_hCompletionPort, &dwTransferred, (PULONG_PTR)&pObject, &lpOverlapped, 1);
+				if (!bSuccess && GetLastError() == WAIT_TIMEOUT)
+					break;
+				pObject->OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
+			}
+
 			CloseHandle(g_hTimer);
 			return 0;
 		}
@@ -584,7 +598,7 @@ unsigned XIOSocket::AddIOThread()
 
 BOOL XIOSocket::CloseIOThread()
 {
-	Sleep(1000); // Wait for processing pending io 
+	//Sleep(1000); // Wait for processing pending io 
 	if (InterlockedExchange(&g_nTerminating, 1))
 		return FALSE;
 	SetEvent(g_hTimer);
@@ -593,7 +607,7 @@ BOOL XIOSocket::CloseIOThread()
 
 void XIOSocket::FreeIOThread()
 {
-#ifdef WAIT_IO_THREAD
+#ifdef EXIT_IO_THREAD
 	CloseHandle(XIOSocket::s_hCompletionPort);
 #endif
 	_RPT(L"XIOSocket::FreeIOThread() \n");
