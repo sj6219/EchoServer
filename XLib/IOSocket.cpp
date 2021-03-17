@@ -16,11 +16,13 @@
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
 
-static XIOBuffer::CSlot g_slotBuffer[BUFFER_POOL_SIZE];
 // g_slotBuffer shoud be initialized before theInit 
 // because g_slotBuffer shold be freed after XIOBuffer freed
+static XIOBuffer::CSlot g_slotBuffer[BUFFER_POOL_SIZE];
+
+// #pragma init_seg(lib) is required 
+// because XIOBuffer cache shoud be freed after all XIOSocket freed
 static XIOSocket::CInit theInit;
-// XIOBuffer cache shoud be freed after all XIOSocket freed
 
 
 
@@ -170,7 +172,9 @@ void XIOSocket::Start()
 void XIOSocket::Stop()
 {
 	XIOSocket::FreeIOThread();
-	XIOBuffer::FreeAll();	// #pragma init_seg(lib) required
+
+	// #pragma init_seg(lib) is required because all XIOSocket should be freed before XIOBuffer be freed 
+	XIOBuffer::FreeAll();	 
 }
 
 XIOSocket::XIOSocket(SOCKET s)
@@ -333,7 +337,6 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 			}
 			g_lockTimer.Unlock();
 #ifdef WAIT_IO_THREAD
-			//Sleep(1000); // Wait for processing pending io 
 			// wait IOThread 
 			g_instance.PostObject(g_nThread - 1, 0);
 			WaitForSingleObject(g_hTimer, INFINITE);
@@ -581,6 +584,7 @@ unsigned XIOSocket::AddIOThread()
 
 BOOL XIOSocket::CloseIOThread()
 {
+	Sleep(1000); // Wait for processing pending io 
 	if (InterlockedExchange(&g_nTerminating, 1))
 		return FALSE;
 	SetEvent(g_hTimer);

@@ -28,7 +28,7 @@ void CSocket::OnCreate()
 	}
 	
 	CServer* pServer = m_pServer;
-	LOG_INFO(_T("new connection %s  to  %s:%d"), AtoT(inet_ntoa(m_addr)), pServer->m_forward_server, pServer->m_forward_port);
+	LOG_INFO(_T("new connection %s  to  %s:%d (%p)"), AtoT(inet_ntoa(m_addr)), pServer->m_forward_server, pServer->m_forward_port, this);
 
 	m_pForwardSocket = new CForwardSocket(this, hConnectSocket);
 	m_pForwardSocket->Initialize();
@@ -53,6 +53,7 @@ void CSocket::OnRead()
 
 void CSocket::OnClose()
 {
+	LOG_INFO(_T("connection close (%p)"),  this);
 	m_pServer->CServer::Remove( this);
 	m_pForwardSocket->Shutdown();
 	m_pForwardSocket = 0;
@@ -72,6 +73,7 @@ CForwardSocket::~CForwardSocket()
 
 void CForwardSocket::OnConnect()
 {
+	LOG_INFO(_T("forward connect (%p)"), this);
 	Read(0);
 	m_pSocket->Read(0);
 }
@@ -95,11 +97,13 @@ void CForwardSocket::OnRead()
 
 void CForwardSocket::OnClose()
 {
+	LOG_INFO(_T("forward connection close (%p)"), this);
 	m_pSocket->Shutdown();
 }
 
 void CForwardSocket::OnCloseEx()
 {
 	// this function is called before m_pSocket->Read() so m_pSocket->Shutdown() is not appropriate
+	LOG_INFO(_T("forward connect fail (%p)"), this);
 	m_pSocket->Close();
 }

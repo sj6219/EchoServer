@@ -24,7 +24,7 @@ void	CSocket::Read(DWORD dwLeft)
 
 void CSocket::OnCreate()
 {
-	LOG_INFO(_T("new connection %s"), AtoT(inet_ntoa(m_addr)));
+	LOG_INFO(_T("new connection from %s (%p)"), AtoT(inet_ntoa(m_addr)), this);
 	m_dwTimeout = GetTickCount() + 0x7fffffff;
 	CServer::Add(this);
 
@@ -53,6 +53,7 @@ void CSocket::OnRead()
 
 void CSocket::OnClose()
 {
+	LOG_INFO(_T("connection close (%p)"), this);
 	CServer::Remove( this);
 }
 
