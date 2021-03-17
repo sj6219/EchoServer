@@ -35,6 +35,7 @@ static int g_nHandle;
 static HANDLE *g_hThread;
 static unsigned *g_nThreadId;
 static int g_nThread;
+static HANDLE	g_hWaitThread;
 long XIOSocket::s_nRunningThread;
 HANDLE XIOSocket::s_hCompletionPort;
 static long g_nTerminating;
@@ -171,8 +172,6 @@ void XIOSocket::Start()
 
 void XIOSocket::Stop()
 {
-	XIOSocket::FreeIOThread();
-
 	// #pragma init_seg(lib) is required because all XIOSocket should be freed before XIOBuffer be freed 
 	XIOBuffer::FreeAll();	 
 }
@@ -574,6 +573,9 @@ BOOL XIOSocket::CreateIOThread(int nThread)
 		g_hThread[i] = (HANDLE)_beginthreadex(NULL, 0, IOThread, (void*)(INT_PTR)i, 0, &g_nThreadId[i]);
 	}
 
+	unsigned nWaitThreadId;
+	g_hWaitThread = (HANDLE)_beginthreadex(NULL, 0, XIOSocket::WaitThread, 0, 0, &nWaitThreadId);
+
 #if 0
 	UINT threadId;
 	HANDLE hThread = (HANDLE)_beginthreadex(NULL, 0, WaitThread, NULL, 0, &threadId);
@@ -598,22 +600,25 @@ unsigned XIOSocket::AddIOThread()
 
 BOOL XIOSocket::CloseIOThread()
 {
-	//Sleep(1000); // Wait for processing pending io 
 	if (InterlockedExchange(&g_nTerminating, 1))
 		return FALSE;
 	SetEvent(g_hTimer);
+	WaitForSingleObject(g_hWaitThread, INFINITE);
+	FreeIOThread();
 	return TRUE;
 }
 
 void XIOSocket::FreeIOThread()
 {
+	CloseHandle(g_hWaitThread);
+	g_hWaitThread = 0;
 #ifdef EXIT_IO_THREAD
 	for (int i = 0; i < g_nThread; ++i) {
 		CloseHandle(g_hThread[i]);
 	}
 	CloseHandle(XIOSocket::s_hCompletionPort);
 #endif
-	_RPT(L"XIOSocket::FreeIOThread() \n");
+	//_RPT(L"XIOSocket::FreeIOThread() \n");
 
 	free(g_hThread);
 	free(g_nThreadId);

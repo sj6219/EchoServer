@@ -68,7 +68,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		CServer::Stop();
 	}
 	XIOSocket::CloseIOThread();
-	WaitForSingleObject( g_hStartThread, INFINITE);
 	CForwardConfig::Close();
 
 	return (int) msg.wParam;
@@ -147,8 +146,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	
 	XIOSocket::CreateIOThread( CForwardConfig::s_nNumberOfThreads);
 
-	unsigned nStartThreadId;
-	g_hStartThread = (HANDLE)_beginthreadex( NULL, 0, XIOSocket::WaitThread, 0, 0, &nStartThreadId);
 	if (CForwardConfig::s_bAutoStart)
 		SendMessage(hWnd, WM_COMMAND, IDM_START, 0);
 

@@ -67,7 +67,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	}
 	XIOSocket::CloseIOThread();
-	WaitForSingleObject( g_hStartThread, INFINITE);
 	CEchoConfig::Close();
 
 	return (int) msg.wParam;
@@ -171,8 +170,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	
 	XIOSocket::CreateIOThread( CEchoConfig::s_nNumberOfThreads);
 
-	unsigned nStartThreadId;
-	g_hStartThread = (HANDLE)_beginthreadex( NULL, 0, XIOSocket::WaitThread, 0, 0, &nStartThreadId);
 	if (CEchoConfig::s_bAutoStart)
 		SendMessage(hWnd, WM_COMMAND, IDM_START, 0);
 

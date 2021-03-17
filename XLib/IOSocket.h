@@ -192,7 +192,6 @@ class XIOSocket : public XIOObject
 {
 public :
 
-
 	XLock m_lock;
 	OVERLAPPED m_overlappedRead;
 	OVERLAPPED m_overlappedWrite;
@@ -231,9 +230,12 @@ public :
 	static BOOL CloseIOThread();
 	static HANDLE s_hCompletionPort;
 	static long s_nRunningThread;
-	static void	FreeIOThread();
 	static unsigned __stdcall WaitThread(void *);
 
+protected:
+	static void	FreeIOThread();
+
+public:
 	class XIOTimer 
 	{
 	public :
