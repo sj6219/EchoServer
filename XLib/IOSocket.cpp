@@ -608,6 +608,9 @@ BOOL XIOSocket::CloseIOThread()
 void XIOSocket::FreeIOThread()
 {
 #ifdef EXIT_IO_THREAD
+	for (int i = 0; i < g_nThread; ++i) {
+		CloseHandle(g_hThread[i]);
+	}
 	CloseHandle(XIOSocket::s_hCompletionPort);
 #endif
 	_RPT(L"XIOSocket::FreeIOThread() \n");
