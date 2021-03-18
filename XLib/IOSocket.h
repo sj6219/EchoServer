@@ -174,7 +174,7 @@ public :
 	DWORD m_dwSize;
 	LONG m_nRef;
 	XIOBuffer *m_pNext;
-	long m_nBufferIndex;
+	XIOBuffer*& GetNext() { return m_pNext; }
 
 	static long	s_nCount;
 

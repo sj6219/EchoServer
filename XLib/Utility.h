@@ -9,7 +9,7 @@
 #include <vector>
 #include <math.h>
 #include <synchapi.h>
-
+#include <atomic>
 
 int	ExpandStringV(char * buffer, size_t count, const char * format, const char ** argptr);
 int	ExpandStringV(wchar_t * buffer, size_t count, const wchar_t * format, const wchar_t **argptr);
@@ -766,4 +766,36 @@ DWORD __stdcall DecryptCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall EncodeCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall DecodeCRC(DWORD crc, void* buf, int len);
 time_t GetTimeStamp();
+
+template<typename T> class LockfreeStack {
+	std::atomic_int64_t m_top;
+public:
+	LockfreeStack() : m_top(0)
+	{
+	}
+	void Push(T* p)
+	{
+		for (;;) {
+			__int64 top = m_top.load(std::memory_order_consume);
+			p->GetNext() = (T*)(top & 0xFFFFFFFFFFFFFFll);
+			if (m_top.compare_exchange_weak(top, (__int64)p + (top & 0xFF00000000000000ll), std::memory_order_release, std::memory_order_relaxed)) {
+				break;
+			}
+		}
+	}
+	T* Pop()
+	{
+		for (;;) {
+			__int64 top = m_top.load(std::memory_order_consume);
+			T* p = (T*)(top & 0xFFFFFFFFFFFFFFll);
+			if (p == NULL)
+				return NULL;
+			//(__int64)p->GetNext() + (top & 0xFF00000000000000)+0x100000000000000z;
+			if (m_top.compare_exchange_weak(top, (__int64)p->GetNext() + (top & 0xFF00000000000000ll) + 0x100000000000000ll, std::memory_order_release, std::memory_order_relaxed)) {
+				return p;
+				break;
+			}
+		}
+	}
+};
 

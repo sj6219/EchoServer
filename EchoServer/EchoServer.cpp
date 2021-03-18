@@ -108,16 +108,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-//
-
-//
-
-//
-
-//
-
-
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 

@@ -18,7 +18,7 @@
 
 // g_slotBuffer shoud be initialized before theInit 
 // because g_slotBuffer shold be freed after XIOBuffer freed
-static XIOBuffer::CSlot g_slotBuffer[BUFFER_POOL_SIZE];
+LockfreeStack<XIOBuffer> g_buffer_stack;
 
 // #pragma init_seg(lib) is required 
 // because XIOBuffer cache shoud be freed after all XIOSocket freed
@@ -113,56 +113,34 @@ void XIOObject::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpO
 
 
 
-static long g_nBufferIndex = -1;
 long XIOBuffer::s_nCount;
 
 XIOBuffer *XIOBuffer::Alloc()
 {
-	long nBufferIndex = InterlockedIncrement(&g_nBufferIndex);
-	CSlot *pSlot = &g_slotBuffer[nBufferIndex & (BUFFER_POOL_SIZE - 1)];
-//	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
-	XIOBuffer *newBuffer;
-	pSlot->m_lock.Lock();
-	if ((newBuffer = pSlot->m_pBuffer) != NULL)
+	XIOBuffer *newBuffer = g_buffer_stack.Pop();
+	if (newBuffer == NULL)
 	{
-		pSlot->m_pBuffer = newBuffer->m_pNext;
-		pSlot->m_lock.Unlock();
-	}
-	else
-	{
-		pSlot->m_lock.Unlock();
 		newBuffer = new XIOBuffer;
 	}
 	newBuffer->m_dwSize = 0;
 	newBuffer->m_nRef = 1;
-	newBuffer->m_nBufferIndex = nBufferIndex;
 	newBuffer->m_pNext = NULL;
 	return newBuffer;
 }
 
 void XIOBuffer::Free()
 {
-	CSlot *pSlot = &g_slotBuffer[m_nBufferIndex & (BUFFER_POOL_SIZE - 1)];
-//	CSlot *pSlot = &g_slotBuffer[InterlockedIncrement(&g_nBufferIndex) & (BUFFER_POOL_SIZE - 1)];
-	pSlot->m_lock.Lock();
-	m_pNext = pSlot->m_pBuffer;
-	pSlot->m_pBuffer = this;
-	pSlot->m_lock.Unlock();
+	g_buffer_stack.Push(this);
 }
 
 void XIOBuffer::FreeAll()
 {
-	for (int i = 0; i < BUFFER_POOL_SIZE; i++)
+	for (;;)
 	{
-		CSlot *pSlot = &g_slotBuffer[i];
-		pSlot->m_lock.Lock();
-		XIOBuffer *pBuffer;
-		while ((pBuffer = pSlot->m_pBuffer) != NULL)
-		{
-			pSlot->m_pBuffer = pBuffer->m_pNext;
-			delete pBuffer;
-		}
-		pSlot->m_lock.Unlock();
+		XIOBuffer *pBuffer = g_buffer_stack.Pop();
+		if (pBuffer == NULL)
+			break;
+		delete pBuffer;
 	}
 }
 
@@ -348,7 +326,7 @@ unsigned __stdcall XIOSocket::WaitThread(void *)
 				XIOObject* pObject;
 				LPOVERLAPPED lpOverlapped;
 
-				BOOL bSuccess = GetQueuedCompletionStatus(s_hCompletionPort, &dwTransferred, (PULONG_PTR)&pObject, &lpOverlapped, 1);
+				BOOL bSuccess = GetQueuedCompletionStatus(s_hCompletionPort, &dwTransferred, (PULONG_PTR)&pObject, &lpOverlapped, 10);
 				if (!bSuccess && GetLastError() == WAIT_TIMEOUT)
 					break;
 				pObject->OnIOCallback(bSuccess, dwTransferred, lpOverlapped);
