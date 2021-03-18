@@ -16,9 +16,9 @@
 #pragma warning(disable: 4073)
 #pragma init_seg(lib) // XIOSocket::CInit::~CInit
 
-// g_slotBuffer shoud be initialized before theInit 
-// because g_slotBuffer shold be freed after XIOBuffer freed
-LockfreeStack<XIOBuffer> g_buffer_stack;
+// g_buffer_stack shoud be initialized before theInit 
+// because g_buffer_stack shold be freed after XIOBuffer freed
+LockfreeStack<XIOBuffer *> g_buffer_stack;
 
 // #pragma init_seg(lib) is required 
 // because XIOBuffer cache shoud be freed after all XIOSocket freed
