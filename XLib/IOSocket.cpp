@@ -51,11 +51,6 @@ XIOSocket::CInit::~CInit()
 	XIOSocket::Stop();
 }
 
-XIOBuffer::CSlot::~CSlot()
-{
-	//_RPT(_T("XIOBuffer::CSlot::~CSlot %p\n"), this);
-}
-
 XIOObject::~XIOObject()
 {
 }

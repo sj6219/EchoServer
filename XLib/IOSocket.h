@@ -160,16 +160,6 @@ public:
 class XIOBuffer 
 {
 public :
-	class CSlot
-	{
-	public :
-		XIOBuffer *m_pBuffer;
-		XLock m_lock;
-
-		CSlot() : m_pBuffer(NULL) {}
-		~CSlot();
-	};
-
 	char m_buffer[BUFFER_SIZE];
 	DWORD m_dwSize;
 	LONG m_nRef;
