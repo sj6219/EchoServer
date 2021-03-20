@@ -900,7 +900,7 @@ BOOL CreatePath(LPCTSTR szPath)
 	LPCTSTR str = _tcsrchr(szPath, '\\');
 	if (str == 0)
 		return FALSE;
-	_tcsncpy_s(szParent, szPath, (char *)str - (char *)szPath);
+	_tcsncpy_s(szParent, szPath, str - szPath);
 	if (CreateDirectory(szParent, NULL))
 		return TRUE;
 	if (GetLastError() != ERROR_PATH_NOT_FOUND)

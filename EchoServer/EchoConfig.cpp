@@ -8,6 +8,7 @@
 #include "XFile.h"
 
 #define ECHO_PORT 50004
+//#define USE_PARSELIST
 
 int	CEchoConfig::s_nMailBindPort;
 tstring CEchoConfig::s_strMailFrom;
@@ -26,26 +27,8 @@ template <typename T> T GetValue(lisp::var var, LPCTSTR name, T defaultValue)
 }
 
 
-
-
-BOOL CEchoConfig::Open()
+BOOL CEchoConfig::Load(lisp::var var)
 {
-	LPCTSTR str;
-
-	XParser parser;
-
-#ifdef USE_PARSELIST
-	XFileEx file;
-	file.Open(_T("EchoConfig.txt"));
-	parser.Open(&file);
-	lisp::var var;
-	auto func = [] (lisp::var in, void *param)->DWORD_PTR {
-		*(lisp::var *) param = in.copy();
-		return 1; };
-	parser.ParseList(func, &var);
-#else
-	lisp::var var = parser.Load(_T("EchoConfig.txt"));
-#endif
 	if (var.errorp())
 	{
 		LOG_ERR(_T("can't open EchoConfig.txt"));
@@ -53,7 +36,7 @@ BOOL CEchoConfig::Open()
 	}
 
 	SYSTEM_INFO sysinfo;
-	GetSystemInfo( &sysinfo);
+	GetSystemInfo(&sysinfo);
 	s_strMailServer = GetValue<LPCTSTR>(var, _T("MailServer"), _T(""));
 	s_nMailBindPort = GetValue<int>(var, _T("MailBindPort"), 25);
 	s_strMailFrom = GetValue<LPCTSTR>(var, _T("MailFrom"), _T(""));
@@ -63,17 +46,37 @@ BOOL CEchoConfig::Open()
 	s_nMaxUser = GetValue<int>(var, _T("MaxUser"), 5000);
 	s_bAutoStart = GetValue<int>(var, _T("AutoStart"), 0);
 	s_nTimeStamp = GetTimeStamp();
-	str = GetValue<LPCTSTR>(var, _T("Title"), _T(""));
-	if( str[0])
+	LPCTSTR str = GetValue<LPCTSTR>(var, _T("Title"), _T(""));
+	if (str[0])
 	{
 		TCHAR buf[32];
-		_stprintf( buf, _T("%s on port %d"), str, s_nPort);
-		SetWindowText( XIOScreen::s_hWnd, buf);
+		_stprintf(buf, _T("%s on port %d"), str, s_nPort);
+		SetWindowText(XIOScreen::s_hWnd, buf);
 	}
-
-	var.destroy();
-
 	return TRUE;
+}
+
+BOOL CEchoConfig::Open()
+{
+
+	XParser parser;
+
+#ifdef USE_PARSELIST
+	XFileEx file;
+	file.Open(_T("EchoConfig.txt"));
+	parser.Open(&file);
+	auto func = [] (lisp::var var, void *param)->DWORD_PTR 
+	{
+		return CEchoConfig::Load(var);
+	};
+	return parser.ParseList(func, NULL);
+#else
+	lisp::var var = parser.Load(_T("EchoConfig.txt"));
+	auto ret = CEchoConfig::Load(var);
+	var.destroy();
+	return ret;
+#endif
+
 }
 
 void CEchoConfig::Close()

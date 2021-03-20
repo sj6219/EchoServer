@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IOLIb.h"
+#include "lisp.h"
 #include <vector>
 
 class CEchoConfig  
@@ -9,6 +10,7 @@ class CEchoConfig
 public:
 	static BOOL	Open();
 	static void Close();
+	static BOOL Load(lisp::var);
 
 	static tstring s_strMailFrom;
 	static tstring s_strMailTo;
