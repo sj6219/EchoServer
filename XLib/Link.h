@@ -75,9 +75,11 @@ public :
 template <typename TYPE, size_t offset = 0> class linked_list_
 {
 public :
-	typedef	TYPE &reference;
-	typedef	TYPE *pointer;
-	typedef	TYPE value_type;
+	typedef 	TYPE &reference;
+	typedef		TYPE *pointer;
+	typedef		TYPE value_type;
+	//typedef 	const TYPE& const_reference;
+	//typedef		const TYPE* const_pointer;
 protected :
 	XLink m_list;
 
@@ -87,7 +89,7 @@ public :
 	public :
 
 		iterator() {}
-		iterator(TYPE ptr) 
+		iterator(TYPE ptr)
 		{
 			m_ptr = ptr;
 		}
@@ -97,53 +99,53 @@ public :
 			m_ptr = (TYPE) ((char *)pLink - offset)	;
 		}
 
-		XLink* ToLinkPtr() const
+		XLink* ToLinkPtr() const noexcept
 		{
 			return (XLink *)((char *)m_ptr + offset);
 		}
 		
-		reference operator*() 
+		reference operator*() const noexcept
 		{	// return designated value
-			return m_ptr;
+			return (reference) m_ptr;
 		}
 
-		//pointer operator->() const
-		//{	// return pointer to class object
-		//	return (&**this);
-		//}
+		pointer operator->()  const noexcept
+		{	// return pointer to class object
+			return (&**this);
+		}
 
-		iterator& operator++()
+		iterator& operator++() noexcept
 		{	// preincrement
 			m_ptr = iterator(ToLinkPtr()->m_pNext).m_ptr;
 			return (*this);
 		}
 
-		iterator operator++(int)
+		iterator operator++(int) noexcept
 		{	// postincrement
 			iterator _Tmp = *this;
 			++*this;
-			return (_Tmp);
+			return _Tmp;
 		}
 
-		iterator& operator--()
+		iterator& operator--() noexcept
 		{	// predecrement
 			m_ptr = iterator(ToLinkPtr()->m_pPrev).m_ptr;
 			return (*this);
 		}
 
-		iterator operator--(int)
+		iterator operator--(int) noexcept
 		{	// postdecrement
 			iterator _Tmp = *this;
 			--*this;
 			return (_Tmp);
 		}
 		
-		bool operator==(const iterator& _Right) const
+		bool operator==(const iterator & _Right) const noexcept
 		{	// test for iterator equality
 			return (m_ptr == _Right.m_ptr);
 		}
 
-		bool operator!=(const iterator& _Right) const
+		bool operator!=(const iterator& _Right) const noexcept
 		{	// test for iterator inequality
 			return (!(*this == _Right));
 		}
@@ -151,149 +153,169 @@ public :
 	protected:
 		TYPE m_ptr;
 	};
-	class reverse_iterator : public std::iterator<std::bidirectional_iterator_tag, TYPE>
-	{	// iterator for mutable list
-	public :
+	
+	//class iterator : public const_iterator
+	//{	// const_iterator for mutable list
+	//	using super = const_iterator;
+	//public:
 
-		reverse_iterator() {}
-		reverse_iterator(TYPE ptr) 
-		{
-			m_ptr = ptr;
-		}
+	//	iterator() {}
+	//	iterator(TYPE ptr) : super(ptr)
+	//	{
+	//	}
 
-		explicit reverse_iterator(XLink *pLink)
-		{
-			m_ptr = (TYPE) ((char *)pLink - offset)	;
-		}
+	//	explicit iterator(XLink* pLink) : super(pLink)
+	//	{
+	//	}
 
-		XLink* ToLinkPtr() const
-		{
-			return (XLink *)((char *)m_ptr + offset);
-		}
-		
-		reference operator*() 
-		{	// return designated value
-			return m_ptr;
-		}
+	//	XLink* ToLinkPtr() const noexcept
+	//	{
+	//		return super::ToLinkPtr();
+	//	}
 
-		//pointer operator->() const
-		//{	// return pointer to class object
-		//	return (&**this);
-		//}
+	//	reference operator*() const noexcept
+	//	{	// return designated value
+	//		return const_cast<reference>(super::operator*());
+	//	}
 
-		reverse_iterator& operator++()
-		{	// preincrement
-			m_ptr = reverse_iterator(ToLinkPtr()->m_pPrev).m_ptr;
-			return (*this);
-		}
+	//	pointer operator->()  const noexcept
+	//	{	// return pointer to class object
+	//		return const_cast<pointer>(super::operator->());
+	//	}
 
-		reverse_iterator operator++(int)
-		{	// postincrement
-			reverse_iterator _Tmp = *this;
-			++*this;
-			return (_Tmp);
-		}
+	//	iterator& operator++() noexcept
+	//	{	// preincrement
+	//		super::operator++();
+	//		return *this;
+	//	}
 
-		reverse_iterator& operator--()
-		{	// predecrement
-			m_ptr = reverse_iterator(ToLinkPtr()->m_pNext).m_ptr;
-			return (*this);
-		}
+	//	iterator operator++(int) noexcept
+	//	{	// postincrement
+	//		iterator _Tmp = *this;
+	//		++* this;
+	//		return (_Tmp);
+	//	}
 
-		reverse_iterator operator--(int)
-		{	// postdecrement
-			reverse_iterator _Tmp = *this;
-			--*this;
-			return (_Tmp);
-		}
-		
-		bool operator==(const reverse_iterator& _Right) const
-		{	// test for iterator equality
-			return (m_ptr == _Right.m_ptr);
-		}
+	//	iterator& operator--() noexcept
+	//	{	// predecrement
+	//		super::operator--();
+	//		return *this;
+	//	}
 
-		bool operator!=(const reverse_iterator& _Right) const
-		{	// test for iterator inequality
-			return (!(*this == _Right));
-		}
+	//	iterator operator--(int) noexcept
+	//	{	// postdecrement
+	//		iterator _Tmp = *this;
+	//		--* this;
+	//		return (_Tmp);
+	//	}
 
-	protected:
-		TYPE m_ptr;
-	};
+	//	bool operator==(const iterator& _Right) const noexcept
+	//	{	// test for iterator equality
+	//		return super::operator==(_Right);
+	//	}
 
-	linked_list_() 
+	//	bool operator!=(const iterator& _Right) const noexcept
+	//	{	// test for iterator inequality
+	//		return super::operator!=(_Right);
+	//	}
+	//};
+	using reverse_iterator = std::reverse_iterator<iterator>;
+	//using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+
+	linked_list_() noexcept
 	{
 		m_list.Initialize();
 	}
 
-	void push_front(TYPE element)
+	void push_front(TYPE element) noexcept
 	{
 		iterator(element).ToLinkPtr()->Append(&m_list);
 	}		
 
-	void push_back(TYPE element)
+	void push_back(TYPE element) noexcept
 	{
 		iterator(element).ToLinkPtr()->Insert(&m_list);
 	}
 
-	TYPE front()
+	TYPE front() noexcept
 	{
 		return *iterator(m_list.m_pNext);
 	}
 
-	TYPE back()
+	TYPE back() noexcept
 	{
 		return *iterator(m_list.m_pPrev);
 	}
 
-	void pop_front()
+	void pop_front() noexcept
 	{
 		m_list.m_pNext->Remove();
 	}
 
-	void pop_back()
+	void pop_back() noexcept
 	{
 		m_list.m_pPrev->Remove();
 	}
 
-	bool empty()
+	bool empty() noexcept
 	{
 		return m_list.Empty() != 0;
 	}
 
-	iterator begin()
+	iterator begin() noexcept
 	{
 		return iterator(m_list.m_pNext);
 	}
 
-	iterator end()
+	//const_iterator begin() const noexcept
+	//{
+	//	return begin();
+	//}
+
+	iterator end() noexcept
 	{
 		return iterator(&m_list);
 	}
 
-	reverse_iterator rbegin()
+	//const_iterator end() const noexcept
+	//{
+	//	return end();
+	//}
+
+	reverse_iterator rbegin() noexcept
 	{	// return iterator for beginning of reversed mutable sequence
-		return (reverse_iterator(m_list.m_pPrev));
+		return reverse_iterator(end());
 	}
 
-	reverse_iterator rend()
+	//const_reverse_iterator rbegin() const noexcept
+	//{
+	//	return rbegin();
+	//}
+
+	reverse_iterator rend() noexcept
 	{	// return iterator for end of reversed mutable sequence
-		return reverse_iterator(&m_list);
+		return reverse_iterator(begin());
 	}
 
-	iterator insert(iterator where, TYPE element)
+	//const_reverse_iterator rend() const noexcept
+	//{	// return iterator for end of reversed mutable sequence
+	//	return reverse_iterator(begin());
+	//}
+
+	iterator insert(iterator where, TYPE element) noexcept
 	{
 		iterator(element).ToLinkPtr()->Insert(where.ToLinkPtr());
 		return iterator(element);
 	}
 
-	static iterator erase(iterator where)
+	static iterator erase(iterator where) noexcept
 	{
 		(where++).ToLinkPtr()->Remove();
 		return where;
 	}
 		
-	void clear()
+	void clear() noexcept
 	{
 		m_list.Initialize();
 	}

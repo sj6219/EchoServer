@@ -8,6 +8,8 @@
 #include <time.h>
 #include <strsafe.h>
 #include <malloc.h>
+#include <iterator>
+#include <algorithm>
 
 void XSpinLock::wait()
 {
@@ -1000,11 +1002,13 @@ tstring GetUniqueName()
 
 LPCTSTR GetNamePart(LPCTSTR szPath)
 {
-	LPCTSTR ptr = _tcsrchr(szPath, '\\');
-	if (ptr)
-		return ptr+1;
-	else
-		return szPath;
+	auto n =_tcslen(szPath);
+	auto it = std::find_if(
+		std::make_reverse_iterator(szPath + n),
+		std::make_reverse_iterator(szPath),
+		[](TCHAR v) { return v == '\\' || v == '/'; });
+	LPCTSTR p = it.base();
+	return p;
 }
 
 const DWORD util::m_vCRC32Table[] = 
