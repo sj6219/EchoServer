@@ -63,7 +63,11 @@ BOOL CEchoConfig::Open()
 
 #ifdef USE_PARSELIST
 	XFileEx file;
-	file.Open(_T("EchoConfig.txt"));
+	if (!file.Open(_T("EchoConfig.txt")))
+	{
+		LOG_ERR(_T("can't open EchoConfig.txt"));
+		return FALSE;
+	}
 	parser.Open(&file);
 	auto func = [] (lisp::var var, void *param)->DWORD_PTR 
 	{

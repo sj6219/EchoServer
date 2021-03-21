@@ -77,7 +77,11 @@ BOOL CForwardConfig::Open()
 
 #ifdef USE_PARSELIST
 	XFileEx file;
-	file.Open(_T("FowardConfig.txt"));
+	if (!file.Open(_T("ForwardConfig.txt"))) {
+		LOG_ERR(_T("can't open ForwardConfig.txt"));
+		return FALSE;
+	}
+
 	parser.Open(&file);
 	auto func = [](lisp::var var, void* param)->DWORD_PTR
 	{
