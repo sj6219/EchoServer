@@ -19,6 +19,15 @@
 // Windows Header Files
 #include <windows.h>
 
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new NEW
+#else
+#define NEW new
+#endif
+
 #include "IOMemory.h"
 //#include "IOLib.h"
 

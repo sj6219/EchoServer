@@ -158,7 +158,7 @@ lisp::_object*	lisp::_cons::copy() const
 	_object **ppObject = &root;
 	for ( ; ; ) {
 		const _object *child = parent->m_cdr.m_pObject;
-		_cons *cons = DBG_NEW _cons(parent->m_car.m_pObject->copy(), 0);
+		_cons *cons = NEW _cons(parent->m_car.m_pObject->copy(), 0);
 		*ppObject = cons; 
 		ppObject = &cons->m_cdr.m_pObject;
 		if (*(DWORD **)child != vptr) { // if (!child->consp())

@@ -7,6 +7,10 @@
 #define PAGES_PER_GROUP     8       //  tunable value
 #define GROUPS_PER_REGION   32      //  tunable value (max 32)
 
+
+
+#ifndef	_DEBUG
+#include <cstdlib>
 #undef malloc
 #undef calloc
 #undef realloc
@@ -14,32 +18,12 @@
 #undef free
 #undef _msize
 
-
-#ifdef	_DEBUG
-
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-
-#undef new
-
-//inline void * operator new(size_t cb, const char * szFileName, int nLine)
-//{
-//    return _malloc_dbg(cb, _NORMAL_BLOCK, szFileName, nLine);
-//}
-
-#define DBG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DBG_NEW
-
-#else
-#include <cstdlib>
 #define _expand(p, s)     XIOMemory::__expand(p,s)
 #define free(p)           XIOMemory::_free(p)
 #define _msize(p)         XIOMemory::__msize(p)
 #define malloc(s)         XIOMemory::_malloc(s)
 #define calloc(c, s)      XIOMemory::_calloc(c,s)
 #define realloc(p, s)     XIOMemory::_realloc(p,s)
-
-#define DBG_NEW new
 #endif // _DEBUG
 
 

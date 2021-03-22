@@ -5,9 +5,6 @@
 #pragma once
 #include <string>
 
-#pragma push_macro("new")
-#undef new
-
 #ifdef	UNICODE
 typedef	std::wstring tstring;
 #else
@@ -154,7 +151,7 @@ namespace lisp
 		virtual float GetFloat() const noexcept { return (float) m_nValue; }
 		virtual bool numberp() const noexcept { return true; }
 		virtual bool integerp() const noexcept { return true; }
-		virtual _object* copy() const  { return DBG_NEW _integer(m_nValue); }
+		virtual _object* copy() const  { return new _integer(m_nValue); }
 		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
 		virtual tstring print(int level) const noexcept;
@@ -176,7 +173,7 @@ namespace lisp
 		virtual float GetFloat() const noexcept { return m_fValue; }
 		virtual bool numberp() const noexcept { return true; }
 		virtual bool floatp() const noexcept { return true; }
-		virtual _object* copy() const  { return DBG_NEW _float(m_fValue); }
+		virtual _object* copy() const  { return new _float(m_fValue); }
 		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
 		virtual tstring print(int level) const noexcept;
@@ -196,4 +193,3 @@ namespace lisp
 	var nreverse(var v) noexcept;
 }
 
-#pragma pop_macro("new")

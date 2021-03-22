@@ -1,9 +1,9 @@
 
 #include "pch.h"
-#include <windows.h>
-#include <tchar.h>
+#include <cstdlib>
 #include "IOMemory.h"
 #include "IOException.h"
+
 #pragma warning(disable: 4074) 
 #pragma init_seg(compiler)
 
@@ -15,9 +15,6 @@ static XIOMemory::CInit  theInit;
 #ifdef	DEBUG_LEAK
 #define MEMORY_HEAP_SIZE 1
 #define IO_HEAP
-#else
-#pragma optimize("gt", on)
-#pragma optimize("y", off)
 #endif
 #ifndef _DEBUG
 static XIOMemory g_memory[MEMORY_HEAP_SIZE]; 
