@@ -12,7 +12,7 @@ using namespace lisp;
 #undef new
 #endif
 
-var	lisp::nreverse(var v)
+var	lisp::nreverse(var v) noexcept
 {
 	_object *pInput = v.m_pObject;
 	if (!pInput->consp())
@@ -45,25 +45,25 @@ _object* lisp::_string::copy() const
 	return new (p) _string((LPCTSTR) memcpy(p + sizeof(_string), m_pString, size)); 
 }
 
-void lisp::_string::destroy() 
+void lisp::_string::destroy() noexcept
 { 
 	free(this); 
 }
 
 #ifdef _DEBUG
-tstring lisp::_string::print(int level) const
+tstring lisp::_string::print(int level) const noexcept
 {
 	return tstring(_T("\"")) +  m_pString + _T('"');
 }
 
-tstring lisp::_integer::print(int level) const
+tstring lisp::_integer::print(int level) const noexcept
 {
 	TCHAR buf[20];
 	_stprintf_s(buf, _T("%d"), m_nValue);
 	return buf;
 }
 
-tstring lisp::_float::print(int level) const
+tstring lisp::_float::print(int level) const noexcept
 {
 	TCHAR buf[20];
 	_stprintf_s(buf,  _T("%.2f"), m_fValue);
@@ -71,7 +71,7 @@ tstring lisp::_float::print(int level) const
 }
 #endif
 
-int	lisp::_cons::length() const
+int	lisp::_cons::length() const noexcept
 {
 	int len = 0;
 	var v = m_cdr;
@@ -85,7 +85,7 @@ int	lisp::_cons::length() const
 }
 
 #ifdef _DEBUG
-tstring	lisp::_cons::print(int level) const
+tstring	lisp::_cons::print(int level) const noexcept
 {
 	if (level >= 6)
 		return _T("(...)");
@@ -96,24 +96,24 @@ tstring	lisp::_cons::print(int level) const
 	return _T('(') + m_car.print(level+4) + _T(" . ") + m_cdr.print(level+1) + _T(')');
 }
 
-tstring lisp::_null::print(int level) const
+tstring lisp::_null::print(int level) const noexcept
 {
 	return _T("()");
 }
 
-tstring lisp::_error::print(int level) const
+tstring lisp::_error::print(int level) const noexcept
 {
 	return _T("#error");
 }
 
-void	lisp::var::print() const
+void	lisp::var::print() const noexcept
 {
 	_RPT(_T("%s\n"), print(0).c_str());
 }
 
 #endif
 
-void lisp::_cons::destroy()
+void lisp::_cons::destroy() noexcept
 {
 	DWORD *vptr = *(DWORD **) this;
 	_cons *parent = this;
@@ -129,7 +129,7 @@ void lisp::_cons::destroy()
 	}
 }
 
-lisp::var lisp::var::get(LPCTSTR name)
+lisp::var lisp::var::get(LPCTSTR name) noexcept
 {
 	var parent = *this;
 	for ( ; !parent.null() ; ) {
@@ -140,7 +140,7 @@ lisp::var lisp::var::get(LPCTSTR name)
 	return nil;
 }
 
-lisp::var lisp::var::nth(int pos)
+lisp::var lisp::var::nth(int pos) noexcept
 {
 	var v = *this;
 	for ( ; --pos >= 0; ) {
@@ -149,7 +149,7 @@ lisp::var lisp::var::nth(int pos)
 	return v.car();
 }
 
-lisp::_object*	lisp::_cons::copy() const
+lisp::_object*	lisp::_cons::copy() const 
 {
 	DWORD *vptr = *(DWORD **) this;
 	const _cons *parent = this;
@@ -158,7 +158,7 @@ lisp::_object*	lisp::_cons::copy() const
 	_object **ppObject = &root;
 	for ( ; ; ) {
 		const _object *child = parent->m_cdr.m_pObject;
-		_cons *cons = new _cons(parent->m_car.m_pObject->copy(), 0);
+		_cons *cons = DBG_NEW _cons(parent->m_car.m_pObject->copy(), 0);
 		*ppObject = cons; 
 		ppObject = &cons->m_cdr.m_pObject;
 		if (*(DWORD **)child != vptr) { // if (!child->consp())
@@ -170,7 +170,7 @@ lisp::_object*	lisp::_cons::copy() const
 	return root;
 }
 
-lisp::var lisp::var::get(LPCTSTR name, int pos)
+lisp::var lisp::var::get(LPCTSTR name, int pos) noexcept
 {
 	var parent = *this;
 	for ( ; !parent.null() ; ) {
@@ -181,7 +181,7 @@ lisp::var lisp::var::get(LPCTSTR name, int pos)
 	return nil;
 }
 
-lisp::var lisp::var::nthcdr(int pos)
+lisp::var lisp::var::nthcdr(int pos) noexcept
 {
 	var v = *this;
 	for ( ; --pos >= 0; ) {
@@ -192,17 +192,17 @@ lisp::var lisp::var::nthcdr(int pos)
 
 
 
-int	lisp::_string::GetInteger() const
+int	lisp::_string::GetInteger() const noexcept
 {
 	return _tcstol(m_pString, 0, 0);
 }
 
-float	lisp::_string::GetFloat() const
+float	lisp::_string::GetFloat() const noexcept
 {
 	return (float) _tstof(m_pString);
 }
 
-unsigned	lisp::_string::GetUnsigned() const
+unsigned	lisp::_string::GetUnsigned() const noexcept
 {
 	return _tcstoul(m_pString, 0, 0);
 }

@@ -39,6 +39,7 @@
 #define calloc(c, s)      XIOMemory::_calloc(c,s)
 #define realloc(p, s)     XIOMemory::_realloc(p,s)
 
+#define DBG_NEW new
 #endif // _DEBUG
 
 

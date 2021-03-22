@@ -144,8 +144,6 @@ namespace util
 	void	FreePage(XMemoryPage *pPage);
 }
 
-#pragma push_macro("new")
-#undef new
 
 class XMemoryPage : public XLink
 {
@@ -238,6 +236,8 @@ public:
 
 };
 
+#pragma push_macro("new")
+#undef new
 
 template <int size>  typename XMemoryPool<size>  XMemoryPool<size>::s_self;
 
@@ -253,144 +253,6 @@ template <typename TYPE> void XDestruct(TYPE *ptr)
 	XMemoryPool<sizeof(TYPE)>::Free(ptr);
 }
 
-template <int size> class YMemoryPool {
-public:
-	union U {
-		char m_buffer[size];
-		U *m_pU;
-	};
-
-	U* m_pU;
-#ifdef	_MT
-	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.Lock();}
-	static void Unlock()	{ s_self.m_lock.Unlock();}
-#else
-	static void Lock()		{}
-	static void Unlock()	{}
-#endif
-	~YMemoryPool() { YMemoryPool::FreeAll(); }
-
-	static YMemoryPool s_self;
-		
-	static void *Alloc() 
-	{
-		Lock();
-		U* pU;
-		if ((pU = s_self.m_pU) != NULL) {
-			s_self.m_pU = pU->m_pU;
-		Unlock();
-#ifdef	_DEBUG
-			pU = (U*) realloc(pU, sizeof(U));
-#endif
-		}
-		else {
-			Unlock();
-			pU = (U*) malloc(sizeof(U));
-		}
-#ifdef	_DEBUG
-		memset(pU, 0xfc, sizeof(U));
-#endif
-		return pU;
-	}
-
-	static void Free(void *pT)
-	{
-#ifdef	_DEBUG
-		memset(pT, 0xfd, sizeof(U));
-#endif
-		Lock();
-		U* pU = (U*) pT;
-		pU->m_pU = s_self.m_pU;
-		s_self.m_pU = pU;
-		Unlock();
-	}
-
-	static void FreeAll()
-	{
-		Lock();
-		U *pU;
-		while ((pU = s_self.m_pU) != NULL) {
-			s_self.m_pU = pU->m_pU;
-			free(pU);
-		}
-		Unlock();
-	}
-};
-
-template <int size>  typename YMemoryPool<size>  YMemoryPool<size>::s_self;
-
-template <typename TYPE> TYPE *YConstruct()
-{
-	return new (YMemoryPool<sizeof(TYPE)>::Alloc()) TYPE;
-}
-
-template <typename TYPE> void YDestruct(TYPE *ptr)
-{
-	ptr->~TYPE();
-	YMemoryPool<sizeof(TYPE)>::Free(ptr);
-}
-
-
-template <class T> class ZMemoryPool {
-public:
-	T *	m_pT;
-#ifdef	_MT
-	XLock	m_lock;
-	static void Lock()		{ s_self.m_lock.Lock();}
-	static void Unlock()	{ s_self.m_lock.Unlock();}
-#else
-	static void Lock()		{}
-	static void Unlock()	{}
-#endif
-	~ZMemoryPool() { ZMemoryPool::FreeAll(); }
-
-	static ZMemoryPool s_self;
-		
-	static T* Alloc()
-	{
-		T* pT;
-		Lock();
-		if ((pT = s_self.m_pT) != NULL) {
-			s_self.m_pT = (T *) pT->m_pNext;
-			Unlock();
-			return pT;
-		}
-		else {
-			Unlock();
-			return new T;
-		}
-	}
-	static void Free(T* pT) 
-	{
-		Lock();
-		pT->m_pNext = s_self.m_pT;
-		s_self.m_pT = pT;
-		Unlock();
-	}
-	static void FreeAll()
-	{
-		Lock();
-		T *pT;
-		while ((pT = s_self.m_pT) != NULL) {
-			s_self.m_pT = (T *) pT->m_pNext;
-			delete pT;
-		}
-		Unlock();
-	}
-};
-
-template <class T> typename ZMemoryPool<T> ZMemoryPool<T>::s_self;
-
-template <typename TYPE> TYPE *ZConstruct()
-{
-	return ZMemoryPool<TYPE>::Alloc();
-}
-
-template <typename TYPE> void ZDestruct(TYPE *ptr)
-{
-	ZMemoryPool<TYPE>::Free(ptr);
-}
 #pragma pop_macro("new")
 
 
@@ -465,8 +327,8 @@ BOOL DeletePath( LPCTSTR ofname);
 void LogPacket( int nType, int nSize, char* buffer);
 
 #ifdef	UNICODE
-std::wstring ToWString(LPCSTR lpa);
-std::string ToString(LPCWSTR lpw);
+std::wstring ToWString(LPCSTR lpa) noexcept;
+std::string ToString(LPCWSTR lpw) noexcept;
 #define AtoT(lpa) ToWString(lpa).c_str()
 #define TtoA(lpw) ToString(lpw).c_str()
 #else
@@ -474,9 +336,9 @@ std::string ToString(LPCWSTR lpw);
 #define TtoA(lpw) lpw
 #endif
 
-tstring GetUniqueName();
-LPCTSTR	GetNamePart(LPCTSTR szPath);
-__forceinline LPTSTR	GetNamePart(LPTSTR szPath) { return (LPTSTR) GetNamePart((LPCTSTR) szPath); }
+tstring GetUniqueName() noexcept;
+LPCTSTR	GetNamePart(LPCTSTR szPath) noexcept;
+__forceinline LPTSTR	GetNamePart(LPTSTR szPath) noexcept { return (LPTSTR) GetNamePart((LPCTSTR) szPath); }
 
 
 template <typename TYPE> class deque
@@ -765,7 +627,7 @@ DWORD __stdcall EncryptCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall DecryptCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall EncodeCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall DecodeCRC(DWORD crc, void* buf, int len);
-time_t GetTimeStamp();
+time_t GetTimeStamp() noexcept;
 
 template<typename T> class LockfreeStack {
 	std::atomic_int64_t m_top;
@@ -773,7 +635,7 @@ public:
 	LockfreeStack() : m_top(0)
 	{
 	}
-	void Push(T p)
+	void Push(T p) noexcept
 	{
 		for (;;) {
 			__int64 top = m_top.load(std::memory_order_consume);
@@ -783,7 +645,7 @@ public:
 			}
 		}
 	}
-	T Pop()
+	T Pop() noexcept
 	{
 		for (;;) {
 			__int64 top = m_top.load(std::memory_order_consume);

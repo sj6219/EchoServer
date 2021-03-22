@@ -970,7 +970,7 @@ void LogPacket(int nType, int nSize, char *buffer)
 }
 
 #ifdef	UNICODE
-std::wstring ToWString(LPCSTR lpa)
+std::wstring ToWString(LPCSTR lpa) noexcept
 {
 	int len = (int) strlen(lpa) + 1;
 	LPWSTR lpw = (LPWSTR) _alloca(len * 2);
@@ -978,7 +978,7 @@ std::wstring ToWString(LPCSTR lpa)
 	return lpw;
 }
 
-std::string ToString(LPCWSTR lpw)
+std::string ToString(LPCWSTR lpw) noexcept
 {
 	int len = (int) wcslen(lpw)+1;
 	LPSTR lpa = (LPSTR) _alloca(len * 4);
@@ -987,7 +987,7 @@ std::string ToString(LPCWSTR lpw)
 }
 #endif
 
-tstring GetUniqueName()
+tstring GetUniqueName() noexcept
 {
 	TCHAR path[MAX_PATH+1];
 	GetModuleFileName(0, path, MAX_PATH);
@@ -1000,7 +1000,7 @@ tstring GetUniqueName()
 	return path;
 }
 
-LPCTSTR GetNamePart(LPCTSTR szPath)
+LPCTSTR GetNamePart(LPCTSTR szPath) noexcept
 {
 	auto n =_tcslen(szPath);
 	auto it = std::find_if(
@@ -1123,7 +1123,7 @@ DWORD __stdcall DecodeCRC(DWORD crc, void* buf, int len)
 	return crc;
 }
 
-time_t GetTimeStamp()
+time_t GetTimeStamp() noexcept
 {
 	HMODULE hModule = GetModuleHandle(0);
 	if (hModule == 0)

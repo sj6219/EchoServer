@@ -5,6 +5,9 @@
 #pragma once
 #include <string>
 
+#pragma push_macro("new")
+#undef new
+
 #ifdef	UNICODE
 typedef	std::wstring tstring;
 #else
@@ -26,29 +29,26 @@ namespace lisp
 	class _object
 	{
 	public:
-		virtual LPCTSTR GetString() const { return _T(""); }
-		virtual int	GetInteger() const { return 0; }
-		virtual float GetFloat() const { return 0; }
-		virtual var& car() { return nil; }
-		virtual var& cdr() { return nil; }
-		virtual bool consp() const { return false; }
-		virtual bool null() const { return false; }
-		virtual bool listp() const { return false; }
-		virtual bool stringp() const { return false; }
-		virtual bool numberp() const { return false; }
-		virtual bool integerp() const { return false; }
-		virtual bool floatp() const { return false; }
-		virtual bool errorp() const { return false; }
-		virtual int	 length() const { return 0; }
-		virtual _object* copy() const = 0;
-		virtual void destroy() = 0;
+		virtual LPCTSTR GetString() const noexcept { return _T(""); }
+		virtual int	GetInteger() const noexcept { return 0; }
+		virtual float GetFloat() const noexcept { return 0; }
+		virtual var& car() noexcept { return nil; }
+		virtual var& cdr() noexcept { return nil; }
+		virtual bool consp() const noexcept { return false; }
+		virtual bool null() const noexcept { return false; }
+		virtual bool listp() const noexcept { return false; }
+		virtual bool stringp() const noexcept { return false; }
+		virtual bool numberp() const noexcept { return false; }
+		virtual bool integerp() const noexcept { return false; }
+		virtual bool floatp() const noexcept { return false; }
+		virtual bool errorp() const noexcept { return false; }
+		virtual int	 length() const noexcept { return 0; }
+		virtual _object* copy() const  = 0;
+		virtual void destroy() noexcept = 0;
 #ifdef _DEBUG
-		virtual tstring print(int level) const = 0;
+		virtual tstring print(int level) const noexcept = 0;
 #endif
 	};
-
-
-
 
 	class _string : public _object
 	{
@@ -56,25 +56,25 @@ namespace lisp
 		LPCTSTR m_pString;
 	public:
 		_string(LPCTSTR str) { m_pString = str; }
-		virtual LPCTSTR GetString() const { return m_pString; }
-		virtual int GetInteger() const;
-		virtual float GetFloat() const;
-		virtual unsigned GetUnsigned() const;
-		virtual bool stringp() const { return true; }
-		virtual _object* copy() const;
-		virtual void destroy();
+		virtual LPCTSTR GetString() const noexcept { return m_pString; }
+		virtual int GetInteger() const noexcept;
+		virtual float GetFloat() const noexcept;
+		virtual unsigned GetUnsigned() const noexcept;
+		virtual bool stringp() const noexcept { return true; }
+		virtual _object* copy() const ;
+		virtual void destroy() noexcept;
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif
 	};
 	class _null : public _object
 	{
-		virtual bool null() const { return true; }
-		virtual bool listp() const { return true; }
-		virtual _object* copy() const { return &s_nil; }
-		virtual void destroy() {}
+		virtual bool null() const noexcept { return true; }
+		virtual bool listp() const noexcept { return true; }
+		virtual _object* copy() const  { return &s_nil; }
+		virtual void destroy() noexcept {}
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif
 	};
 
@@ -86,38 +86,38 @@ namespace lisp
 		var() { m_pObject = &s_nil; }
 		var(const var& v) { m_pObject = v.m_pObject; }
 		var(_object *p) { m_pObject = p; }
-		var& car() const { return m_pObject->car(); }
-		var& cdr() const { return m_pObject->cdr(); }
-		bool consp() const { return m_pObject->consp(); }
-		bool null() const { return m_pObject->null(); }
-		bool stringp() const { return m_pObject->stringp(); }
-		bool numberp() const { return m_pObject->numberp(); }
-		bool integerp() const { return m_pObject->integerp(); }
-		bool floatp() const { return m_pObject->floatp(); }
-		bool errorp() const { return m_pObject->errorp(); }
-		bool listp() const { return m_pObject->listp(); }
-		var pop() { _object *pObject = m_pObject; m_pObject = m_pObject->cdr().m_pObject; return pObject->car(); }
-		int	length() const { return m_pObject->length(); }
-		void operator=(const var v) { _ASSERT(this != &nil); m_pObject = v.m_pObject; }
-		var& operator*() { return m_pObject->car(); }
-		operator LPCTSTR() const { return m_pObject->GetString(); }
-		operator int() const { return (int)m_pObject->GetInteger(); }
-		operator float() const { return m_pObject->GetFloat(); }
+		var& car() noexcept { return m_pObject->car(); }
+		var& cdr() noexcept { return m_pObject->cdr(); }
+		bool consp() const noexcept { return m_pObject->consp(); }
+		bool null() const noexcept { return m_pObject->null(); }
+		bool stringp() const noexcept { return m_pObject->stringp(); }
+		bool numberp() const noexcept { return m_pObject->numberp(); }
+		bool integerp() const noexcept { return m_pObject->integerp(); }
+		bool floatp() const noexcept { return m_pObject->floatp(); }
+		bool errorp() const noexcept { return m_pObject->errorp(); }
+		bool listp() const noexcept { return m_pObject->listp(); }
+		var pop() noexcept { _object *pObject = m_pObject; m_pObject = m_pObject->cdr().m_pObject; return pObject->car(); }
+		int	length() const noexcept { return m_pObject->length(); }
+		void operator=(const var v) noexcept { _ASSERT(this != &nil); m_pObject = v.m_pObject; }
+		var& operator*() noexcept { return m_pObject->car(); }
+		operator LPCTSTR() const noexcept { return m_pObject->GetString(); }
+		operator int() const noexcept { return (int)m_pObject->GetInteger(); }
+		operator float() const noexcept { return m_pObject->GetFloat(); }
 		operator double() const { return m_pObject->GetFloat(); }
-		operator char() const { return (char)m_pObject->GetInteger(); }
-		operator short() const { return (short)m_pObject->GetInteger(); }
-		operator DWORD() const { return (DWORD)m_pObject->GetInteger(); }
-		operator INT64() const { return (INT64)m_pObject->GetInteger(); }
-		var copy() const { return m_pObject->copy(); } 
-		void destroy() { m_pObject->destroy(); m_pObject = &s_nil; } 
-		var get(LPCTSTR name);
-		var nth(int pos);
-		var get(LPCTSTR name, int pos);
-		var nthcdr(int pos);
+		operator char() const noexcept { return (char)m_pObject->GetInteger(); }
+		operator short() const noexcept { return (short)m_pObject->GetInteger(); }
+		operator DWORD() const noexcept { return (DWORD)m_pObject->GetInteger(); }
+		operator INT64() const noexcept { return (INT64)m_pObject->GetInteger(); }
+		var copy() const  { return m_pObject->copy(); }
+		void destroy() noexcept { m_pObject->destroy(); m_pObject = &s_nil; }
+		var get(LPCTSTR name) noexcept;
+		var nth(int pos) noexcept;
+		var get(LPCTSTR name, int pos) noexcept;
+		var nthcdr(int pos) noexcept;
 //		bool empty() const { return m_pObject == 0; }
 #ifdef	_DEBUG
-		void print() const;
-		tstring print(int level) const { return m_pObject->print(level); }
+		void print() const noexcept;
+		tstring print(int level) const noexcept { return m_pObject->print(level); }
 #endif
 	};
 
@@ -128,15 +128,15 @@ namespace lisp
 		var m_cdr;
 	public:
 		_cons(const var car, const var cdr) : m_car(car), m_cdr(cdr) {} 
-		virtual var& car() { return m_car; }
-		virtual var& cdr() { return m_cdr; }
-		virtual bool consp() const { return true; }
-		virtual bool listp() const { return true; }
-		virtual int	length() const;
-		virtual _object* copy() const;
-		virtual void destroy();
+		virtual var& car() noexcept { return m_car; }
+		virtual var& cdr() noexcept { return m_cdr; }
+		virtual bool consp() const noexcept { return true; }
+		virtual bool listp() const noexcept { return true; }
+		virtual int	length() const noexcept;
+		virtual _object* copy() const ;
+		virtual void destroy() noexcept;
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif
 	};
 	class _integer : public _object
@@ -145,19 +145,19 @@ namespace lisp
 		int	m_nValue;
 	public:
 		_integer(int n) { m_nValue = n; }
-		virtual LPCTSTR GetString() const 
+		virtual LPCTSTR GetString() const noexcept
 		{ 
 			_ASSERT(0);
 			return _T(""); 
 		}
-		virtual int GetInteger() const { return m_nValue; }
-		virtual float GetFloat() const { return (float) m_nValue; }
-		virtual bool numberp() const { return true; }
-		virtual bool integerp() const { return true; }
-		virtual _object* copy() const { return new _integer(m_nValue); }
-		virtual void destroy() { delete this; }
+		virtual int GetInteger() const noexcept { return m_nValue; }
+		virtual float GetFloat() const noexcept { return (float) m_nValue; }
+		virtual bool numberp() const noexcept { return true; }
+		virtual bool integerp() const noexcept { return true; }
+		virtual _object* copy() const  { return DBG_NEW _integer(m_nValue); }
+		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif		
 	};
 
@@ -167,36 +167,33 @@ namespace lisp
 		float	m_fValue;
 	public:
 		_float(float n) { m_fValue = n; }
-		virtual LPCTSTR GetString() const 
+		virtual LPCTSTR GetString() const noexcept
 		{ 
 			_ASSERT(0);
 			return _T("");
 		}
-		virtual int	GetInteger() const { return (int) m_fValue; }
-		virtual float GetFloat() const { return m_fValue; }
-		virtual bool numberp() const { return true; }
-		virtual bool floatp() const { return true; }
-		virtual _object* copy() const { return new _float(m_fValue); }
-		virtual void destroy() { delete this; }
+		virtual int	GetInteger() const noexcept { return (int) m_fValue; }
+		virtual float GetFloat() const noexcept { return m_fValue; }
+		virtual bool numberp() const noexcept { return true; }
+		virtual bool floatp() const noexcept { return true; }
+		virtual _object* copy() const  { return DBG_NEW _float(m_fValue); }
+		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif
 	};
-
-
 
 	class _error : public _object
 	{
-		virtual bool errorp() const { return true; }
-		virtual _object* copy() const { return &s_error; }
-		virtual void destroy() {}
+		virtual bool errorp() const noexcept { return true; }
+		virtual _object* copy() const  { return &s_error; }
+		virtual void destroy() noexcept {}
 #ifdef _DEBUG
-		virtual tstring print(int level) const;
+		virtual tstring print(int level) const noexcept;
 #endif
 	};
 
-
-
-	var nreverse(var v);
+	var nreverse(var v) noexcept;
 }
 
+#pragma pop_macro("new")

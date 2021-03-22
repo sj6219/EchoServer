@@ -16,17 +16,17 @@ public :
 	XLink *m_pNext;
 	XLink *m_pPrev;
 
-	void PushFront(XLink *pParent)
+	void PushFront(XLink *pParent) noexcept
 	{
 		Append(pParent);
 	}
 
-	void PushBack(XLink *pParent)
+	void PushBack(XLink *pParent) noexcept
 	{
 		Insert(pParent);
 	}
 
-	void MoveTo(XLink *pTo)
+	void MoveTo(XLink *pTo) noexcept
 	{
 		if (m_pNext != this) {
 			pTo->m_pPrev->m_pNext = m_pNext;
@@ -37,15 +37,15 @@ public :
 		}
 	}
 
-	bool Empty()
+	bool Empty() const noexcept
 	{
 		return (this == m_pNext);
 	}
-	void Initialize() 
+	void Initialize() noexcept
 	{ 
 		m_pPrev = m_pNext = this; 
 	}
-	void Append(XLink *pLink)
+	void Append(XLink *pLink) noexcept
 	{
 		m_pNext = pLink->m_pNext; 
 		m_pPrev = pLink; 
@@ -53,14 +53,14 @@ public :
 		pLink->m_pNext = this; 
 	}
 
-	void Insert(XLink *pLink) 
+	void Insert(XLink *pLink) noexcept
 	{ 
 		m_pPrev = pLink->m_pPrev;
 		m_pNext = pLink;
 		pLink->m_pPrev->m_pNext = this;
 		pLink->m_pPrev = this;
 	}
-	void Remove() 
+	void Remove() noexcept
 	{ 
 		m_pNext->m_pPrev = m_pPrev; 
 		m_pPrev->m_pNext = m_pNext; 
@@ -333,54 +333,54 @@ public :
 		m_nSize = 0;
 	}
 
-	void push_front(TYPE element)
+	void push_front(TYPE element) noexcept
 	{
 		Super::push_front(element);
 		m_nSize++;
 	}		
 
-	void push_back(TYPE element)
+	void push_back(TYPE element) noexcept
 	{
 		Super::push_back(element);
 		m_nSize++;
 	}
 
-	void pop_front()
+	void pop_front() noexcept
 	{
 		Super::pop_front();
 		m_nSize--;
 	}
 
-	void pop_back()
+	void pop_back() noexcept
 	{
 		Super::pop_back();
 		m_nSize--;
 	}
 
-	bool empty()
+	bool empty() const noexcept
 	{
 		return m_nSize == 0;
 	}
 
-	iterator insert(iterator where, TYPE element)
+	iterator insert(iterator where, TYPE element) noexcept
 	{
 		m_nSize++;
 		return Super::insert(where, element);
 	}
 
-	iterator erase(iterator where)
+	iterator erase(iterator where) noexcept
 	{
 		m_nSize--;
 		return Super::erase(where);
 	}
 		
-	void clear()
+	void clear() noexcept
 	{
 		m_nSize = 0;
 		Super::clear();
 	}
 
-	size_t size()
+	size_t size() noexcept
 	{
 		return m_nSize;
 	}
