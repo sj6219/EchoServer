@@ -241,10 +241,9 @@ public:
 
 template <int size>  typename XMemoryPool<size>  XMemoryPool<size>::s_self;
 
-template <typename TYPE> TYPE *XConstruct()
+template <typename TYPE, typename ...Args> TYPE *XConstruct(Args... args)
 {
-	return new (XMemoryPool<sizeof(TYPE)>::Alloc()) TYPE;
-	//return new TYPE;
+	return new (XMemoryPool<sizeof(TYPE)>::Alloc()) TYPE(args...);
 }
 
 template <typename TYPE> void XDestruct(TYPE *ptr)
@@ -637,6 +636,7 @@ public:
 	}
 	void Push(T p) noexcept
 	{
+		_ASSERT(((__int64)p & 0xFF00000000000000) == 0);
 		for (;;) {
 			__int64 top = m_top.load(std::memory_order_consume);
 			p->GetNext() = (T)(top & 0xFFFFFFFFFFFFFFll);

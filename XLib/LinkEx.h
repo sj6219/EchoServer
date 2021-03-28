@@ -96,7 +96,7 @@ public:
 
 	void	push_front(TYPE element)
 	{
-		CPointerLink *ptr = XConstruct<CPointerLink>(1);
+		CPointerLink *ptr = XConstruct<CPointerLink>();
 		ptr->m_ptr = element;
 		m_linklist.push_front(ptr);
 	}		

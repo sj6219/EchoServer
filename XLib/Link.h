@@ -88,13 +88,13 @@ public :
 	{	// iterator for mutable list
 	public :
 
-		iterator() {}
-		iterator(TYPE ptr)
+		iterator() noexcept {}
+		iterator(TYPE ptr) noexcept
 		{
 			m_ptr = ptr;
 		}
 
-		explicit iterator(XLink *pLink)
+		explicit iterator(XLink *pLink) noexcept
 		{
 			m_ptr = (TYPE) ((char *)pLink - offset)	;
 		}
@@ -154,71 +154,6 @@ public :
 		TYPE m_ptr;
 	};
 	
-	//class iterator : public const_iterator
-	//{	// const_iterator for mutable list
-	//	using super = const_iterator;
-	//public:
-
-	//	iterator() {}
-	//	iterator(TYPE ptr) : super(ptr)
-	//	{
-	//	}
-
-	//	explicit iterator(XLink* pLink) : super(pLink)
-	//	{
-	//	}
-
-	//	XLink* ToLinkPtr() const noexcept
-	//	{
-	//		return super::ToLinkPtr();
-	//	}
-
-	//	reference operator*() const noexcept
-	//	{	// return designated value
-	//		return const_cast<reference>(super::operator*());
-	//	}
-
-	//	pointer operator->()  const noexcept
-	//	{	// return pointer to class object
-	//		return const_cast<pointer>(super::operator->());
-	//	}
-
-	//	iterator& operator++() noexcept
-	//	{	// preincrement
-	//		super::operator++();
-	//		return *this;
-	//	}
-
-	//	iterator operator++(int) noexcept
-	//	{	// postincrement
-	//		iterator _Tmp = *this;
-	//		++* this;
-	//		return (_Tmp);
-	//	}
-
-	//	iterator& operator--() noexcept
-	//	{	// predecrement
-	//		super::operator--();
-	//		return *this;
-	//	}
-
-	//	iterator operator--(int) noexcept
-	//	{	// postdecrement
-	//		iterator _Tmp = *this;
-	//		--* this;
-	//		return (_Tmp);
-	//	}
-
-	//	bool operator==(const iterator& _Right) const noexcept
-	//	{	// test for iterator equality
-	//		return super::operator==(_Right);
-	//	}
-
-	//	bool operator!=(const iterator& _Right) const noexcept
-	//	{	// test for iterator inequality
-	//		return super::operator!=(_Right);
-	//	}
-	//};
 	using reverse_iterator = std::reverse_iterator<iterator>;
 	//using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
@@ -328,7 +263,7 @@ protected :
 	typedef	linked_list_<TYPE, offset> Super;
 	typedef Super::iterator iterator;
 public :
-	linked_list() 
+	linked_list() noexcept
 	{
 		m_nSize = 0;
 	}

@@ -52,7 +52,7 @@ namespace lisp
 	protected:
 		LPCTSTR m_pString;
 	public:
-		_string(LPCTSTR str) { m_pString = str; }
+		_string(LPCTSTR str) noexcept { m_pString = str; }
 		virtual LPCTSTR GetString() const noexcept { return m_pString; }
 		virtual int GetInteger() const noexcept;
 		virtual float GetFloat() const noexcept;
@@ -80,9 +80,9 @@ namespace lisp
 	public:
 		_object *m_pObject;
 	public:
-		var() { m_pObject = &s_nil; }
-		var(const var& v) { m_pObject = v.m_pObject; }
-		var(_object *p) { m_pObject = p; }
+		var() noexcept { m_pObject = &s_nil; }
+		var(const var& v) noexcept { m_pObject = v.m_pObject; }
+		var(_object *p) noexcept { m_pObject = p; }
 		var& car() noexcept { return m_pObject->car(); }
 		var& cdr() noexcept { return m_pObject->cdr(); }
 		bool consp() const noexcept { return m_pObject->consp(); }
@@ -124,7 +124,7 @@ namespace lisp
 		var m_car;
 		var m_cdr;
 	public:
-		_cons(const var car, const var cdr) : m_car(car), m_cdr(cdr) {} 
+		_cons(const var car, const var cdr) noexcept : m_car(car), m_cdr(cdr) {}
 		virtual var& car() noexcept { return m_car; }
 		virtual var& cdr() noexcept { return m_cdr; }
 		virtual bool consp() const noexcept { return true; }
@@ -141,7 +141,7 @@ namespace lisp
 	protected:
 		int	m_nValue;
 	public:
-		_integer(int n) { m_nValue = n; }
+		_integer(int n) noexcept { m_nValue = n; }
 		virtual LPCTSTR GetString() const noexcept
 		{ 
 			_ASSERT(0);
@@ -163,7 +163,7 @@ namespace lisp
 	protected:
 		float	m_fValue;
 	public:
-		_float(float n) { m_fValue = n; }
+		_float(float n) noexcept  { m_fValue = n; }
 		virtual LPCTSTR GetString() const noexcept
 		{ 
 			_ASSERT(0);
