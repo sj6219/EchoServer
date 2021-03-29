@@ -209,7 +209,7 @@ BOOL XRWLock::try_lock()
 
 #endif
 
-namespace util
+namespace Utility
 {
 	XMemoryPage *m_pFreePage;
 	char	*m_pReserve;
@@ -231,7 +231,7 @@ class XMemoryManager
 public:
 	~XMemoryManager()
 	{
-		_ASSERT(util::m_nAllocPage == 0);
+		_ASSERT(Utility::m_nAllocPage == 0);
 	}
 
 	static XMemoryManager s_self;
@@ -240,42 +240,42 @@ public:
 XMemoryManager XMemoryManager::s_self;
 #endif
 
-XMemoryPage*	util::AllocPage()
+XMemoryPage* XMemoryPage::AllocPage()
 {
-	MemoryLock();
+	Utility::MemoryLock();
 	XMemoryPage *pPage;
-	if (m_pFreePage == 0) {
-		if (m_nReserve == 0) {
-			m_pReserve = (char *) VirtualAlloc(0, ALLOC_SIZE, MEM_RESERVE, PAGE_READWRITE);
-			_ASSERT(((DWORD_PTR) m_pReserve & (PAGE_SIZE - 1)) == 0);
-			m_nReserve = ALLOC_SIZE/PAGE_SIZE;
+	if (Utility::m_pFreePage == 0) {
+		if (Utility::m_nReserve == 0) {
+			Utility::m_pReserve = (char *) VirtualAlloc(0, ALLOC_SIZE, MEM_RESERVE, PAGE_READWRITE);
+			_ASSERT(((DWORD_PTR) Utility::m_pReserve & (PAGE_SIZE - 1)) == 0);
+			Utility::m_nReserve = ALLOC_SIZE/PAGE_SIZE;
 		}
-		pPage = (XMemoryPage *) m_pReserve;
-		m_pReserve += PAGE_SIZE;
-		m_nReserve--;
+		pPage = (XMemoryPage *)Utility::m_pReserve;
+		Utility::m_pReserve += PAGE_SIZE;
+		Utility::m_nReserve--;
 		VirtualAlloc(pPage, PAGE_SIZE, MEM_COMMIT, PAGE_READWRITE);
 	}
 	else {
-		pPage = m_pFreePage;
-		m_pFreePage = (XMemoryPage *) m_pFreePage->m_pNext;
+		pPage = Utility::m_pFreePage;
+		Utility::m_pFreePage = (XMemoryPage *)Utility::m_pFreePage->m_pNext;
 	}
 	pPage->m_pFreeList = 0;
 	pPage->m_nAlloc = 0;
-	m_nAllocPage++;
-	MemoryUnlock();
+	Utility::m_nAllocPage++;
+	Utility::MemoryUnlock();
 	return pPage;
 }
 
-void	util::FreePage(XMemoryPage *pPage)
+void	XMemoryPage::FreePage(XMemoryPage *pPage)
 {
-	MemoryLock();
-	m_nAllocPage--;
-	pPage->m_pNext = (XLink *) m_pFreePage;
-	m_pFreePage = pPage;
-	MemoryUnlock();
+	Utility::MemoryLock();
+	Utility::m_nAllocPage--;
+	pPage->m_pNext = (XLink *)Utility::m_pFreePage;
+	Utility::m_pFreePage = pPage;
+	Utility::MemoryUnlock();
 }
 
-//char KTableA[21 * 19 * 2 + 1] =
+//static char KTableA[21 * 19 * 2 + 1] =
 //"가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기"
 //"까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼"
 //"나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니"
@@ -296,7 +296,7 @@ void	util::FreePage(XMemoryPage *pPage)
 //"파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피"
 //"하해햐햬허헤펴혜호화홰회효후훠훼휘휴흐희히";
 
-wchar_t KTableW[21 * 19 + 1] =
+static wchar_t KTableW[21 * 19 + 1] =
 L"가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기"
 L"까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼"
 L"나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니"
@@ -1011,7 +1011,7 @@ LPCTSTR GetNamePart(LPCTSTR szPath) noexcept
 	return p;
 }
 
-const DWORD util::m_vCRC32Table[] = 
+const DWORD Utility::m_vCRC32Table[] =
 {
   0x00000000L, 0x77073096L, 0xee0e612cL, 0x990951baL, 0x076dc419L,
   0x706af48fL, 0xe963a535L, 0x9e6495a3L, 0x0edb8832L, 0x79dcb8a4L,
@@ -1072,7 +1072,7 @@ DWORD	UpdateCRC(DWORD crc, void *buf, int len)
 {
 	BYTE *end = (BYTE *) buf + len;
 	for (BYTE *ptr = (BYTE *) buf; ptr != end; ) {
-		crc = util::m_vCRC32Table[(BYTE)(crc ^ *ptr++)] ^ (crc >> 8);
+		crc = Utility::m_vCRC32Table[(BYTE)(crc ^ *ptr++)] ^ (crc >> 8);
     }
 	return crc;
 }
@@ -1083,7 +1083,7 @@ DWORD __stdcall EncryptCRC(DWORD crc, void* buf, int len)
 	for (BYTE *ptr = (BYTE *) buf; ptr != end; ) {
 		BYTE _xor = (BYTE) crc ^ *ptr;
 		*ptr++ = _xor;
-		crc = util::m_vCRC32Table[_xor] ^ _rotr(crc, 8);
+		crc = Utility::m_vCRC32Table[_xor] ^ _rotr(crc, 8);
 	}
 	return crc;
 }
@@ -1094,7 +1094,7 @@ DWORD __stdcall DecryptCRC(DWORD crc, void* buf, int len)
 	for (BYTE *ptr = (BYTE *) buf; ptr != end; ) {
 		BYTE _xor = *ptr;
 		*ptr++ = (BYTE) crc ^ _xor;
-		crc = util::m_vCRC32Table[_xor] ^ _rotr(crc, 8);
+		crc = Utility::m_vCRC32Table[_xor] ^ _rotr(crc, 8);
 	}
 	return crc;
 }
@@ -1106,7 +1106,7 @@ DWORD __stdcall EncodeCRC(DWORD crc, void* buf, int len)
 	for (BYTE *ptr = (BYTE *) buf; ptr != end; ) {
 		crc ^= * (BYTE *) ptr;
 		*ptr++ = (BYTE) crc;
-		crc = util::m_vCRC32Table[(BYTE)crc] ^ (crc >> 8);
+		crc = Utility::m_vCRC32Table[(BYTE)crc] ^ (crc >> 8);
 	}
 	return crc;
 }
@@ -1118,7 +1118,7 @@ DWORD __stdcall DecodeCRC(DWORD crc, void* buf, int len)
 	for (BYTE *ptr = (BYTE *) buf; ptr != end; ) {
 		DWORD nByte = *ptr;
 		*ptr++ = (BYTE) (crc ^ nByte);
-		crc = util::m_vCRC32Table[nByte] ^ (crc >> 8);
+		crc = Utility::m_vCRC32Table[nByte] ^ (crc >> 8);
 	}
 	return crc;
 }

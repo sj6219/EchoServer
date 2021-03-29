@@ -189,7 +189,7 @@ void XIOSocket::Write(void* buffer, DWORD size)
 	while (size)
 	{
 		XIOBuffer* pBuffer = XIOBuffer::Alloc();
-		DWORD n = min(BUFFER_SIZE, size);
+		DWORD n = std::min(size, (DWORD) BUFFER_SIZE);
 		memcpy(pBuffer->m_buffer, buf, n);
 		pBuffer->m_dwSize = n;
 		Write(pBuffer);

@@ -126,13 +126,6 @@ public:
 	bool operator ! () const { return m_p == 0; }
 };
 
-
-
-
-
-
-
-
 class XIOScreen;
 
 class XIOLog

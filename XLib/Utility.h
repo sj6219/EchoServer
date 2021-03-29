@@ -130,24 +130,14 @@ public:
 	}
 };
 
-
-
-class XMemoryPage;
-class XMemoryBase;
-
-namespace util
-{
-	const DWORD ALLOC_SIZE = 64 * 1024;
-	const DWORD PAGE_SIZE = 4 * 1024;
-
-	XMemoryPage *AllocPage();
-	void	FreePage(XMemoryPage *pPage);
-}
-
-
 class XMemoryPage : public XLink
 {
 public:
+	static const DWORD ALLOC_SIZE = 64 * 1024;
+	static const DWORD PAGE_SIZE = 4 * 1024;
+
+	static XMemoryPage* AllocPage();
+	static void	FreePage(XMemoryPage* pPage);
 
 	char	*m_pFreeList;
 	DWORD	m_nAlloc;
@@ -162,7 +152,7 @@ public:
 		U *m_pU;
 	};
 
-	static const DWORD PAGE_SIZE = util::PAGE_SIZE;
+	static const DWORD PAGE_SIZE = XMemoryPage::PAGE_SIZE;
 	typedef	linked_list_<XMemoryPage *> PAGELIST;
 
 	PAGELIST	m_listPage;
@@ -192,7 +182,7 @@ public:
 		Lock();
 		if (s_self.m_listPage.empty()) {
 			Unlock();
-			pPage = util::AllocPage();
+			pPage = XMemoryPage::AllocPage();
 			Lock();
 			s_self.m_listPage.push_back(pPage);
 		}
@@ -227,7 +217,7 @@ public:
 		if (--pPage->m_nAlloc == 0) {
 			s_self.m_listPage.erase(pPage);
 			Unlock();
-			util::FreePage(pPage);
+			XMemoryPage::FreePage(pPage);
 		}
 		else {
 			Unlock();
@@ -604,23 +594,12 @@ template<class _FwdIt, class _Ty> inline std::pair<_FwdIt, _FwdIt> equal_range(_
 	return (std::pair<_FwdIt, _FwdIt>(_First, _First));	// empty range
 }
 
-template <typename T> void	minimize(T &left, const T& right) { if (right < left) left = right; }
-template <typename T> void	maximize(T &left, const T& right) { if (right > left) left = right; }
-template <typename T> void	minmaximize(T &left, const T& min, const T& max) 
-{ 
-	if (left > max) 
-		left = max;
-	else if (left < min)
-		left = min;
-}
-
-
-namespace util
+namespace Utility
 {	
 	extern const DWORD m_vCRC32Table[256];
 }
 
-inline DWORD	UpdateCRC(DWORD nCRC, DWORD nByte) { return util::m_vCRC32Table[(BYTE)(nCRC ^ nByte)] ^ (nCRC >> 8); }
+inline DWORD	UpdateCRC(DWORD nCRC, DWORD nByte) { return Utility::m_vCRC32Table[(BYTE)(nCRC ^ nByte)] ^ (nCRC >> 8); }
 DWORD	UpdateCRC(DWORD crc, void *buf, int len);
 DWORD __stdcall EncryptCRC(DWORD crc, void* buf, int len);
 DWORD __stdcall DecryptCRC(DWORD crc, void* buf, int len);
@@ -652,7 +631,6 @@ public:
 			T p = (T)(top & 0xFFFFFFFFFFFFFFll);
 			if (p == NULL)
 				return NULL;
-			//(__int64)p->GetNext() + (top & 0xFF00000000000000)+0x100000000000000z;
 			if (m_top.compare_exchange_weak(top, (__int64)p->GetNext() + (top & 0xFF00000000000000ll) + 0x100000000000000ll, std::memory_order_release, std::memory_order_relaxed)) {
 				return p;
 				break;
