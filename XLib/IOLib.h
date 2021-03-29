@@ -63,19 +63,6 @@ void BREAK();
 #endif
 
 
-template <typename T> class Zero
-{
-public:
-	T m_n;
-	Zero() : m_n(0) {}
-	Zero(T n) : m_n(n) {}
-	operator T () const { return m_n; }
-	T operator -> () const { return m_n; }
-	T* operator& () { return &m_n; }
-	bool operator !() const { return m_n == 0; }
-};
-
-#define _A(str)	str
 #pragma warning(disable: 4995)
 
 #ifdef	UNICODE
@@ -85,35 +72,6 @@ typedef	std::string tstring;
 #endif // UNICODE
 
 tstring Format(LPCTSTR format, ...);
-
-extern "C"
-{
-   LONG  __cdecl _InterlockedIncrement(LONG volatile *Addend);
-   LONG  __cdecl _InterlockedDecrement(LONG volatile *Addend);
-   LONG  __cdecl _InterlockedCompareExchange(LONG volatile *Dest, LONG Exchange, LONG Comp);
-   LONG  __cdecl _InterlockedExchange(LONG volatile *Target, LONG Value);
-   LONG  __cdecl _InterlockedExchangeAdd(LONG volatile *Addend, LONG Value);
-}
-
-#pragma intrinsic (_InterlockedCompareExchange)
-#define InterlockedCompareExchange _InterlockedCompareExchange
-
-#pragma intrinsic (_InterlockedExchange)
-#define InterlockedExchange _InterlockedExchange 
-
-#pragma intrinsic (_InterlockedExchangeAdd)
-#define InterlockedExchangeAdd _InterlockedExchangeAdd
-
-#pragma intrinsic (_InterlockedIncrement)
-#define InterlockedIncrement _InterlockedIncrement
-
-#pragma intrinsic (_InterlockedDecrement)
-#define InterlockedDecrement _InterlockedDecrement
-
-#ifdef	_WIN64
-#define InterlockedExchangePointer	_InterlockedExchangePointer
-#define InterlockedExchangeAdd64	_InterlockedExchangeAdd64
-#endif
 
 void LOG_WARN(LPCTSTR format, ...);
 void LOG_ERR(LPCTSTR format, ...);
