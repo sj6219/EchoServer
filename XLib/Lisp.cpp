@@ -108,7 +108,7 @@ tstring lisp::_error::print(int level) const noexcept
 
 void	lisp::var::print() const noexcept
 {
-	TRACE(_T("%s\n"), print(0).c_str());
+	LOG(_T("%s\n"), print(0).c_str());
 }
 
 #endif

@@ -8,7 +8,7 @@ class CSocket;
 class CServer : public XIOServer
 {
 public:
-	static int Size();
+	static size_t Size();
 	static void Stop();
 	static void Shutdown();
 	static void Start();

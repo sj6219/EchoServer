@@ -8,7 +8,7 @@
 #include <tchar.h>
 
 #if defined(_DEBUG)
-void TRACE(LPCTSTR lpszFormat, ...) noexcept
+void LOG(LPCTSTR lpszFormat, ...) noexcept
 {
 	TCHAR buff[1024];
 	va_list args;

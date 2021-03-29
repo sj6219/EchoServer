@@ -22,7 +22,7 @@ void	CStatus::Update()
 
 		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 1, XIOSocket::s_nRunningThread);
 		_ASSERT(Status == ERROR_SUCCESS);
-		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, CServer::Size());
+		Status = PerfSetULongCounterValue(EchoUserModeCounters, g_instance, 2, (ULONG) CServer::Size());
 #ifndef _DEBUG
 		PerfSetULongLongCounterValue(EchoUserModeCounters, g_instance, 3, XIOMemory::GetTotalSize());
 #endif

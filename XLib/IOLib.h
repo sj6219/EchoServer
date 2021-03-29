@@ -45,13 +45,13 @@
 
 #include <memory>
 
-#undef TRACE
+#undef LOG
 #undef ASSERT
 
 #ifdef	_DEBUG
-void TRACE(LPCTSTR lpszFormat, ...) noexcept;
+void LOG(LPCTSTR lpszFormat, ...) noexcept;
 #else
-#define TRACE __noop
+#define LOG __noop
 #endif
 
 #ifdef _DEBUG

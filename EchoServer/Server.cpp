@@ -30,7 +30,7 @@ void CServer::Remove( CSocket *pSocket)
 	g_link.erase(pSocket);
 }
 
-int	CServer::Size()
+size_t	CServer::Size()
 {
 	return g_link.size();
 }

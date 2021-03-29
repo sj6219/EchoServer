@@ -427,7 +427,7 @@ lisp::var	XParser::OnLoad()
 			break;
 		default:
 			varList.destroy();
-			//TRACE(_T("XParser::OnLoad(): Invalid format at line %d\n"), GetLine());
+			//LOG(_T("XParser::OnLoad(): Invalid format at line %d\n"), GetLine());
 			return lisp::error;
 		}
 	}
@@ -841,7 +841,7 @@ DWORD_PTR	XParser::ParseList(PARSE_CALLBACK callback, void *param)
 		switch (token) {
 		case T_END:
 			if (m_nDepth != 0) {
-				//TRACE(_T("Unmatched open parenthesis\n"));
+				//LOG(_T("Unmatched open parenthesis\n"));
 				top = lisp::error;
 				goto quit;
 			}
@@ -858,7 +858,7 @@ DWORD_PTR	XParser::ParseList(PARSE_CALLBACK callback, void *param)
 				top = pObject;
 			}
 			else if (m_nDepth < 0) {
-				//TRACE(_T("Unmatched close parenthesis %d\n"), GetLine());
+				//LOG(_T("Unmatched close parenthesis %d\n"), GetLine());
 				top = lisp::error;
 				m_nDepth = 0;
 				goto quit;
@@ -916,7 +916,7 @@ BOOL		XParser::ParseFile(PARSE_CALLBACK callback, void *param)
 		case T_END:
 			return TRUE;
 		case T_CLOSE:
-			//TRACE(_T("Unmatched close parenthesis (%d)\n"), GetLine());
+			//LOG(_T("Unmatched close parenthesis (%d)\n"), GetLine());
 			if (!(callback)(lisp::error, param))
 				return FALSE;
 			ResetDepth();
@@ -924,7 +924,7 @@ BOOL		XParser::ParseFile(PARSE_CALLBACK callback, void *param)
 		case T_OPEN:
 		{
 			if (!ParseList(callback, param)) {
-				//TRACE(_T("Invalid format (%d)"), GetLine());
+				//LOG(_T("Invalid format (%d)"), GetLine());
 				return	FALSE;
 			}
 		}
@@ -951,7 +951,7 @@ BOOL		XParser::ParseFile(PARSE_CALLBACK callback, void *param)
 		}
 		break;
 		default:
-			//TRACE(_T("Invalid format (%d)\n"), GetLine());
+			//LOG(_T("Invalid format (%d)\n"), GetLine());
 			//_ASSERT(0);
 			if (!(callback)(lisp::error, param))
 				return FALSE;

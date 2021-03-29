@@ -70,7 +70,7 @@ BOOL	XFileEx::Open(LPCTSTR szPath)
 	m_hFile = ::CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
 	if( m_hFile == INVALID_HANDLE_VALUE) {
 		_ASSERT(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND);
-		//TRACE(_T("XFileEx::Open(%s) failed %d\n"), szPath, GetLastError());
+		//LOG(_T("XFileEx::Open(%s) failed %d\n"), szPath, GetLastError());
 		return FALSE;
 	}
 	m_hMapping = 0;

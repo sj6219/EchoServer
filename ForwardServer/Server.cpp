@@ -17,7 +17,7 @@ CServer::CServer(LPCTSTR server, int port)
 
 CServer::~CServer()
 {
-	TRACE(L"CServer::~CServer() %p \n", this);
+	LOG(L"CServer::~CServer() %p \n", this);
 }
 
 void CServer::Start()
@@ -52,7 +52,7 @@ void CServer::Remove( CSocket *pSocket)
 	m_link.erase(pSocket);
 }
 
-int	CServer::Size()
+size_t	CServer::Size()
 {
 	return m_link.size();
 }
