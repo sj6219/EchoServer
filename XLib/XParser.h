@@ -15,7 +15,7 @@ public:
 		MAX_SYMBOL = 256,
 	};
 
-	typedef 	DWORD_PTR (*PARSE_CALLBACK)(lisp::var var, void *param);
+	typedef 	DWORD_PTR (*PARSE_CALLBACK)(lisp::var var, void *param) noexcept;
 	//typedef std::function<DWORD_PTR(lisp::var)> PARSE_CALLBACK;
 	enum TOKEN 
 	{ T_END, T_STRING, T_INTEGER, T_FLOAT, T_OPEN, T_CLOSE, T_ERROR };
