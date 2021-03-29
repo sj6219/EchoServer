@@ -12,12 +12,12 @@ UINT XParser::s_nCodePage = CP_UTF8;
 
 __forceinline int		XParserW::GetChar() 
 { 
-	int ch = *(TCHAR *)m_pFile->m_pView; 
-	m_pFile->m_pView += sizeof(TCHAR); 
+	int ch = *(TCHAR *)m_pFile->m_pViewCurrent; 
+	m_pFile->m_pViewCurrent += sizeof(TCHAR); 
 	return ch; 
 }
-__forceinline int		XParserW::PeekChar() { return *(TCHAR *) m_pFile->m_pView; }
-__forceinline void	XParserW::UndoChar() { m_pFile->m_pView -= sizeof(TCHAR); }
+__forceinline int		XParserW::PeekChar() { return *(TCHAR *) m_pFile->m_pViewCurrent; }
+__forceinline void	XParserW::UndoChar() { m_pFile->m_pViewCurrent -= sizeof(TCHAR); }
 __forceinline void	XParserW::InitChar() { m_nSymbolW = 0; }
 __forceinline void	XParserW::PutChar(int ch) 
 { 
@@ -38,7 +38,7 @@ XParser::TOKEN		XParserW::GetToken()
 
 	{
 st_start:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_END;
 		switch (ch = GetChar()) {
 		case 0 :
@@ -46,7 +46,7 @@ st_start:
 			return T_END;
 		case ';':	// comment
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_END;
 				switch(GetChar()) {
 				case 0:
@@ -67,14 +67,14 @@ st_start:
 		case '"':
 			InitChar();
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_ERROR;
 				switch(ch = GetChar()) {
 				case 0:
 					UndoChar();
 					return T_ERROR;
 				case '"':
-					if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+					if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 						goto return_string;
 					if ((ch = PeekChar()) != '"') 
 						goto return_string;
@@ -93,14 +93,14 @@ st_start:
 		case '\'':
 			InitChar();
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_ERROR;
 				switch(ch = GetChar()) {
 				case 0:
 					UndoChar();
 					return T_ERROR;
 				case '\'':
-					if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+					if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 						goto return_string;
 					if ((ch = PeekChar()) != '\'') 
 						goto return_string;
@@ -156,7 +156,7 @@ st_start:
 			return T_ERROR;
 		}
 st_string:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			goto return_string;
 		switch(ch = GetChar()) {
 		case '+':
@@ -176,7 +176,7 @@ st_string:
 			goto return_string;
 		}
 st_sign:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			goto return_string;
 		switch (ch = GetChar()) {
 		case '0':
@@ -196,7 +196,7 @@ st_sign:
 			goto return_string;
 		}
 st_zero:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -223,7 +223,7 @@ st_zero:
 			return T_INTEGER;
 		}
 st_octal:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -243,7 +243,7 @@ st_octal:
 			return T_INTEGER;
 		}
 st_hexa:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -257,7 +257,7 @@ st_hexa:
 		EndChar();
 		return T_INTEGER;
 st_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -283,7 +283,7 @@ st_digit:
 			return T_INTEGER;
 		}
 st_dot:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		if (isdigit(ch = GetChar())) {
 			PutChar(ch);
@@ -294,7 +294,7 @@ st_dot:
 		return T_ERROR;
 		
 st_dot_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_FLOAT;
 		}
@@ -317,7 +317,7 @@ st_dot_digit:
 			return T_FLOAT;
 		}
 st_exp:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		switch (ch = GetChar()) {
 		case '+':
@@ -333,7 +333,7 @@ st_exp:
 			return T_ERROR;
 		}
 st_exp_sign:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		if (isdigit(ch = GetChar())) {
 			PutChar(ch);
@@ -342,7 +342,7 @@ st_exp_sign:
 		UndoChar();
 		return T_ERROR;
 st_exp_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_FLOAT;
 		}
@@ -479,9 +479,9 @@ lisp::var	XParser::Load(XFile *pFile)
 }
 
 
-__forceinline int		XParser::GetChar() { return *m_pFile->m_pView++; }
-__forceinline int		XParser::PeekChar() { return *m_pFile->m_pView; }
-__forceinline void	XParser::UndoChar() { m_pFile->m_pView--; }
+__forceinline int		XParser::GetChar() { return *m_pFile->m_pViewCurrent++; }
+__forceinline int		XParser::PeekChar() { return *m_pFile->m_pViewCurrent; }
+__forceinline void	XParser::UndoChar() { m_pFile->m_pViewCurrent--; }
 __forceinline void	XParser::InitChar() { m_nSymbolA = 0; }
 __forceinline void	XParser::PutChar(int ch) 
 { 
@@ -507,7 +507,7 @@ XParser::TOKEN		XParser::GetToken()
 
 	{
 st_start:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_END;
 		switch (ch = GetChar()) {
 		case 0 :
@@ -515,7 +515,7 @@ st_start:
 			return T_END;
 		case ';':	// comment
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_END;
 				switch(GetChar()) {
 				case 0:
@@ -536,14 +536,14 @@ st_start:
 		case '"':
 			InitChar();
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_ERROR;
 				switch(ch = GetChar()) {
 				case 0:
 					UndoChar();
 					return T_ERROR;
 				case '"':
-					if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+					if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 						goto return_string;
 					if ((ch = PeekChar()) != '"') 
 						goto return_string;
@@ -562,14 +562,14 @@ st_start:
 		case '\'':
 			InitChar();
 			for ( ; ; ) {
-				if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+				if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 					return T_ERROR;
 				switch(ch = GetChar()) {
 				case 0:
 					UndoChar();
 					return T_ERROR;
 				case '\'':
-					if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+					if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 						goto return_string;
 					if ((ch = PeekChar()) != '\'') 
 						goto return_string;
@@ -625,7 +625,7 @@ st_start:
 			return T_ERROR;
 		}
 st_string:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			goto return_string;
 		switch(ch = GetChar()) {
 		case '+':
@@ -645,7 +645,7 @@ st_string:
 			goto return_string;
 		}
 st_sign:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			goto return_string;
 		switch (ch = GetChar()) {
 		case '0':
@@ -665,7 +665,7 @@ st_sign:
 			goto return_string;
 		}
 st_zero:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -692,7 +692,7 @@ st_zero:
 			return T_INTEGER;
 		}
 st_octal:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -712,7 +712,7 @@ st_octal:
 			return T_INTEGER;
 		}
 st_hexa:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -726,7 +726,7 @@ st_hexa:
 		EndChar();
 		return T_INTEGER;
 st_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_INTEGER;
 		}
@@ -752,7 +752,7 @@ st_digit:
 			return T_INTEGER;
 		}
 st_dot:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		if (isdigit(ch = GetChar())) {
 			PutChar(ch);
@@ -763,7 +763,7 @@ st_dot:
 		return T_ERROR;
 		
 st_dot_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_FLOAT;
 		}
@@ -786,7 +786,7 @@ st_dot_digit:
 			return T_FLOAT;
 		}
 st_exp:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		switch (ch = GetChar()) {
 		case '+':
@@ -802,7 +802,7 @@ st_exp:
 			return T_ERROR;
 		}
 st_exp_sign:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd)
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd)
 			return T_ERROR;
 		if (isdigit(ch = GetChar())) {
 			PutChar(ch);
@@ -811,7 +811,7 @@ st_exp_sign:
 		UndoChar();
 		return T_ERROR;
 st_exp_digit:
-		if (m_pFile->m_pView == m_pFile->m_pViewEnd) {
+		if (m_pFile->m_pViewCurrent == m_pFile->m_pViewEnd) {
 			EndChar();
 			return T_FLOAT;
 		}

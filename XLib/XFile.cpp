@@ -2,69 +2,69 @@
 #include "XFile.h"
 #include "Utility.h"
 
-XFile::XFile()
+XFile::XFile() noexcept
 {
 	m_pViewBegin = 0;
-	m_pView = 0;
+	m_pViewCurrent = 0;
 	m_pViewEnd = 0;
 }
 
-XFile::XFile(void *pFile, DWORD size)
+XFile::XFile(void *pFile, size_t size) noexcept
 {
-	m_pView = 0;
+	m_pViewCurrent = 0;
 	m_pViewEnd = 0;
 
 	Open(pFile, size);
 }
 
-XFile::~XFile()
+XFile::~XFile() noexcept
 {
 }
 
-void	XFile::Open(void *pVoid, DWORD size)
+void	XFile::Open(void *pVoid, size_t size) noexcept
 {
 	m_pViewBegin = (char *) pVoid;
-	m_pView = m_pViewBegin;
+	m_pViewCurrent = m_pViewBegin;
 	m_pViewEnd = m_pViewBegin + size;
 }
 
-UINT	XFile::Read(void *lpBuf, UINT uiCount)
+size_t	XFile::Read(void *lpBuf, size_t uiCount) noexcept
 {
-	uiCount =  std::min<UINT>(uiCount, (UINT)(m_pViewEnd - m_pView));
-	memcpy(lpBuf, m_pView, uiCount);
-	m_pView += uiCount;
+	uiCount =  std::min<>(uiCount, (size_t)(m_pViewEnd - m_pViewCurrent));
+	memcpy(lpBuf, m_pViewCurrent, uiCount);
+	m_pViewCurrent += uiCount;
 	return uiCount;
 }
 
-void	XFile::Close()
+void	XFile::Close() noexcept
 {
-	m_pView = 0;
+	m_pViewCurrent = 0;
 	m_pViewEnd = 0;
 }
 
-long	XFile::Seek(long lOffset, UINT nFrom)
+size_t	XFile::Seek(size_t lOffset, SeekPosition nFrom) noexcept
 {
-	if (nFrom == begin) 
-		m_pView = m_pViewBegin + lOffset;
-	else if (nFrom == current)
-		m_pView += lOffset;
-	else if (nFrom == end)
-		m_pView = m_pViewEnd + lOffset;
-	return (long)(m_pView - m_pViewBegin);
+	if (nFrom == Begin) 
+		m_pViewCurrent = m_pViewBegin + lOffset;
+	else if (nFrom == Current)
+		m_pViewCurrent += lOffset;
+	else if (nFrom == End)
+		m_pViewCurrent = m_pViewEnd + lOffset;
+	return (long)(m_pViewCurrent - m_pViewBegin);
 }
 
-XFileEx::XFileEx()
+XFileEx::XFileEx() noexcept
 {
 	m_hFile = INVALID_HANDLE_VALUE;
 	m_hMapping = 0;
 }
 
-XFileEx::~XFileEx()
+XFileEx::~XFileEx() noexcept
 {
 	Close();
 }
 
-BOOL	XFileEx::Open(LPCTSTR szPath) 
+BOOL	XFileEx::Open(LPCTSTR szPath) noexcept
 {
 	_ASSERT(m_hFile == INVALID_HANDLE_VALUE);
 	m_hFile = ::CreateFile(szPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
@@ -96,9 +96,7 @@ BOOL	XFileEx::Open(LPCTSTR szPath)
 	return TRUE;
 }
 
-
-
-void	XFileEx::Close()
+void	XFileEx::Close() noexcept
 {
 	if (m_hMapping) {
 		UnmapViewOfFile(m_pViewBegin);
@@ -113,7 +111,7 @@ void	XFileEx::Close()
 	}
 }
 
-DWORD	XFileEx::Touch()
+DWORD	XFileEx::Touch() noexcept
 {
 	DWORD checksum = 0;
 	if (m_hMapping) {

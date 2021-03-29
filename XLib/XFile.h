@@ -5,25 +5,25 @@ class XFile
 {
 public:
 	enum	SeekPosition	{
-		begin	=	0x0,	//	파일의 선두에서.
-		current	=	0x1,	//	파일에 있는 현재의 위치에서.
-		end		=	0x2		//	파일의 끝에서.
+		Begin	=	0,	
+		Current	=	1,	
+		End		=	2,	
 	};
 
-	XFile();
-	XFile(void *pFile, DWORD size);
-	~XFile();
+	XFile() noexcept;
+	XFile(void *pFile, size_t size) noexcept;
+	~XFile() noexcept;
 
-	void Open(void *pVoid, DWORD size);
-	UINT Read(void *lpBuf, UINT uiCount);
-	void Close();
-	long Seek(long lOffset, UINT nFrom);
-	DWORD	SeekToEnd( void)	{	return	Seek( 0L, XFile::end);	}
-	void	SeekToBegin( void)	{	Seek( 0L, XFile::begin);	}
-	DWORD	GetLength( void)	const { return (DWORD)(m_pViewEnd - m_pViewBegin);	}
-	DWORD	GetPosition( void)	const { return (DWORD)(m_pView - m_pViewBegin); }
+	void Open(void *pVoid, size_t size) noexcept;
+	size_t Read(void *lpBuf, size_t uiCount) noexcept;
+	void Close() noexcept;
+	size_t Seek(size_t lOffset, SeekPosition nFrom) noexcept;
+	size_t	SeekToEnd( void) noexcept {	return	Seek( 0L, XFile::End);	}
+	void	SeekToBegin( void) noexcept {	Seek( 0L, XFile::Begin);	}
+	size_t	GetLength( void)	const noexcept { return (size_t) (m_pViewEnd - m_pViewBegin);	}
+	size_t	GetPosition( void) const noexcept { return (size_t) (m_pViewCurrent - m_pViewBegin); }
 
-	char	*m_pView;
+	char	*m_pViewCurrent;
 	char	*m_pViewBegin;
 	char	*m_pViewEnd;
 };
@@ -34,12 +34,11 @@ public:
 	HANDLE	m_hFile;
 	HANDLE	m_hMapping;
 
-	XFileEx();
-	~XFileEx();
+	XFileEx() noexcept;
+	~XFileEx() noexcept;
 
-	BOOL	Open(LPCTSTR szPath);
-	void	Close();
-	DWORD	Touch();
+	BOOL	Open(LPCTSTR szPath) noexcept;
+	void	Close() noexcept;
+	DWORD	Touch() noexcept;
 };
 
-;
