@@ -15,7 +15,7 @@ public:
 		MAX_SYMBOL = 256,
 	};
 
-	typedef	DWORD_PTR (*PARSE_CALLBACK)(lisp::var var, void *param);
+	typedef 	DWORD_PTR (*PARSE_CALLBACK)(lisp::var var, void *param);
 	//typedef std::function<DWORD_PTR(lisp::var)> PARSE_CALLBACK;
 	enum TOKEN 
 	{ T_END, T_STRING, T_INTEGER, T_FLOAT, T_OPEN, T_CLOSE, T_ERROR };
@@ -29,7 +29,7 @@ protected:
 	TCHAR	*m_szSymbolW;
 	TCHAR	m_szMemoryW[MAX_SYMBOL];
 #endif
-	void	AllocString();
+	void	AllocString() noexcept;
 	DWORD	m_dwFlags;
 	XFile	*m_pFile;
 	int		m_nLine;
@@ -40,67 +40,63 @@ protected:
 
 
 public:
-	XParser(void);
-	~XParser(void);
+	XParser(void) noexcept;
+	~XParser(void) noexcept;
 #ifdef	UNICODE
-	virtual TOKEN	GetToken();
-	LPCTSTR GetString() { return m_szSymbolW; }
-	virtual int		GetInteger() { return strtoul(m_szSymbolA, 0, 0); }
-	virtual float	GetFloat() { return (float) atof(m_szSymbolA); }
+	virtual TOKEN	GetToken() noexcept;
+	LPCTSTR GetString() noexcept { return m_szSymbolW; }
+	virtual int		GetInteger() noexcept { return strtoul(m_szSymbolA, 0, 0); }
+	virtual float	GetFloat() noexcept { return (float) atof(m_szSymbolA); }
 #else
 	TOKEN	GetToken();
 	LPCTSTR GetString() { return m_szSymbolA; }
 	int		GetInteger() { return strtoul(m_szSymbolA, 0, 0); }
 	float	GetFloat() { return (float) atof(m_szSymbolA); }
 #endif
-	void	Open(XFile *pFile);
-	lisp::var Load(LPCTSTR szPath);
-	lisp::var Load(XFile *pFile);
-	int	GetLine() { return m_nLine; }
-	int	GetDepth() { return m_nDepth; }
-	void	ResetDepth() { m_nDepth = 0; }
+	void	Open(XFile *pFile) noexcept;
+	lisp::var Load(LPCTSTR szPath) noexcept;
+	lisp::var Load(XFile *pFile) noexcept;
+	int	GetLine() noexcept { return m_nLine; }
+	int	GetDepth() noexcept { return m_nDepth; }
+	void	ResetDepth() noexcept { m_nDepth = 0; }
 
 	// Function that uses alloca() instead of malloc()
-	DWORD_PTR	ParseList(PARSE_CALLBACK callback, void *param);
-	BOOL	ParseFile(PARSE_CALLBACK callback, void *param);
+	DWORD_PTR	ParseList(PARSE_CALLBACK callback, void *param) noexcept;
+	BOOL	ParseFile(PARSE_CALLBACK callback, void *param) noexcept;
 
 protected:
-	lisp::var OnLoad();
+	lisp::var OnLoad() noexcept;
 
-	__forceinline void InitChar();
-	__forceinline void PutChar(int ch);
-	__forceinline void EndChar();
-	__forceinline void MakeString();
-	__forceinline int GetChar();
-	__forceinline int PeekChar();
-	__forceinline void UndoChar();
+	__forceinline void InitChar() noexcept;
+	__forceinline void PutChar(int ch) noexcept;
+	__forceinline void EndChar() noexcept;
+	__forceinline void MakeString() noexcept;
+	__forceinline int GetChar() noexcept;
+	__forceinline int PeekChar() noexcept;
+	__forceinline void UndoChar() noexcept;
 
 };
-
-
-
-
 
 #ifdef	UNICODE
 class XParserW : public XParser
 {
 public:
-	virtual TOKEN	GetToken();
-	virtual int		GetInteger() { return _tcstol(m_szSymbolW, 0, 0); }
-	virtual float	GetFloat() { return (float) _tstof(m_szSymbolW); }
+	virtual TOKEN	GetToken() noexcept;
+	virtual int		GetInteger() noexcept { return _tcstol(m_szSymbolW, 0, 0); }
+	virtual float	GetFloat() noexcept { return (float) _tstof(m_szSymbolW); }
 
 protected:
 
-	__forceinline void EndChar();
-	__forceinline void MakeString();
-	__forceinline int isdigit(int);
-	__forceinline int isalnum(int);
-	__forceinline int isxdigit(int);
-	__forceinline int GetChar();
-	__forceinline int PeekChar();
-	__forceinline void UndoChar();
-	__forceinline void InitChar();
-	__forceinline void PutChar(int ch);
+	__forceinline void EndChar() noexcept;
+	__forceinline void MakeString() noexcept;
+	__forceinline int isdigit(int) noexcept;
+	__forceinline int isalnum(int) noexcept;
+	__forceinline int isxdigit(int) noexcept;
+	__forceinline int GetChar() noexcept;
+	__forceinline int PeekChar() noexcept;
+	__forceinline void UndoChar() noexcept;
+	__forceinline void InitChar() noexcept;
+	__forceinline void PutChar(int ch) noexcept;
 };
 #endif
 

@@ -83,7 +83,7 @@ BOOL CForwardConfig::Open()
 	}
 
 	parser.Open(&file);
-	auto func = [](lisp::var var, void* param)->DWORD_PTR
+	auto func = [](lisp::var var, void* param) noexcept ->DWORD_PTR 
 	{
 		return CForwardConfig::Load(var);
 	};

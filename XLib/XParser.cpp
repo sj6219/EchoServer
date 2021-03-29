@@ -10,29 +10,29 @@
 UINT XParser::s_nCodePage = CP_UTF8;
 #ifdef	UNICODE
 
-__forceinline int		XParserW::GetChar() 
+__forceinline int		XParserW::GetChar() noexcept
 { 
 	int ch = *(TCHAR *)m_pFile->m_pViewCurrent; 
 	m_pFile->m_pViewCurrent += sizeof(TCHAR); 
 	return ch; 
 }
-__forceinline int		XParserW::PeekChar() { return *(TCHAR *) m_pFile->m_pViewCurrent; }
-__forceinline void	XParserW::UndoChar() { m_pFile->m_pViewCurrent -= sizeof(TCHAR); }
-__forceinline void	XParserW::InitChar() { m_nSymbolW = 0; }
-__forceinline void	XParserW::PutChar(int ch) 
+__forceinline int		XParserW::PeekChar() noexcept { return *(TCHAR *) m_pFile->m_pViewCurrent; }
+__forceinline void	XParserW::UndoChar() noexcept { m_pFile->m_pViewCurrent -= sizeof(TCHAR); }
+__forceinline void	XParserW::InitChar() noexcept { m_nSymbolW = 0; }
+__forceinline void	XParserW::PutChar(int ch) noexcept
 { 
 	m_szSymbolW[m_nSymbolW++] = ch; 
 	if (m_nSymbolW >= m_nReserve)
 		AllocString();
 }
-__forceinline void	XParserW::EndChar() { m_szSymbolW[m_nSymbolW] = 0; }
-__forceinline void	XParserW::MakeString() { m_szSymbolW[m_nSymbolW] = 0;}
-__forceinline int	XParserW::isdigit(int ch) { return _istdigit(ch); }
-__forceinline int	XParserW::isalnum(int ch) { return _istalnum(ch); }
-__forceinline int	XParserW::isxdigit(int ch) { return _istxdigit(ch); }
+__forceinline void	XParserW::EndChar() noexcept { m_szSymbolW[m_nSymbolW] = 0; }
+__forceinline void	XParserW::MakeString() noexcept { m_szSymbolW[m_nSymbolW] = 0;}
+__forceinline int	XParserW::isdigit(int ch) noexcept { return _istdigit(ch); }
+__forceinline int	XParserW::isalnum(int ch) noexcept { return _istalnum(ch); }
+__forceinline int	XParserW::isxdigit(int ch) noexcept { return _istxdigit(ch); }
 
 
-XParser::TOKEN		XParserW::GetToken()
+XParser::TOKEN		XParserW::GetToken() noexcept
 {
 	int ch;
 
@@ -361,7 +361,8 @@ return_string:
 	}
 }
 #endif
-XParser::XParser(void)
+
+XParser::XParser(void) noexcept
 {
 	m_nReserve = MAX_SYMBOL;
 	m_szSymbolA = m_szMemoryA;
@@ -370,7 +371,7 @@ XParser::XParser(void)
 #endif
 }
 
-XParser::~XParser(void)
+XParser::~XParser(void) noexcept
 {
 	if (m_nReserve > MAX_SYMBOL) {
 		free(m_szSymbolA);
@@ -379,7 +380,7 @@ XParser::~XParser(void)
 #endif
 	}
 }
-lisp::var	XParser::OnLoad()
+lisp::var	XParser::OnLoad() noexcept
 {
 	TOKEN token;
 	lisp::var varList;
@@ -433,7 +434,7 @@ lisp::var	XParser::OnLoad()
 	}
 }
 
-void	XParser::AllocString()
+void	XParser::AllocString() noexcept
 {
 	if (m_nReserve <= MAX_SYMBOL) {
 		m_nReserve += MAX_SYMBOL;
@@ -453,14 +454,14 @@ void	XParser::AllocString()
 	}
 }
 
-void	XParser::Open(XFile *pFile)
+void	XParser::Open(XFile *pFile) noexcept
 {
 	m_pFile = pFile;
 	m_nLine = 1;
 	m_nDepth = 0;
 }
 
-lisp::var	XParser::Load(LPCTSTR szPath)
+lisp::var	XParser::Load(LPCTSTR szPath) noexcept
 {
 	XFileEx	file;
 	if (!file.Open(szPath)) {
@@ -470,7 +471,7 @@ lisp::var	XParser::Load(LPCTSTR szPath)
 	return Load(&file);
 }
 
-lisp::var	XParser::Load(XFile *pFile)
+lisp::var	XParser::Load(XFile *pFile) noexcept
 {
 	m_pFile = pFile;
 	m_nLine = 1;
@@ -479,18 +480,18 @@ lisp::var	XParser::Load(XFile *pFile)
 }
 
 
-__forceinline int		XParser::GetChar() { return *m_pFile->m_pViewCurrent++; }
-__forceinline int		XParser::PeekChar() { return *m_pFile->m_pViewCurrent; }
-__forceinline void	XParser::UndoChar() { m_pFile->m_pViewCurrent--; }
-__forceinline void	XParser::InitChar() { m_nSymbolA = 0; }
-__forceinline void	XParser::PutChar(int ch) 
+__forceinline int		XParser::GetChar() noexcept { return *m_pFile->m_pViewCurrent++; }
+__forceinline int		XParser::PeekChar() noexcept { return *m_pFile->m_pViewCurrent; }
+__forceinline void	XParser::UndoChar() noexcept { m_pFile->m_pViewCurrent--; }
+__forceinline void	XParser::InitChar() noexcept { m_nSymbolA = 0; }
+__forceinline void	XParser::PutChar(int ch) noexcept
 { 
 	m_szSymbolA[m_nSymbolA++] = ch; 
 	if (m_nSymbolA >= m_nReserve) 
 		AllocString();
 }
-__forceinline void	XParser::EndChar() { m_szSymbolA[m_nSymbolA] = 0; }
-__forceinline void	XParser::MakeString() 
+__forceinline void	XParser::EndChar() noexcept { m_szSymbolA[m_nSymbolA] = 0; }
+__forceinline void	XParser::MakeString() noexcept
 {
 
 	m_szSymbolA[m_nSymbolA] = 0;
@@ -501,7 +502,7 @@ __forceinline void	XParser::MakeString()
 }
 
 
-XParser::TOKEN		XParser::GetToken()
+XParser::TOKEN		XParser::GetToken() noexcept
 {
 	int ch;
 
@@ -830,7 +831,7 @@ return_string:
 	}
 }
 
-DWORD_PTR	XParser::ParseList(PARSE_CALLBACK callback, void *param)
+DWORD_PTR	XParser::ParseList(PARSE_CALLBACK callback, void *param) noexcept
 {
 	TOKEN token;
 	lisp::var top;
@@ -908,7 +909,7 @@ quit:
 	return (callback)(top, param);
 }
 
-BOOL		XParser::ParseFile(PARSE_CALLBACK callback, void *param)
+BOOL		XParser::ParseFile(PARSE_CALLBACK callback, void *param) noexcept
 {
 	TOKEN token;
 	for (; ; ) {

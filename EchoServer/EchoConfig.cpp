@@ -69,7 +69,7 @@ BOOL CEchoConfig::Open()
 		return FALSE;
 	}
 	parser.Open(&file);
-	auto func = [] (lisp::var var, void *param)->DWORD_PTR 
+	auto func = [] (lisp::var var, void *param) noexcept ->DWORD_PTR 
 	{
 		return CEchoConfig::Load(var);
 	};
