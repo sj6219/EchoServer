@@ -11,7 +11,6 @@
 #ifndef	_DEBUG
 #define _HAS_EXCEPTIONS 0
 #endif
-//#define NOMINMAX
 #include "framework.h"
 #include <windows.h>
 #include <tchar.h>
@@ -25,13 +24,13 @@
 #define NEW new
 #endif
 
-#ifdef _DEBUG
-#ifdef _UNICODE
-#define _RPT(...)  _RPT_BASE_W(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
-#else
-#define _RPT(...)   _RPT_BASE(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
-#endif
-#else
-#define _RPT(...)
-#endif
+//#ifdef _DEBUG
+//#ifdef _UNICODE
+//#define _RPT(...)  _RPT_BASE_W(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
+//#else
+//#define _RPT(...)   _RPT_BASE(_CRT_WARN, NULL, 0, NULL,  __VA_ARGS__)
+//#endif
+//#else
+//#define _RPT(...)
+//#endif
 #endif //PCH_H

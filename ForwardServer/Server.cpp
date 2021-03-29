@@ -17,7 +17,7 @@ CServer::CServer(LPCTSTR server, int port)
 
 CServer::~CServer()
 {
-	_RPT(L"CServer::~CServer() %p \n", this);
+	TRACE(L"CServer::~CServer() %p \n", this);
 }
 
 void CServer::Start()

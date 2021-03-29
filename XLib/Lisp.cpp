@@ -1,7 +1,7 @@
 #include "pch.h"
+#include "IOLib.h"
 #include <windows.h>
 #include <tchar.h>
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ tstring lisp::_error::print(int level) const noexcept
 
 void	lisp::var::print() const noexcept
 {
-	_RPT(_T("%s\n"), print(0).c_str());
+	TRACE(_T("%s\n"), print(0).c_str());
 }
 
 #endif

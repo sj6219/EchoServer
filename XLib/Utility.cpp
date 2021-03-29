@@ -936,7 +936,7 @@ BOOL DeletePath(LPCTSTR ofname)
 
 void LogPacket(int nType, int nSize, char *buffer)
 {
-	_RPT(_T("LogPacket nType(%d) nSize(%d)"), nType, nSize);
+	TRACE(_T("LogPacket nType(%d) nSize(%d)\n"), nType, nSize);
 	char temp[32 * 3 + 10];
 	if (nType == -1)
 	{
@@ -963,7 +963,7 @@ void LogPacket(int nType, int nSize, char *buffer)
 				StringCbPrintfExA(ptr, size, &ptr, &size, 0, " ");
 			}
 		}
-		_RPT(_T("%p: %s"), buffer, temp);
+		TRACE(_T("%p: %s\n"), buffer, temp);
 		buffer = bufptr;
 	}
 }
