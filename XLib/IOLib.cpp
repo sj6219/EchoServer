@@ -8,7 +8,7 @@
 #include <tchar.h>
 
 #if defined(_DEBUG)
-void TRACE(LPCTSTR lpszFormat, ...)
+void TRACE(LPCTSTR lpszFormat, ...) noexcept
 {
 	TCHAR buff[1024];
 	va_list args;
@@ -18,7 +18,7 @@ void TRACE(LPCTSTR lpszFormat, ...)
 	va_end(args);
 }
 
-void	BREAK()
+void	BREAK() noexcept
 {
 	//__asm int 3 
 	DebugBreak();
@@ -45,7 +45,7 @@ void	BREAK()
 //#pragma init_seg(lib)
 //XIOLibInit	theInit;
 
-tstring Format(LPCTSTR format, ...)
+tstring Format(LPCTSTR format, ...) noexcept
 {
 	va_list arglist;
 	va_start(arglist, format);

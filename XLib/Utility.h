@@ -57,19 +57,19 @@ class XSpinLock
 protected:
 	long m_lock;
 
-	void wait();
+	void wait() noexcept;
 public:
-	XSpinLock() { m_lock = 0; }
-	void Lock()
+	XSpinLock() noexcept { m_lock = 0; }
+	void Lock() noexcept
 	{
 		if (InterlockedCompareExchange(&m_lock, 1, 0))
 			wait();
 	}
-	void Unlock()
+	void Unlock() noexcept
 	{
 		InterlockedExchange(&m_lock, 0);
 	}
-	bool try_lock()
+	bool try_lock() noexcept
 	{
 		return InterlockedCompareExchange(&m_lock, 1, 0) == 0;
 	}
@@ -81,12 +81,12 @@ class XRWLock
 #ifdef USE_SRWLOCK
 	SRWLOCK m_lock;
 public:
-	XRWLock() { InitializeSRWLock(&m_lock); }
-	void Lock() { AcquireSRWLockExclusive(&m_lock); }
-	void Unlock() { ReleaseSRWLockExclusive(&m_lock); }
-	BOOL try_lock() { return TryAcquireSRWLockExclusive(&m_lock); }
-	void LockShared() { AcquireSRWLockShared(&m_lock); }
-	void UnlockShared() { ReleaseSRWLockShared(&m_lock);  }
+	XRWLock() noexcept { InitializeSRWLock(&m_lock); }
+	void Lock() noexcept { AcquireSRWLockExclusive(&m_lock); }
+	void Unlock() noexcept { ReleaseSRWLockExclusive(&m_lock); }
+	BOOL try_lock() noexcept { return TryAcquireSRWLockExclusive(&m_lock); }
+	void LockShared() noexcept { AcquireSRWLockShared(&m_lock); }
+	void UnlockShared() noexcept { ReleaseSRWLockShared(&m_lock);  }
 #else
 public:
 	XRWLock();
@@ -120,11 +120,11 @@ template <typename T> class XSharedLock
 private:
 	typename T* m_pT;
 public:
-	XSharedLock(typename T& rT) : m_pT(&rT)
+	XSharedLock(typename T& rT) noexcept : m_pT(&rT)
 	{
 		m_pT->LockShared();
 	}
-	~XSharedLock()
+	~XSharedLock() noexcept
 	{
 		m_pT->UnlockShared();
 	}
@@ -610,7 +610,7 @@ time_t GetTimeStamp() noexcept;
 template<typename T> class LockfreeStack {
 	std::atomic_int64_t m_top;
 public:
-	LockfreeStack() : m_top(0)
+	LockfreeStack() noexcept : m_top(0)
 	{
 	}
 	void Push(T p) noexcept

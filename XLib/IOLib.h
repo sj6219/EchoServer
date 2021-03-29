@@ -49,13 +49,13 @@
 #undef ASSERT
 
 #ifdef	_DEBUG
-void TRACE(LPCTSTR lpszFormat, ...);
+void TRACE(LPCTSTR lpszFormat, ...) noexcept;
 #else
 #define TRACE __noop
 #endif
 
 #ifdef _DEBUG
-void BREAK();
+void BREAK() noexcept;
 #define ASSERT(expr) if (!(expr)) BREAK()
 #else
 #define BREAK __noop
@@ -71,7 +71,7 @@ typedef	std::wstring tstring;
 typedef	std::string tstring;
 #endif // UNICODE
 
-tstring Format(LPCTSTR format, ...);
+tstring Format(LPCTSTR format, ...) noexcept;
 
 void LOG_WARN(LPCTSTR format, ...);
 void LOG_ERR(LPCTSTR format, ...);
@@ -84,23 +84,23 @@ template <class T> class XAutoVar
 public:
 	T* m_p;
 
-	XAutoVar() : m_p(0) {}
-	XAutoVar(XAutoVar<T> const & copy) : m_p(copy.m_p)
+	XAutoVar() noexcept : m_p(0) {}
+	XAutoVar(XAutoVar<T> const & copy) noexcept : m_p(copy.m_p)
 	{
 		if (m_p)
 			m_p->AddRefVar(); 
 	}
-	XAutoVar(T* p) : m_p(p)
+	XAutoVar(T* p) noexcept : m_p(p)
 	{
 		if (p)
 			p->AddRefVar(); 
 	}
-	~XAutoVar()
+	~XAutoVar() noexcept
 	{
 		if (m_p)
 			m_p->ReleaseVar();
 	}
-	T* operator = (T* p)
+	T* operator = (T* p) noexcept
 	{
 		if (p)
 			p->AddRefVar();
@@ -109,7 +109,7 @@ public:
 			pOld->ReleaseVar();
 		return p;
 	}
-	T* operator = (XAutoVar<T> const &copy)
+	T* operator = (XAutoVar<T> const &copy) noexcept
 	{
 		T* p = copy.m_p;
 		if (p)
@@ -119,11 +119,11 @@ public:
 			pOld->ReleaseVar();
 		return p;
 	}
-	operator T* () const { return m_p; }
-	T& operator * () const { return *m_p; }
-	T* operator -> () const { return m_p; }
-	T** operator & () const { return &m_p; }
-	bool operator ! () const { return m_p == 0; }
+	operator T* () const noexcept { return m_p; }
+	T& operator * () const noexcept { return *m_p; }
+	T* operator -> () const noexcept { return m_p; }
+	T** operator & () const noexcept { return &m_p; }
+	bool operator ! () const noexcept { return m_p == 0; }
 };
 
 class XIOScreen;
@@ -148,11 +148,11 @@ protected:
 	CRITICAL_SECTION m_lock;
 
 public:
-	XLock() { InitializeCriticalSectionAndSpinCount(&m_lock, 0x00000400); }
-	~XLock() { DeleteCriticalSection(&m_lock); }
-	void Lock() { EnterCriticalSection(&m_lock); }
-	void Unlock() { LeaveCriticalSection(&m_lock); }
-	bool try_lock() { return TryEnterCriticalSection(&m_lock); }
+	XLock() noexcept { InitializeCriticalSectionAndSpinCount(&m_lock, 0x00000400); }
+	~XLock() noexcept { DeleteCriticalSection(&m_lock); }
+	void Lock() noexcept { EnterCriticalSection(&m_lock); }
+	void Unlock() noexcept { LeaveCriticalSection(&m_lock); }
+	bool try_lock() noexcept { return TryEnterCriticalSection(&m_lock); }
 };
 
 template <typename T> class XUniqueLock
@@ -160,11 +160,11 @@ template <typename T> class XUniqueLock
 private:
 	typename T* m_pT;
 public:
-	XUniqueLock(typename T & rT) : m_pT(&rT)
+	XUniqueLock(typename T & rT) noexcept : m_pT(&rT)
 	{
 		m_pT->Lock();
 	}
-	~XUniqueLock()
+	~XUniqueLock() noexcept
 	{
 		m_pT->Unlock();
 	}

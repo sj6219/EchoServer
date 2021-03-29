@@ -1,6 +1,6 @@
 #pragma once
 #include "Lisp.h"
-#include <functional>
+//#include <functional>
 
 class XFile;
 

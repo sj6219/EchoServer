@@ -11,7 +11,7 @@
 #include <iterator>
 #include <algorithm>
 
-void XSpinLock::wait()
+void XSpinLock::wait() noexcept
 {
 	int count = 4000;
 	while (--count >= 0)
