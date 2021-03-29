@@ -11,7 +11,7 @@
 #ifndef	_DEBUG
 #define _HAS_EXCEPTIONS 0
 #endif
-#define NOMINMAX
+//#define NOMINMAX
 #include "framework.h"
 #include <windows.h>
 #include <tchar.h>

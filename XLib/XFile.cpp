@@ -30,7 +30,7 @@ void	XFile::Open(void *pVoid, DWORD size)
 
 UINT	XFile::Read(void *lpBuf, UINT uiCount)
 {
-	uiCount =  std::min(uiCount, (UINT)(m_pViewEnd - m_pView));
+	uiCount =  std::min<UINT>(uiCount, (UINT)(m_pViewEnd - m_pView));
 	memcpy(lpBuf, m_pView, uiCount);
 	m_pView += uiCount;
 	return uiCount;

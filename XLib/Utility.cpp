@@ -9,7 +9,6 @@
 #include <strsafe.h>
 #include <malloc.h>
 #include <iterator>
-#include <algorithm>
 
 void XSpinLock::wait() noexcept
 {

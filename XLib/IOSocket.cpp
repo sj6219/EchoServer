@@ -10,6 +10,7 @@
 #include <process.h>
 #include <mswsock.h>
 
+
 #define BUFFER_POOL_SIZE 16
 #define EXIT_IO_THREAD
 
@@ -189,7 +190,7 @@ void XIOSocket::Write(void* buffer, DWORD size)
 	while (size)
 	{
 		XIOBuffer* pBuffer = XIOBuffer::Alloc();
-		DWORD n = std::min(size, (DWORD) BUFFER_SIZE);
+		DWORD n = std::min<DWORD>(size,  BUFFER_SIZE);
 		memcpy(pBuffer->m_buffer, buf, n);
 		pBuffer->m_dwSize = n;
 		Write(pBuffer);
