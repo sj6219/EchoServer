@@ -4,15 +4,15 @@
 
 XFile::XFile() noexcept
 {
-	m_pViewBegin = 0;
-	m_pViewCurrent = 0;
-	m_pViewEnd = 0;
+	m_begin = 0;
+	m_current = 0;
+	m_end = 0;
 }
 
 XFile::XFile(void *pFile, size_t size) noexcept
 {
-	m_pViewCurrent = 0;
-	m_pViewEnd = 0;
+	m_current = 0;
+	m_end = 0;
 
 	Open(pFile, size);
 }
@@ -23,34 +23,34 @@ XFile::~XFile() noexcept
 
 void	XFile::Open(void *pVoid, size_t size) noexcept
 {
-	m_pViewBegin = (char *) pVoid;
-	m_pViewCurrent = m_pViewBegin;
-	m_pViewEnd = m_pViewBegin + size;
+	m_begin = (char *) pVoid;
+	m_current = m_begin;
+	m_end = m_begin + size;
 }
 
 size_t	XFile::Read(void *lpBuf, size_t uiCount) noexcept
 {
-	uiCount =  std::min<>(uiCount, (size_t)(m_pViewEnd - m_pViewCurrent));
-	memcpy(lpBuf, m_pViewCurrent, uiCount);
-	m_pViewCurrent += uiCount;
+	uiCount =  std::min<>(uiCount, (size_t)(m_end - m_current));
+	memcpy(lpBuf, m_current, uiCount);
+	m_current += uiCount;
 	return uiCount;
 }
 
 void	XFile::Close() noexcept
 {
-	m_pViewCurrent = 0;
-	m_pViewEnd = 0;
+	m_current = 0;
+	m_end = 0;
 }
 
 size_t	XFile::Seek(size_t lOffset, SeekPosition nFrom) noexcept
 {
 	if (nFrom == Begin) 
-		m_pViewCurrent = m_pViewBegin + lOffset;
+		m_current = m_begin + lOffset;
 	else if (nFrom == Current)
-		m_pViewCurrent += lOffset;
+		m_current += lOffset;
 	else if (nFrom == End)
-		m_pViewCurrent = m_pViewEnd + lOffset;
-	return (long)(m_pViewCurrent - m_pViewBegin);
+		m_current = m_end + lOffset;
+	return (long)(m_current - m_begin);
 }
 
 XFileEx::XFileEx() noexcept
@@ -99,7 +99,7 @@ BOOL	XFileEx::Open(LPCTSTR szPath) noexcept
 void	XFileEx::Close() noexcept
 {
 	if (m_hMapping) {
-		UnmapViewOfFile(m_pViewBegin);
+		UnmapViewOfFile(m_begin);
 		CloseHandle(m_hMapping);
 		CloseHandle(m_hFile);
 		m_hMapping = 0;
@@ -117,7 +117,7 @@ DWORD	XFileEx::Touch() noexcept
 	if (m_hMapping) {
 		SYSTEM_INFO sys_info;
 		GetSystemInfo(&sys_info);
-		for (char *ptr = m_pViewBegin; ptr < m_pViewEnd; ptr += sys_info.dwPageSize) {
+		for (char *ptr = m_begin; ptr < m_end; ptr += sys_info.dwPageSize) {
 			checksum += *(DWORD *) ptr;
 		}
 	}
