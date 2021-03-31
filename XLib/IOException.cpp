@@ -1348,12 +1348,13 @@ static void RecordModuleList(HANDLE LogFile)
 
 static LPTSTR GetFilePart(LPTSTR source)
 {
-		LPTSTR result = _tcsrchr(source, '\\');
-		if (result)
-				result++;
-		else
-				result = source;
-		return result;
+		//LPTSTR result = _tcsrchr(source, '\\');
+		//if (result)
+		//		result++;
+		//else
+		//		result = source;
+		//return result;
+	return GetNamePart(source);
 }
 
 extern "C" void * _ReturnAddress(void);

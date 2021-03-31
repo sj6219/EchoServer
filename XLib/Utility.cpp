@@ -1001,13 +1001,8 @@ tstring GetUniqueName() noexcept
 
 LPCTSTR GetNamePart(LPCTSTR szPath) noexcept
 {
-	auto n =_tcslen(szPath);
-	auto it = std::find_if(
-		std::make_reverse_iterator(szPath + n),
-		std::make_reverse_iterator(szPath),
-		[](TCHAR v) { return v == '\\' || v == '/'; });
-	LPCTSTR p = it.base();
-	return p;
+	str slice(szPath);
+	return slice.rfind_if([](TCHAR v) noexcept { return v == '\\' || v == '/'; });
 }
 
 const DWORD Utility::m_vCRC32Table[] =

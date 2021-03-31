@@ -11,6 +11,54 @@
 #include <synchapi.h>
 #include <atomic>
 
+class str
+{
+public:
+	LPCTSTR m_begin;
+	LPCTSTR m_end;
+
+	str(LPCTSTR p) noexcept
+	{	
+		m_begin = p;
+		m_end = p + _tcslen(p);
+	}
+	str(LPCTSTR begin, LPCTSTR end) noexcept
+	{
+		m_begin = begin;
+		m_end = end;
+	}
+	LPCTSTR begin() noexcept { return m_begin; }
+	LPCTSTR end() noexcept { return m_end; }
+	std::reverse_iterator<LPCTSTR> rbegin() noexcept { return std::reverse_iterator(m_end); }
+	std::reverse_iterator<LPCTSTR> rend() noexcept { return std::reverse_iterator(m_begin); }
+	size_t len() noexcept { return m_end - m_begin; }
+
+	template<class predicate> LPCTSTR find_if(predicate p) 
+	{
+		auto it = std::find_if(
+			m_begin,
+			m_end,
+			p);
+		return it;
+	}
+	template<class predicate> LPCTSTR find_if_not(predicate p) 
+	{
+		auto it = std::find_if_not(
+			m_begin,
+			m_end,
+			p);
+		return it;
+	}
+	template<class predicate> LPCTSTR rfind_if(predicate p) 
+	{
+		auto it = std::find_if(
+			rbegin(),
+			rend(),
+			p);
+		return it.base();
+	}
+};
+
 int	ExpandStringV(char * buffer, size_t count, const char * format, const char ** argptr);
 int	ExpandStringV(wchar_t * buffer, size_t count, const wchar_t * format, const wchar_t **argptr);
 int ExpandString(char * buffer, size_t count, const char *format, ...);
