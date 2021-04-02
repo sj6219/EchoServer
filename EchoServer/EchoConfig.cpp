@@ -11,14 +11,14 @@
 //#define USE_PARSELIST
 
 int	CEchoConfig::s_nMailBindPort;
-tstring CEchoConfig::s_strMailFrom;
-tstring CEchoConfig::s_strMailTo;
+String CEchoConfig::s_strMailFrom;
+String CEchoConfig::s_strMailTo;
 int CEchoConfig::s_nPort;
 BOOL	CEchoConfig::s_bAutoStart;
 int	CEchoConfig::s_nNumberOfThreads;
 int	CEchoConfig::s_nMaxUser;
 time_t CEchoConfig::s_nTimeStamp;
-tstring CEchoConfig::s_strMailServer;
+String CEchoConfig::s_strMailServer;
 
 template <typename T> T GetValue(lisp::var var, LPCTSTR name, T defaultValue)
 {

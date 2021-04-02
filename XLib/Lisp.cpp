@@ -51,19 +51,19 @@ void lisp::_string::destroy() noexcept
 }
 
 #ifdef _DEBUG
-tstring lisp::_string::print(int level) const noexcept
+String lisp::_string::print(int level) const noexcept
 {
-	return tstring(_T("\"")) +  m_pString + _T('"');
+	return String(_T("\"")) +  m_pString + _T('"');
 }
 
-tstring lisp::_integer::print(int level) const noexcept
+String lisp::_integer::print(int level) const noexcept
 {
 	TCHAR buf[20];
 	_stprintf_s(buf, _T("%d"), m_nValue);
 	return buf;
 }
 
-tstring lisp::_float::print(int level) const noexcept
+String lisp::_float::print(int level) const noexcept
 {
 	TCHAR buf[20];
 	_stprintf_s(buf,  _T("%.2f"), m_fValue);
@@ -85,7 +85,7 @@ int	lisp::_cons::length() const noexcept
 }
 
 #ifdef _DEBUG
-tstring	lisp::_cons::print(int level) const noexcept
+String	lisp::_cons::print(int level) const noexcept
 {
 	if (level >= 6)
 		return _T("(...)");
@@ -96,12 +96,12 @@ tstring	lisp::_cons::print(int level) const noexcept
 	return _T('(') + m_car.print(level+4) + _T(" . ") + m_cdr.print(level+1) + _T(')');
 }
 
-tstring lisp::_null::print(int level) const noexcept
+String lisp::_null::print(int level) const noexcept
 {
 	return _T("()");
 }
 
-tstring lisp::_error::print(int level) const noexcept
+String lisp::_error::print(int level) const noexcept
 {
 	return _T("#error");
 }

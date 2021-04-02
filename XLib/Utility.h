@@ -11,51 +11,68 @@
 #include <synchapi.h>
 #include <atomic>
 
-class str
+// String slice
+template <typename T> class Str
 {
 public:
-	LPCTSTR m_begin;
-	LPCTSTR m_end;
+	typedef T value_type;
+	typedef T* pointer;
+	typedef T& reference;
+	typedef Str<const T> ConstStr;
 
-	str(LPCTSTR p) noexcept
-	{	
+	pointer m_begin;
+	pointer m_end;
+
+	Str() noexcept {}
+	Str(pointer p) noexcept
+	{
 		m_begin = p;
 		m_end = p + _tcslen(p);
 	}
-	str(LPCTSTR begin, LPCTSTR end) noexcept
+	Str(pointer begin, pointer end) noexcept
 	{
 		m_begin = begin;
 		m_end = end;
 	}
-	LPCTSTR begin() noexcept { return m_begin; }
-	LPCTSTR end() noexcept { return m_end; }
-	std::reverse_iterator<LPCTSTR> rbegin() noexcept { return std::reverse_iterator(m_end); }
-	std::reverse_iterator<LPCTSTR> rend() noexcept { return std::reverse_iterator(m_begin); }
-	size_t len() noexcept { return m_end - m_begin; }
+	pointer begin() const noexcept { return m_begin; }
+	pointer end() const noexcept { return m_end; }
+	std::reverse_iterator<pointer> rbegin() const noexcept { return std::reverse_iterator<pointer>(m_end); }
+	std::reverse_iterator<pointer> rend() const noexcept { return std::reverse_iterator<pointer>(m_begin); }
+	size_t len() const noexcept { return m_end - m_begin; }
+	bool empty() const noexcept { return m_begin == m_end; }
+	reference operator [] (size_t i) const noexcept { return m_begin[i]; }
 
-	template<class predicate> LPCTSTR find_if(predicate p) 
+	pointer find(value_type v) const noexcept
 	{
-		auto it = std::find_if(
-			m_begin,
-			m_end,
-			p);
-		return it;
+		return std::find(m_begin, m_end, v);
 	}
-	template<class predicate> LPCTSTR find_if_not(predicate p) 
+	pointer find(ConstStr s) const noexcept
 	{
-		auto it = std::find_if_not(
-			m_begin,
-			m_end,
-			p);
-		return it;
+		return find_if([=](value_type v) noexcept { return s.find(v) != s.end(); });
 	}
-	template<class predicate> LPCTSTR rfind_if(predicate p) 
+	pointer find_not(ConstStr s) const noexcept
 	{
-		auto it = std::find_if(
-			rbegin(),
-			rend(),
-			p);
-		return it.base();
+		return find_if([=](value_type v) noexcept { return s.find(v) == s.end(); });
+	}
+	pointer rfind(value_type v) const noexcept
+	{
+		return std::find(rbegin(), rend(), v).base();
+	}
+	pointer rfind(ConstStr s) const noexcept
+	{
+		return rfind_if([=](value_type v) noexcept { return s.find(v) != s.end(); });
+	}
+	pointer rfind_not(ConstStr s) const noexcept
+	{
+		return rfind_if([=](value_type v) noexcept { return s.find(v) == s.end(); });
+	}
+	template<class predicate> pointer find_if(predicate p) const
+	{
+		return std::find_if(m_begin, 	m_end, p);
+	}
+	template<class predicate> pointer rfind_if(predicate p) const
+	{
+		return std::find_if(rbegin(), rend(), p).base();
 	}
 };
 
@@ -68,13 +85,13 @@ int ExpandString(wchar_t * buffer, size_t count, const wchar_t * format, ...);
 class iless
 {
 public:
-	bool operator()(const tstring& a, const tstring& b) const {
+	bool operator()(const String& a, const String& b) const {
 		return _tcsicmp(a.c_str(), b.c_str()) < 0;
 	}
-	bool operator()(LPCTSTR a, const tstring& b) const {
+	bool operator()(LPCTSTR a, const String& b) const {
 		return _tcsicmp(a, b.c_str()) < 0;
 	}
-	bool operator()(const tstring& a, LPCTSTR b) const {
+	bool operator()(const String& a, LPCTSTR b) const {
 		return _tcsicmp(a.c_str(), b) < 0;
 	}
 	bool operator()(LPCTSTR a, LPCTSTR b) const {
@@ -85,13 +102,13 @@ public:
 class StrCmp
 {
 public:
-	bool operator()(const tstring& a, const tstring& b) const {
+	bool operator()(const String& a, const String& b) const {
 		return _tcscmp(a.c_str(), b.c_str()) < 0;
 	}
-	bool operator()(LPCTSTR a, const tstring& b) const {
+	bool operator()(LPCTSTR a, const String& b) const {
 		return _tcscmp(a, b.c_str()) < 0;
 	}
-	bool operator()(tstring& a, LPCTSTR b) const {
+	bool operator()(String& a, LPCTSTR b) const {
 		return _tcscmp(a.c_str(), b) < 0;
 	}
 	bool operator()(LPCTSTR a, LPCTSTR b) const {
@@ -373,7 +390,7 @@ std::string ToString(LPCWSTR lpw) noexcept;
 #define TtoA(lpw) lpw
 #endif
 
-tstring GetUniqueName() noexcept;
+String GetUniqueName() noexcept;
 LPCTSTR	GetNamePart(LPCTSTR szPath) noexcept;
 __forceinline LPTSTR	GetNamePart(LPTSTR szPath) noexcept { return (LPTSTR) GetNamePart((LPCTSTR) szPath); }
 

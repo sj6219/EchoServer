@@ -986,7 +986,7 @@ std::string ToString(LPCWSTR lpw) noexcept
 }
 #endif
 
-tstring GetUniqueName() noexcept
+String GetUniqueName() noexcept
 {
 	TCHAR path[MAX_PATH+1];
 	GetModuleFileName(0, path, MAX_PATH);
@@ -1001,8 +1001,10 @@ tstring GetUniqueName() noexcept
 
 LPCTSTR GetNamePart(LPCTSTR szPath) noexcept
 {
-	str slice(szPath);
-	return slice.rfind_if([](TCHAR v) noexcept { return v == '\\' || v == '/'; });
+	Str slice(szPath);
+	Str<const TCHAR> s(_T("\\/"));
+
+	return slice.rfind(_T("\\/"));
 }
 
 const DWORD Utility::m_vCRC32Table[] =

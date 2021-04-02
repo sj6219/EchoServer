@@ -139,7 +139,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	UpdateWindow(hWnd);
 
 
-	CreateMutex( NULL, FALSE, tstring(_T("Global\\")).append(GetUniqueName()).c_str());
+	CreateMutex( NULL, FALSE, String(_T("Global\\")).append(GetUniqueName()).c_str());
 	if(GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		MessageBox(hWnd, _T("Another Server is running"), _T(""), MB_ICONERROR);

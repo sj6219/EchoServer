@@ -6,9 +6,9 @@
 #include <string>
 
 #ifdef	UNICODE
-typedef	std::wstring tstring;
+typedef	std::wstring String;
 #else
-typedef	std::string tstring;
+typedef	std::string String;
 #endif
 
 namespace lisp
@@ -43,7 +43,7 @@ namespace lisp
 		virtual _object* copy() const  = 0;
 		virtual void destroy() noexcept = 0;
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept = 0;
+		virtual String print(int level) const noexcept = 0;
 #endif
 	};
 
@@ -61,7 +61,7 @@ namespace lisp
 		virtual _object* copy() const ;
 		virtual void destroy() noexcept;
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif
 	};
 	class _null : public _object
@@ -71,7 +71,7 @@ namespace lisp
 		virtual _object* copy() const  { return &s_nil; }
 		virtual void destroy() noexcept {}
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif
 	};
 
@@ -114,7 +114,7 @@ namespace lisp
 //		bool empty() const { return m_pObject == 0; }
 #ifdef	_DEBUG
 		void print() const noexcept;
-		tstring print(int level) const noexcept { return m_pObject->print(level); }
+		String print(int level) const noexcept { return m_pObject->print(level); }
 #endif
 	};
 
@@ -133,7 +133,7 @@ namespace lisp
 		virtual _object* copy() const ;
 		virtual void destroy() noexcept;
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif
 	};
 	class _integer : public _object
@@ -154,7 +154,7 @@ namespace lisp
 		virtual _object* copy() const  { return new _integer(m_nValue); }
 		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif		
 	};
 
@@ -176,7 +176,7 @@ namespace lisp
 		virtual _object* copy() const  { return new _float(m_fValue); }
 		virtual void destroy() noexcept { delete this; }
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif
 	};
 
@@ -186,7 +186,7 @@ namespace lisp
 		virtual _object* copy() const  { return &s_error; }
 		virtual void destroy() noexcept {}
 #ifdef _DEBUG
-		virtual tstring print(int level) const noexcept;
+		virtual String print(int level) const noexcept;
 #endif
 	};
 

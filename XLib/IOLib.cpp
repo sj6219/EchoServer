@@ -45,7 +45,7 @@ void	BREAK() noexcept
 //#pragma init_seg(lib)
 //XIOLibInit	theInit;
 
-tstring Format(LPCTSTR format, ...) noexcept
+String StringFormat(LPCTSTR format, ...) noexcept
 {
 	va_list arglist;
 	va_start(arglist, format);

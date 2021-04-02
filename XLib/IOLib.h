@@ -66,12 +66,12 @@ void BREAK() noexcept;
 #pragma warning(disable: 4995)
 
 #ifdef	UNICODE
-typedef	std::wstring tstring;
+typedef	std::wstring String;
 #else
-typedef	std::string tstring;
+typedef	std::string String;
 #endif // UNICODE
 
-tstring Format(LPCTSTR format, ...) noexcept;
+String StringFormat(LPCTSTR format, ...) noexcept;
 
 void LOG_WARN(LPCTSTR format, ...);
 void LOG_ERR(LPCTSTR format, ...);

@@ -10,13 +10,13 @@
 #define USE_PARSELIST
 
 int	CForwardConfig::s_nMailBindPort;
-tstring CForwardConfig::s_strMailFrom;
-tstring CForwardConfig::s_strMailTo;
+String CForwardConfig::s_strMailFrom;
+String CForwardConfig::s_strMailTo;
 BOOL	CForwardConfig::s_bAutoStart;
 int	CForwardConfig::s_nNumberOfThreads;
 int	CForwardConfig::s_nMaxUser;
 time_t CForwardConfig::s_nTimeStamp;
-tstring CForwardConfig::s_strMailServer;
+String CForwardConfig::s_strMailServer;
 CForwardConfig::ForwardVector CForwardConfig::s_vForwardList;
 
 
