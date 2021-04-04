@@ -8,8 +8,9 @@
 #include "forwardcounter.h"
 
 // ctrpp -o forwardcounter.h -rc forwardcounter.rc -ch forwardcountersymbol.h forward.man
-// lodctr /m:forward.man C:\Users\sjpark\Documents\ForwardServer\x64\Release
+// lodctr /m:forward.man C:\Users\sjpark\Documents\EchoServer\x64\Release
 // unlodctr  /m:forward.man
+// Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\_V2Providers\{6b0b3135-4a43-4e48-84ec-f057457ac18e}
 
 XIOScreen	CStatus::s_screen;
 

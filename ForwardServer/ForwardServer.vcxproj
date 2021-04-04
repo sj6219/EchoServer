@@ -324,6 +324,7 @@
     <ClCompile Include="ForwardConfig.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="forwardcounter.rc" />
     <ResourceCompile Include="ForwardServer.rc" />
   </ItemGroup>
   <ItemGroup>
