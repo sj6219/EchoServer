@@ -107,7 +107,7 @@ void CForwardSocket::OnClose()
 void CForwardSocket::OnCloseEx()
 {
 	// if connection is failed, this function is called 
-	// before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate
+	// and it's called before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate
 	LOG_INFO(_T("forward connect fail (%p)"), this);
 	m_pSocket->Close();
 }

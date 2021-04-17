@@ -632,7 +632,7 @@ void XIOSocket::Read(DWORD dwLeft)
 		m_lock.Unlock();
 		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
 			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD*)this, nErr);
-		Close();
+		Shutdown();
 		ReleaseIO();
 	}
 	else
