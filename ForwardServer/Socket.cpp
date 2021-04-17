@@ -11,6 +11,7 @@ CSocket::CSocket(CServer *pServer, SOCKET socket, in_addr addr) :
 	m_pServer(pServer)
 {
 	m_addr = addr;
+	m_link.Initialize();
 }
 
 CSocket::~CSocket()
@@ -53,6 +54,8 @@ void CSocket::OnRead()
 
 void CSocket::OnClose()
 {
+	if (m_link.Empty())
+		return;
 	LOG_INFO(_T("connection close (%p)"),  this);
 	m_pServer->CServer::Remove( this);
 	m_pForwardSocket->Shutdown();
@@ -103,7 +106,8 @@ void CForwardSocket::OnClose()
 
 void CForwardSocket::OnCloseEx()
 {
-	// this function is called before m_pSocket->Read() so m_pSocket->Shutdown() is not appropriate
+	// if connection is failed, this function is called 
+	// before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate
 	LOG_INFO(_T("forward connect fail (%p)"), this);
 	m_pSocket->Close();
 }

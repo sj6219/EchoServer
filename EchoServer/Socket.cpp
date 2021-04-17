@@ -9,6 +9,7 @@
 CSocket::CSocket(SOCKET socket, in_addr addr) : XIOSocket(socket)
 {
 	m_addr = addr;
+	m_link.Initialize();
 }
 
 CSocket::~CSocket()
@@ -53,6 +54,8 @@ void CSocket::OnRead()
 
 void CSocket::OnClose()
 {
+	if (m_link.Empty())
+		return;
 	LOG_INFO(_T("connection close (%p)"), this);
 	CServer::Remove( this);
 }
