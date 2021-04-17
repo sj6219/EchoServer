@@ -8,7 +8,7 @@
 #include "echocounter.h"
 
 // ctrpp -o echocounter.h -rc echocounter.rc -ch echocountersymbol.h echo.man
-// lodctr /m:echo.man C:\Users\sjpark\Documents\EchoServer\x64\Release
+// for /F %i in ("..\x64\Release") do lodctr /m:echo.man %~fi
 // unlodctr  /m:echo.man
 // Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\_V2Providers\{9c1006fe-c71f-4b5b-adf9-d55db47dd902}
 
