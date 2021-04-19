@@ -47,11 +47,6 @@ static DWORD g_dwTopTime;
 typedef std::priority_queue<XIOSocket::XIOTimer> TimerQueue;
 static TimerQueue g_timerQueue;
 
-XIOSocket::CInit::~CInit()
-{
-	XIOSocket::Stop();
-}
-
 XIOObject::~XIOObject()
 {
 }
@@ -138,6 +133,32 @@ void XIOBuffer::FreeAll()
 			break;
 		delete pBuffer;
 	}
+}
+
+static XIOSocket::XIOTimerInstance g_instance;
+
+void XIOSocket::XIOTimerInstance::OnTimerCallback(int nId)
+{
+	g_timerQueue.push(XIOSocket::XIOTimer(this, GetTickCount() + 24 * 3600 * 1000, nId));
+	g_dwTopTime = g_timerQueue.top().m_dwTime;
+}
+
+void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
+{
+#ifdef EXIT_IO_THREAD
+	if (dwTransferred == 0)
+		SetEvent(g_hTimer);
+	else
+		g_instance.PostObject(dwTransferred - 1, 0);
+	InterlockedDecrement(&s_nRunningThread);
+	//SuspendThread(GetCurrentThread());
+	ExitThread(0);
+#endif
+}
+
+XIOSocket::CInit::~CInit()
+{
+	XIOSocket::Stop();
 }
 
 void XIOSocket::Start()
@@ -240,30 +261,6 @@ void XIOSocket::DumpStack()
 	XIOException::DumpStack(g_nThread, g_hThread, g_nThreadId);
 	XIOException::SendMail();
 }
-
-
-static XIOSocket::XIOTimerInstance g_instance;
-
-void XIOSocket::XIOTimerInstance::OnTimerCallback(int nId)
-{
-	g_timerQueue.push(XIOSocket::XIOTimer(this, GetTickCount() + 24 * 3600 * 1000, nId));
-	g_dwTopTime = g_timerQueue.top().m_dwTime;
-}
-
-void XIOSocket::XIOTimerInstance::OnIOCallback(BOOL bSucess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
-{
-#ifdef EXIT_IO_THREAD
-	if (dwTransferred == 0)
-		SetEvent(g_hTimer);
-	else
-		g_instance.PostObject(dwTransferred - 1, 0);
-	InterlockedDecrement(&s_nRunningThread);
-	//SuspendThread(GetCurrentThread());
-	ExitThread(0);
-#endif
-}
-
-typedef void (XIOObject::*TimerFunc)(int nId);
 
 unsigned __stdcall XIOSocket::WaitThread(void *)
 {
@@ -655,36 +652,6 @@ void XIOSocket::Close()
 		closesocket(hSocket);
 		ReleaseSelf();
 	}
-}
-
-void XIOSocket::GracefulClose()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket;
-	m_hSocket = INVALID_SOCKET;
-	m_lock.Unlock();
-	if (hSocket != INVALID_SOCKET)
-	{
-		OnClose();
-		closesocket(hSocket);
-		ReleaseSelf();
-	}
-}
-
-void XIOSocket::Disconnect()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket;
-	if (hSocket != INVALID_SOCKET) {
-		m_hSocket = 0;
-	}
-	m_lock.Unlock();
-
-	//	LINGER linger;
-	//	linger.l_onoff = 1;
-	//	linger.l_linger = 0;
-	//	setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
-	closesocket(hSocket);
 }
 
 void XIOSocket::Shutdown()

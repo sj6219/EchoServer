@@ -64,75 +64,9 @@ public:
 #endif
 };
 
-template <class T> class CIOAutoPtr
-{
-public:
-	T* m_p;
-
-	CIOAutoPtr(T* p) : m_p(p) { if (m_p) m_p->AddRefTemp(); }
-	~CIOAutoPtr() { if (m_p) m_p->ReleaseTemp(); }
-	operator T* () const { return m_p; }
-	T& operator * () const { return *m_p; }
-	T* operator -> () const { return m_p; }
-	T** operator & () const { return &m_p; }
-	bool operator ! () const { return m_p == 0; }
-private:
-	CIOAutoPtr(CIOAutoPtr<T> const &copy);
-	T* operator = (CIOAutoPtr<T> const &copy);
-	
-};
-
-template <class T> class CIOAutoVar
-{
-public:
-	T* m_p;
-
-	CIOAutoVar() : m_p(0) {}
-	CIOAutoVar(CIOAutoVar<T> const & copy) : m_p(copy.m_p)
-	{
-		if (m_p)
-			m_p->AddRefVar(); 
-	}
-	CIOAutoVar(T* p) : m_p(p) 
-	{
-		if (p)
-			p->AddRefVar(); 
-	}
-	~CIOAutoVar()
-	{
-		T* pOld = (T*) InterlockedExchangePointer((void **)&m_p, 0);
-		if (pOld)
-			pOld->ReleaseVar();
-	}
-	T* operator = (T* p)
-	{
-		if (p)
-			p->AddRefVar();
-		T *pOld = (T*) InterlockedExchangePointer((void **)&m_p, p);
-		if (pOld)
-			pOld->ReleaseVar();
-		return p;
-	}
-	T* operator = (CIOAutoVar<T> const &copy)
-	{
-		T* p = copy.m_p;
-		if (p)
-			p->AddRefVar();
-		T* pOld = (T*) InterlockedExchangePointer((void **)&m_p, p);
-		if (pOld)
-			pOld->ReleaseVar();
-		return p;
-	}
-	operator T* () const { return m_p; }
-	T& operator * () const { return *m_p; }
-	T* operator -> () const { return m_p; }
-	T** operator & () const { return &m_p; }
-	bool operator ! () const { return m_p == 0; }
-};
-
 class XIOBuffer;
-
 class XIOSocket;
+
 class XIOServer : public XIOObject
 {
 public:
@@ -198,8 +132,6 @@ public :
 	virtual void OnRead() = 0;
 	virtual void OnCreate();
 	void Close();
-	void GracefulClose();
-	void Disconnect();
 	void Shutdown();
 	void Read( DWORD dwLeft);
 	void FreeBuffer();
