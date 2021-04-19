@@ -260,7 +260,7 @@ template <typename TYPE, size_t offset = 0> class linked_list : public linked_li
 {
 protected :
 	long m_nSize;
-	typedef	linked_list_<TYPE, offset> Super;
+	typedef linked_list_<TYPE, offset> Super;
 	typedef Super::iterator iterator;
 public :
 	linked_list() noexcept

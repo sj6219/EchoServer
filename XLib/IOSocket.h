@@ -142,8 +142,7 @@ public :
 	void FreeBuffer();
 	void ReadCallback(DWORD dwTransferred);
 	void WriteCallback(DWORD dwTransferred);
-	void WriteWithLock(XIOBuffer *pBuffer);
-	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
+	void Write(XIOBuffer *pBuffer);
 	void Write(void *buf, DWORD size);
 	void Initialize();
 	long PendingWrite() { return m_nPendingWrite; }

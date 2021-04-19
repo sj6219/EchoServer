@@ -411,6 +411,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 
 void XIOSocket::Write(void* buffer, DWORD size)
 {
+	m_lock.Lock();
 	char* buf = (char*)buffer;
 	while (size)
 	{
@@ -422,10 +423,12 @@ void XIOSocket::Write(void* buffer, DWORD size)
 		buf += n;
 		size -= n;
 	}
+	m_lock.Unlock();
 }
 
-void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
+void XIOSocket::Write(XIOBuffer *pBuffer)
 {
+	m_lock.Lock();
 	if (pBuffer->m_dwSize == 0)
 	{
 		m_lock.Unlock();
