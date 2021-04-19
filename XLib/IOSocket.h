@@ -116,16 +116,21 @@ class XIOSocket : public XIOObject
 {
 public :
 
+	SOCKET m_hSocket;
 	XLock m_lock;
+	// There is no need to lock for variable m_hSocket inside the OnCreate() or OnRead() function.
+	// This is because these functions is not called simultaneously in multiple threads.
+	// Thus, inside these functions, the Write() function of other XIOSocket instance can be called without worrying about the deadlock.
+
 	OVERLAPPED m_overlappedRead;
 	OVERLAPPED m_overlappedWrite;
 	XIOBuffer *m_pReadBuf;
-	SOCKET m_hSocket;
 	XIOBuffer *m_pFirstBuf;
 	XIOBuffer *m_pLastBuf;
 	long m_nPendingWrite;
 
 
+	XIOSocket(SOCKET s);
 	virtual ~XIOSocket();
 	virtual void OnClose();
 	virtual void OnIOCallback(BOOL bError, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
@@ -137,14 +142,13 @@ public :
 	void FreeBuffer();
 	void ReadCallback(DWORD dwTransferred);
 	void WriteCallback(DWORD dwTransferred);
-	XIOSocket(SOCKET s);
-	static void Start();
-	static void Stop();
 	void WriteWithLock(XIOBuffer *pBuffer);
 	void Write(XIOBuffer *pBuffer) { m_lock.Lock(); WriteWithLock(pBuffer); }
 	void Write(void *buf, DWORD size);
 	void Initialize();
 	long PendingWrite() { return m_nPendingWrite; }
+	static void Start();
+	static void Stop();
 	static unsigned __stdcall IOThread(void *arglist);
 	static void DumpStack();
 	static BOOL CreateIOThread(int nThread);

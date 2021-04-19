@@ -205,24 +205,10 @@ void XIOSocket::Initialize()
 
 	OnCreate();
 }
-void XIOSocket::Write(void* buffer, DWORD size)
-{
-	char* buf = (char*)buffer;
-	while (size)
-	{
-		XIOBuffer* pBuffer = XIOBuffer::Alloc();
-		DWORD n = std::min<DWORD>(size,  BUFFER_SIZE);
-		memcpy(pBuffer->m_buffer, buf, n);
-		pBuffer->m_dwSize = n;
-		Write(pBuffer);
-		buf += n;
-		size -= n;
-	}
-}
 
 void XIOSocket::OnCreate()
 {
-	Read(0); // Read must be called last because that can cause OnRead()
+	Read(0); // Read must be called last because that can cause other thread's OnRead()
 }
 
 void XIOSocket::ReadCallback(DWORD dwTransferred)
@@ -423,6 +409,20 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 	pFirstBuf->Free();
 }
 
+void XIOSocket::Write(void* buffer, DWORD size)
+{
+	char* buf = (char*)buffer;
+	while (size)
+	{
+		XIOBuffer* pBuffer = XIOBuffer::Alloc();
+		DWORD n = std::min<DWORD>(size, BUFFER_SIZE);
+		memcpy(pBuffer->m_buffer, buf, n);
+		pBuffer->m_dwSize = n;
+		Write(pBuffer);
+		buf += n;
+		size -= n;
+	}
+}
 
 void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 {
@@ -450,8 +450,9 @@ void XIOSocket::WriteWithLock(XIOBuffer *pBuffer)
 			m_lock.Unlock();
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
-				LOG_ERR(_T("XIOSocket::Write %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
+				LOG_ERR(_T("XIOSocket::Write %#x(%p) err=%d"), m_hSocket, *(DWORD_PTR *)this, nErr);
 			FreeBuffer();
+			// Shutdown();
 			ReleaseIO(); 
 		}
 		else
@@ -629,7 +630,7 @@ void XIOSocket::Read(DWORD dwLeft)
 		m_lock.Unlock();
 		if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN)
 			LOG_ERR(_T("XIOSocket::Read %#x(%#x) err = %d"), m_hSocket, *(DWORD*)this, nErr);
-		Shutdown();
+		Close();
 		ReleaseIO();
 	}
 	else
