@@ -64,7 +64,7 @@ void CSocket::OnClose()
 
 
 CForwardSocket::CForwardSocket(CSocket* pSocket, SOCKET socket)
-	: XIOSocketEx(socket),
+	: XIOConnectSocket(socket),
 	m_pSocket(pSocket)
 {
 }
@@ -104,7 +104,7 @@ void CForwardSocket::OnClose()
 	m_pSocket->Shutdown();
 }
 
-void CForwardSocket::OnCloseEx()
+void CForwardSocket::OnConnectFail()
 {
 	// if connection is failed, this function is called 
 	// and it's called before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate

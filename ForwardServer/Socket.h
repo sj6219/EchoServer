@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IOLib.h"
-#include "IOSocketEx.h"
+#include "IOConnectSocket.h"
 #include "Link.h"
 
 #define USE_IOBUFFER
@@ -28,7 +28,7 @@ public:
 	
 };
 
-class CForwardSocket : public XIOSocketEx
+class CForwardSocket : public XIOConnectSocket
 {
 
 public:
@@ -39,7 +39,7 @@ public:
 
 	virtual void OnRead();
 	virtual void OnClose();
-	virtual void OnCloseEx();
+	virtual void OnConnectFail();
 	virtual void	OnConnect();
 
 };

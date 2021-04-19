@@ -1,31 +1,31 @@
 #include "pch.h"
-#include "IOSocketEx.h"
+#include "IOConnectSocket.h"
 #include "Utility.h"
 #include <mswsock.h>
 
 
 
-XIOSocketEx::XIOSocketEx(SOCKET socket)
+XIOConnectSocket::XIOConnectSocket(SOCKET socket)
 	: XIOSocket(socket)
 {
 }
 
-XIOSocketEx::~XIOSocketEx()
+XIOConnectSocket::~XIOConnectSocket()
 {
 
 }
 
-void XIOSocketEx::OnCreate()
+void XIOConnectSocket::OnCreate()
 {
 
 }
 
-void XIOSocketEx::OnConnect()
+void XIOConnectSocket::OnConnect()
 {
 	Read(0);
 }
 
-bool XIOSocketEx::Connect(LPCTSTR server, int port)
+bool XIOConnectSocket::Connect(LPCTSTR server, int port)
 {
 	LPFN_CONNECTEX ConnectEx;
 	GUID guid = WSAID_CONNECTEX;
@@ -72,14 +72,14 @@ fail:
 
 }
 
-void XIOSocketEx::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
+void XIOConnectSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped)
 {
 	if (lpOverlapped == &m_overlappedConnect) {
 		if (!bSuccess)
 		{
 			if (m_hSocket != INVALID_SOCKET) {
 				LOG_ERR(_T("connect callback error %d"), GetLastError());
-				CloseEx();
+				ConnectFail();
 			}
 			ReleaseIO();
 			return;
@@ -93,7 +93,7 @@ void XIOSocketEx::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED 
 	}
 }
 
-void XIOSocketEx::CloseEx()
+void XIOConnectSocket::ConnectFail()
 {
 	m_lock.Lock();
 	SOCKET hSocket = m_hSocket;
@@ -101,7 +101,7 @@ void XIOSocketEx::CloseEx()
 	m_lock.Unlock();
 	if (hSocket != INVALID_SOCKET)
 	{
-		OnCloseEx();
+		OnConnectFail();
 		//		LINGER linger;
 		//		linger.l_onoff = 1;
 		//		linger.l_linger = 0;
@@ -111,7 +111,7 @@ void XIOSocketEx::CloseEx()
 	}
 }
 
-void XIOSocketEx::OnCloseEx()
+void XIOConnectSocket::OnConnectFail()
 {
-
+	
 }

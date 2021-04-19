@@ -54,7 +54,7 @@
     <ClInclude Include="XParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IOSocketEx.h">
+    <ClInclude Include="IOConnectSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -92,7 +92,7 @@
     <ClCompile Include="XParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IOSocketEx.cpp">
+    <ClCompile Include="IOConnectSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
