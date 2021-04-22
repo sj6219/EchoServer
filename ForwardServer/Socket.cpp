@@ -58,7 +58,7 @@ void CSocket::OnClose()
 		return;
 	LOG_INFO(_T("connection close (%p)"),  this);
 	m_pServer->CServer::Remove( this);
-	m_pForwardSocket->Shutdown();
+	m_pForwardSocket->Close(); //  m_pForwardSocket->Shutdown();
 	m_pForwardSocket = 0;
 }
 
@@ -101,13 +101,13 @@ void CForwardSocket::OnRead()
 void CForwardSocket::OnClose()
 {
 	LOG_INFO(_T("forward connection close (%p)"), this);
-	m_pSocket->Shutdown();
+	m_pSocket->Close(); //m_pSocket->Shutdown();
 }
 
-void CForwardSocket::OnConnectFail()
-{
-	// if connection is failed, this function is called 
-	// and it's called before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate
-	LOG_INFO(_T("forward connect fail (%p)"), this);
-	m_pSocket->Close();
-}
+//void CForwardSocket::OnConnectFail()
+//{
+//	// if connection is failed, this function is called 
+//	// and it's called before m_pSocket->Read() is called, so m_pSocket->Shutdown() is not appropriate
+//	LOG_INFO(_T("forward connect fail (%p)"), this);
+//	m_pSocket->Close();
+//}

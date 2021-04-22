@@ -152,7 +152,7 @@ public:
 	~XLock() noexcept { DeleteCriticalSection(&m_lock); }
 	void Lock() noexcept { EnterCriticalSection(&m_lock); }
 	void Unlock() noexcept { LeaveCriticalSection(&m_lock); }
-	bool try_lock() noexcept { return TryEnterCriticalSection(&m_lock); }
+	bool TryLock() noexcept { return TryEnterCriticalSection(&m_lock); }
 };
 
 template <typename T> class XUniqueLock

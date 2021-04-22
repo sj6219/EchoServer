@@ -396,7 +396,7 @@ void XIOSocket::WriteCallback(DWORD dwTransferred)
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::WriteCallback %#x(%#x) err=%d"), m_hSocket, *(DWORD *)this, nErr);
-			FreeBuffer();
+			Close(); //  FreeBuffer();
 			ReleaseIO();
 		}
 		else
@@ -454,8 +454,7 @@ void XIOSocket::Write(XIOBuffer *pBuffer)
 			if (nErr != WSAENOTSOCK && nErr != WSAECONNRESET && nErr != WSAECONNABORTED && nErr != WSAESHUTDOWN
 				&& nErr != WSAEINVAL)
 				LOG_ERR(_T("XIOSocket::Write %#x(%p) err=%d"), m_hSocket, *(DWORD_PTR *)this, nErr);
-			FreeBuffer();
-			// Shutdown();
+			Close(); // FreeBuffer();
 			ReleaseIO(); 
 		}
 		else
@@ -498,10 +497,10 @@ void XIOSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 {
 	if (!bSuccess)
 	{
-		if (lpOverlapped == &m_overlappedRead) // closed only at read
+		if (lpOverlapped == &m_overlappedRead) 
 			Close();
 		else if (lpOverlapped == &m_overlappedWrite)
-			FreeBuffer();
+			Close(); // FreeBuffer();
 		ReleaseIO();
 	}
 	else if (lpOverlapped == &m_overlappedWrite)
@@ -526,7 +525,7 @@ void XIOSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lp
 
 BOOL XIOSocket::CreateIOThread(int nThread)
 {
-	SetProcessPriorityBoost(GetCurrentProcess(), TRUE);
+	// SetProcessPriorityBoost(GetCurrentProcess(), TRUE);
 	g_nTerminating = 0;
 	g_hTimer = CreateEvent(NULL, FALSE, FALSE, NULL);
 	s_hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);

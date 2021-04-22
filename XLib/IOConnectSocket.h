@@ -11,7 +11,7 @@ public:
 	virtual void OnCreate();
 	virtual void OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLAPPED lpOverlapped);
 	virtual void OnConnect();
-	virtual void OnConnectFail();
+	// virtual void OnConnectFail() {}
 	bool Connect(LPCTSTR server, int port);
-	void ConnectFail();
+	// void ConnectFail();
 };

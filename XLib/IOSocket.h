@@ -118,10 +118,6 @@ public :
 
 	SOCKET m_hSocket;
 	XLock m_lock;
-	// There is no need to lock for variable m_hSocket inside the OnCreate() or OnRead() function.
-	// This is because these functions is not called simultaneously in multiple threads.
-	// Thus, inside these functions, the Write() function of other XIOSocket instance can be called without worrying about the deadlock.
-
 	OVERLAPPED m_overlappedRead;
 	OVERLAPPED m_overlappedWrite;
 	XIOBuffer *m_pReadBuf;

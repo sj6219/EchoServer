@@ -196,7 +196,7 @@ void XRWLock::Unlock()
 	//	InterlockedExchangeAdd(&m_nRWCount, -0x10000000);
 }
 
-BOOL XRWLock::try_lock()
+BOOL XRWLock::TryLock()
 {
 	if ((short)InterlockedExchangeAdd(&m_nCount, 0x100))
 	{

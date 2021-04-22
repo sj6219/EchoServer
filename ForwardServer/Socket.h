@@ -39,7 +39,7 @@ public:
 
 	virtual void OnRead();
 	virtual void OnClose();
-	virtual void OnConnectFail();
+	//virtual void OnConnectFail();
 	virtual void	OnConnect();
 
 };

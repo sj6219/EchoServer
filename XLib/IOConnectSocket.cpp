@@ -79,7 +79,7 @@ void XIOConnectSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLA
 		{
 			if (m_hSocket != INVALID_SOCKET) {
 				LOG_ERR(_T("connect callback error %d"), GetLastError());
-				ConnectFail();
+				Close(); // ConnectFail();
 			}
 			ReleaseIO();
 			return;
@@ -93,25 +93,21 @@ void XIOConnectSocket::OnIOCallback(BOOL bSuccess, DWORD dwTransferred, LPOVERLA
 	}
 }
 
-void XIOConnectSocket::ConnectFail()
-{
-	m_lock.Lock();
-	SOCKET hSocket = m_hSocket;
-	m_hSocket = INVALID_SOCKET;
-	m_lock.Unlock();
-	if (hSocket != INVALID_SOCKET)
-	{
-		OnConnectFail();
-		//		LINGER linger;
-		//		linger.l_onoff = 1;
-		//		linger.l_linger = 0;
-		//		setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
-		closesocket(hSocket);
-		ReleaseSelf();
-	}
-}
+//void XIOConnectSocket::ConnectFail()
+//{
+//	m_lock.Lock();
+//	SOCKET hSocket = m_hSocket;
+//	m_hSocket = INVALID_SOCKET;
+//	m_lock.Unlock();
+//	if (hSocket != INVALID_SOCKET)
+//	{
+//		OnConnectFail();
+//		//		LINGER linger;
+//		//		linger.l_onoff = 1;
+//		//		linger.l_linger = 0;
+//		//		setsockopt(hSocket, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
+//		closesocket(hSocket);
+//		ReleaseSelf();
+//	}
+//}
 
-void XIOConnectSocket::OnConnectFail()
-{
-	
-}

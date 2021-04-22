@@ -134,7 +134,7 @@ public:
 	{
 		InterlockedExchange(&m_lock, 0);
 	}
-	bool try_lock() noexcept
+	bool TryLock() noexcept
 	{
 		return InterlockedCompareExchange(&m_lock, 1, 0) == 0;
 	}
@@ -149,7 +149,7 @@ public:
 	XRWLock() noexcept { InitializeSRWLock(&m_lock); }
 	void Lock() noexcept { AcquireSRWLockExclusive(&m_lock); }
 	void Unlock() noexcept { ReleaseSRWLockExclusive(&m_lock); }
-	BOOL try_lock() noexcept { return TryAcquireSRWLockExclusive(&m_lock); }
+	BOOL TryLock() noexcept { return TryAcquireSRWLockExclusive(&m_lock); }
 	void LockShared() noexcept { AcquireSRWLockShared(&m_lock); }
 	void UnlockShared() noexcept { ReleaseSRWLockShared(&m_lock);  }
 #else
@@ -158,7 +158,7 @@ public:
 	~XRWLock();
 	void Lock();
 	void Unlock();
-	BOOL try_lock();
+	BOOL TryLock();
 	void LockShared();
 	void UnlockShared();
 

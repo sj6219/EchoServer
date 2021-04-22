@@ -63,7 +63,7 @@ void	CServer::OnTimer(int nId)
 		for (CSocket* pSocket : g_link) {
 			int dwTimeout = dwTick - pSocket->m_dwTimeout;
 			if (dwTimeout > 0) {
-				pSocket->Shutdown();
+				pSocket->Close(); //  pSocket->Shutdown();
 			}
 		}
 	}
