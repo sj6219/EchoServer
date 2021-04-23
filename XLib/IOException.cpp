@@ -88,6 +88,7 @@ static LONG WINAPI RecordExceptionInfo(PEXCEPTION_POINTERS data);
 
 XIOException::CInit::CInit()
 {
+	g_dwStack = 0;
 	XIOException::Start();
 }
 
@@ -269,125 +270,174 @@ static void PrintStack(HANDLE LogFile, DWORD_PTR begin, DWORD_PTR end)
 	}
 }
 
-#if !defined(_M_ARM64) && !defined(_M_ARM)
 static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 {
-	hprintf(LogFile, _T("Call Stack Information:\r\n"));
-
-	STACKFRAME64 sf;
-	memset(&sf, 0, sizeof(sf));
-#ifdef	_WIN64
-	sf.AddrPC.Offset       = ptrContext->Rip;
-	sf.AddrPC.Mode         = AddrModeFlat;
-	sf.AddrStack.Offset    = ptrContext->Rsp;
-	sf.AddrStack.Mode      = AddrModeFlat;
-	sf.AddrFrame.Offset = ptrContext->Rsp;
-	sf.AddrFrame.Mode = AddrModeFlat;
+#if defined(_M_ARM64)
+#elif defined(_M_ARM)
+#elif defined(_WIN64)
+	hprintf(LogFile, _T("\r\nRegisters:\r\n"));
+	hprintf(LogFile, _T("RAX=%p CS=%04x RIP=%p ContextFlags=%08x\r\n"),
+		ptrContext->Rax, ptrContext->SegCs, ptrContext->Rip, ptrContext->ContextFlags);
+	hprintf(LogFile, _T("RBX=%p SS=%04x RSP=%p RBP=%p\r\n"),
+		ptrContext->Rbx, ptrContext->SegSs, ptrContext->Rsp, ptrContext->Rbp);
+	hprintf(LogFile, _T("RCX=%p DS=%04x RSI=%p FS=%04x\r\n"),
+		ptrContext->Rcx, ptrContext->SegDs, ptrContext->Rsi, ptrContext->SegFs);
+	hprintf(LogFile, _T("RDX=%p ES=%04x RDI=%p GS=%04x\r\n"),
+		ptrContext->Rdx, ptrContext->SegEs, ptrContext->Rdi, ptrContext->SegGs);
 #else
-	sf.AddrPC.Offset       = ptrContext->Eip;
-	sf.AddrPC.Mode         = AddrModeFlat;
-	sf.AddrStack.Offset    = ptrContext->Esp;
-	sf.AddrStack.Mode      = AddrModeFlat;
-	sf.AddrFrame.Offset    = ptrContext->Ebp;
-	sf.AddrFrame.Mode      = AddrModeFlat;
+	hprintf(LogFile, _T("\r\nRegisters:\r\n"));
+	hprintf(LogFile, _T("EAX=%08x CS=%04x EIP=%08x EFLGS=%08x\r\n"),
+		ptrContext->Eax, ptrContext->SegCs, ptrContext->Eip, ptrContext->EFlags);
+	hprintf(LogFile, _T("EBX=%08x SS=%04x ESP=%08x EBP=%08x\r\n"),
+		ptrContext->Ebx, ptrContext->SegSs, ptrContext->Esp, ptrContext->Ebp);
+	hprintf(LogFile, _T("ECX=%08x DS=%04x ESI=%08x FS=%04x\r\n"),
+		ptrContext->Ecx, ptrContext->SegDs, ptrContext->Esi, ptrContext->SegFs);
+	hprintf(LogFile, _T("EDX=%08x ES=%04x EDI=%08x GS=%04x\r\n"),
+		ptrContext->Edx, ptrContext->SegEs, ptrContext->Edi, ptrContext->SegGs);
 #endif
-	while ( 1 )
-	{
-#ifdef	_WIN64
-		if (!StackWalk64(IMAGE_FILE_MACHINE_AMD64,
-						GetCurrentProcess(),
-						GetCurrentThread(),
-						&sf,
-						ptrContext,
-						0,
-						SymFunctionTableAccess64,
-						SymGetModuleBase64,
-						0))
-			break;
+
+	__try {
+		hprintf(LogFile, _T("\r\nCall Stack:\r\n"));
+
+		STACKFRAME64 sf;
+		memset(&sf, 0, sizeof(sf));
+#if defined(_M_ARM64)
+		sf.AddrPC.Offset = ptrContext->Pc;
+		sf.AddrPC.Mode = AddrModeFlat;
+		sf.AddrStack.Offset = ptrContext->Sp;
+		sf.AddrStack.Mode = AddrModeFlat;
+		sf.AddrFrame.Offset = ptrContext->Fp;
+		sf.AddrFrame.Mode = AddrModeFlat;
+#elif defined(_M_ARM)
+		sf.AddrPC.Offset = ptrContext->Pc;
+		sf.AddrPC.Mode = AddrModeFlat;
+		sf.AddrStack.Offset = ptrContext->Sp;
+		sf.AddrStack.Mode = AddrModeFlat;
+		sf.AddrFrame.Offset = ptrContext->R11;
+		sf.AddrFrame.Mode = AddrModeFlat;
+#elif defined(_WIN64)
+		sf.AddrPC.Offset       = ptrContext->Rip;
+		sf.AddrPC.Mode         = AddrModeFlat;
+		sf.AddrStack.Offset    = ptrContext->Rsp;
+		sf.AddrStack.Mode      = AddrModeFlat;
+		//sf.AddrFrame.Offset = ptrContext->Rbp;
+		//sf.AddrFrame.Mode = AddrModeFlat;
 #else
-		if (!StackWalk64(IMAGE_FILE_MACHINE_I386,
-						GetCurrentProcess(),
-						GetCurrentThread(),
-						&sf,
-						ptrContext,
-						0,
-						SymFunctionTableAccess64,
-						SymGetModuleBase64,
-						0))
-			break;
+		sf.AddrPC.Offset       = ptrContext->Eip;
+		sf.AddrPC.Mode         = AddrModeFlat;
+		sf.AddrStack.Offset    = ptrContext->Esp;
+		sf.AddrStack.Mode      = AddrModeFlat;
+		sf.AddrFrame.Offset    = ptrContext->Ebp;
+		sf.AddrFrame.Mode      = AddrModeFlat;
 #endif
-		if (0 == sf.AddrFrame.Offset) // Bail if frame is not okay.
-			break;
 
-		PrintStack(LogFile, (DWORD_PTR) sf.AddrFrame.Offset - ABOVE_STACK_NUM * sizeof(DWORD), 
-			(DWORD_PTR) sf.AddrFrame.Offset + BELOW_STACK_NUM * sizeof(DWORD));
-
-		hprintf(LogFile, _T("\r\n%p %p "), (char *) sf.AddrFrame.Offset, (char *) sf.AddrPC.Offset);
-		char UnDName[512];
-		UnDName[0] = 0;
-#if	0
-		ULONG64 symbolBuffer[(sizeof(SYMBOL_INFO) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
-		PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)symbolBuffer;
-		pSymbol->SizeOfStruct = sizeof(symbolBuffer);
-		pSymbol->MaxNameLen = 512;
-		DWORD64 symDisplacement = 0;
-
-		if (SymFromAddr(GetCurrentProcess(), sf.AddrPC.Offset,
-							&symDisplacement, pSymbol)) 
-#else
-		ULONG64 symbolBuffer[(sizeof(PIMAGEHLP_SYMBOL64 ) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
-		PIMAGEHLP_SYMBOL64  pSymbol = (PIMAGEHLP_SYMBOL64 )symbolBuffer;
-		pSymbol->SizeOfStruct = sizeof(symbolBuffer);
-		pSymbol->MaxNameLength  = 512;
-		DWORD64 symDisplacement = 0;
-
-		if (SymGetSymFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset,
-							&symDisplacement, pSymbol)) 
-#endif
+		int depth = 0;
+		while ( 1 )
 		{
-#ifdef	UNICODE
-			hprintf(LogFile, _T("%S +%x\r\n"), pSymbol->Name, symDisplacement);
+#if defined(_M_ARM64) || defined(_M_ARM)
+#elif defined(_WIN64)
+			if (!StackWalk64(IMAGE_FILE_MACHINE_AMD64,
+							GetCurrentProcess(),
+							GetCurrentThread(),
+							&sf,
+							ptrContext,
+							0,
+							SymFunctionTableAccess64,
+							SymGetModuleBase64,
+							0))
+				break;
 #else
-			hprintf(LogFile, _T("%s +%x\r\n"), pSymbol->Name, symDisplacement);
+			if (!StackWalk64(IMAGE_FILE_MACHINE_I386,
+							GetCurrentProcess(),
+							GetCurrentThread(),
+							&sf,
+							ptrContext,
+							0,
+							SymFunctionTableAccess64,
+							SymGetModuleBase64,
+							0))
+				break;
 #endif
-			UnDecorateSymbolName(pSymbol->Name, UnDName, 512, UNDNAME_COMPLETE);
-		}
+			if (0 == sf.AddrFrame.Offset || ++depth > 20) // Bail if frame is not okay.
+				break;
 
-		{
-			IMAGEHLP_LINE64 line;
-			DWORD lineDisplacement = 0;
-			line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-			if (SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &lineDisplacement, &line)) {
-#ifdef	UNICODE
-				hprintf(LogFile, _T("%S %d %S\r\n"), line.FileName, line.LineNumber, UnDName);
+			PrintStack(LogFile, (DWORD_PTR) sf.AddrFrame.Offset - ABOVE_STACK_NUM * sizeof(DWORD), 
+				(DWORD_PTR) sf.AddrFrame.Offset + BELOW_STACK_NUM * sizeof(DWORD));
+
+			hprintf(LogFile, _T("\r\n%p %p "), (char *) sf.AddrFrame.Offset, (char *) sf.AddrPC.Offset);
+			char UnDName[512];
+			UnDName[0] = 0;
+#if	 0
+			ULONG64 symbolBuffer[(sizeof(SYMBOL_INFO) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
+			PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)symbolBuffer;
+			pSymbol->SizeOfStruct = sizeof(symbolBuffer);
+			pSymbol->MaxNameLen = 512;
+			DWORD64 symDisplacement = 0;
+
+			if (SymFromAddr(GetCurrentProcess(), sf.AddrPC.Offset,
+								&symDisplacement, pSymbol)) 
 #else
-				hprintf(LogFile, _T("%s %d %s\r\n"), line.FileName, line.LineNumber, UnDName);
+			ULONG64 symbolBuffer[(sizeof(PIMAGEHLP_SYMBOL64 ) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
+			PIMAGEHLP_SYMBOL64  pSymbol = (PIMAGEHLP_SYMBOL64 )symbolBuffer;
+			pSymbol->SizeOfStruct = sizeof(symbolBuffer);
+			pSymbol->MaxNameLength  = 512;
+			DWORD64 symDisplacement = 0;
+
+			if (SymGetSymFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset,
+								&symDisplacement, pSymbol)) 
 #endif
-				goto print_param;
+			{
+#ifdef	UNICODE
+				hprintf(LogFile, _T("%S +%x\r\n"), pSymbol->Name, symDisplacement);
+#else
+				hprintf(LogFile, _T("%s +%x\r\n"), pSymbol->Name, symDisplacement);
+#endif
+				UnDecorateSymbolName(pSymbol->Name, UnDName, 512, UNDNAME_COMPLETE);
 			}
-		} 
-		{
-			TCHAR CrashModulePathName[MAX_PATH];
-			CrashModulePathName[0] = 0;
-			MEMORY_BASIC_INFORMATION MemInfo;
-			// VirtualQuery can be used to get the allocation base associated with a
-			// code address, which is the same as the ModuleHandle. This can be used
-			// to get the filename of the module that the crash happened in.
-			if (VirtualQuery((void*)sf.AddrPC.Offset, &MemInfo, sizeof(MemInfo)))
-				GetModuleFileName((HINSTANCE)MemInfo.AllocationBase,
-					CrashModulePathName, MAX_PATH);
-#ifdef		UNICODE
-			hprintf(LogFile, _T("%s %S\r\n"), CrashModulePathName, UnDName);
+
+			{
+				IMAGEHLP_LINE64 line;
+				DWORD lineDisplacement = 0;
+				line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+				if (SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &lineDisplacement, &line)) {
+#ifdef	UNICODE
+					hprintf(LogFile, _T("%S %d %S\r\n"), line.FileName, line.LineNumber, UnDName);
 #else
-			hprintf(LogFile, _T("%s %s\r\n"), CrashModulePathName, UnDName);
+					hprintf(LogFile, _T("%s %d %s\r\n"), line.FileName, line.LineNumber, UnDName);
+#endif
+					goto print_param;
+				}
+			} 
+			{
+				TCHAR CrashModulePathName[MAX_PATH];
+				CrashModulePathName[0] = 0;
+				MEMORY_BASIC_INFORMATION MemInfo;
+				// VirtualQuery can be used to get the allocation base associated with a
+				// code address, which is the same as the ModuleHandle. This can be used
+				// to get the filename of the module that the crash happened in.
+				if (VirtualQuery((void*)sf.AddrPC.Offset, &MemInfo, sizeof(MemInfo)))
+					GetModuleFileName((HINSTANCE)MemInfo.AllocationBase,
+						CrashModulePathName, MAX_PATH);
+#ifdef		UNICODE
+				hprintf(LogFile, _T("%s %S\r\n"), CrashModulePathName, UnDName);
+#else
+				hprintf(LogFile, _T("%s %s\r\n"), CrashModulePathName, UnDName);
+#endif
+			}
+	print_param:
+			hprintf(LogFile, _T("Params:   %p %p %p %p\r\n"), (char *) sf.Params[0], (char *) sf.Params[1], (char *) sf.Params[2], (char *) sf.Params[3]);
+
+#if defined(_M_ARM64) || defined(_M_ARM)
+			sf.AddrPC.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[1];
+			sf.AddrFrame.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[0];
 #endif
 		}
-print_param:
-		hprintf(LogFile, _T("Params:   %p %p %p %p\r\n"), (char *) sf.Params[0], (char *) sf.Params[1], (char *) sf.Params[2], (char *) sf.Params[3]);
+		hprintf(LogFile, _T("\r\n"));
 	}
-	hprintf(LogFile, _T("\r\n"));
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		hprintf(LogFile, _T("Exception encountered during stack walk\r\n"));
+	}
 }
-#endif
 
 static void __cdecl hprintf(HANDLE LogFile, LPCTSTR Format, ...)
 {
@@ -484,7 +534,6 @@ void	XIOException::SendMail()
 
 static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 {
-
 	HANDLE LogFile = CreateFile(g_szLogPath, GENERIC_WRITE, FILE_SHARE_READ, 0,
 		OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, 0);
 	if (LogFile == INVALID_HANDLE_VALUE) {
@@ -508,13 +557,13 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 		GetCurrentThreadId(), GetCurrentThreadId(), 
 		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, g_nBreak);
 
-#if !defined(_M_ARM64) && !defined(_M_ARM)
+	CONTEXT context = *data->ContextRecord;
+#if !defined(_M_ARM64) && !defined(_M_ARM) 
 
 	TCHAR CrashModulePathName[MAX_PATH];
 	LPCTSTR CrashModuleFileName = _T("Unknown");
 	MEMORY_BASIC_INFORMATION MemInfo;
 
-	CONTEXT context = *data->ContextRecord;
 	if (VirtualQuery((void*)(UINT_PTR)context.RIP, &MemInfo, sizeof(MemInfo)) &&
 			GetModuleFileName((HINSTANCE)MemInfo.AllocationBase,
 			CrashModulePathName, MAX_PATH) > 0)
@@ -552,26 +601,6 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 	}
 	// Print out the register values in a Win95 error window compatible format.
 	hprintf(LogFile, _T("\r\n"));
-	hprintf(LogFile, _T("Registers:\r\n"));
-#ifdef	_WIN64
-	hprintf(LogFile, _T("RAX=%p CS=%04x RIP=%p ContextFlags=%08x\r\n"),
-			context.Rax, context.SegCs, context.Rip, context.ContextFlags);
-	hprintf(LogFile, _T("RBX=%p SS=%04x RSP=%p RBP=%p\r\n"),
-			context.Rbx, context.SegSs, context.Rsp, context.Rbp);
-	hprintf(LogFile, _T("RCX=%p DS=%04x RSI=%p FS=%04x\r\n"),
-			context.Rcx, context.SegDs, context.Rsi, context.SegFs);
-	hprintf(LogFile, _T("RDX=%p ES=%04x RDI=%p GS=%04x\r\n"),
-			context.Rdx, context.SegEs, context.Rdi, context.SegGs);
-#else
-	hprintf(LogFile, _T("EAX=%08x CS=%04x EIP=%08x EFLGS=%08x\r\n"),
-			context.Eax, context.SegCs, context.Eip, context.EFlags);
-	hprintf(LogFile, _T("EBX=%08x SS=%04x ESP=%08x EBP=%08x\r\n"),
-			context.Ebx, context.SegSs, context.Esp, context.Ebp);
-	hprintf(LogFile, _T("ECX=%08x DS=%04x ESI=%08x FS=%04x\r\n"),
-			context.Ecx, context.SegDs, context.Esi, context.SegFs);
-	hprintf(LogFile, _T("EDX=%08x ES=%04x EDI=%08x GS=%04x\r\n"),
-			context.Edx, context.SegEs, context.Edi, context.SegGs);
-#endif
 	hprintf(LogFile, _T("\r\nBytes at CS:EIP:\r\n"));
 
 	// Print out the bytes of code at the instruction pointer. Since the
@@ -613,6 +642,7 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 	g_dwStackTop &= ~(STACK_COLUMN * sizeof(UINT_PTR) - 1);
 	PrintStack(LogFile, g_dwStack, g_dwStack + MAX_STACK_NUM * sizeof(DWORD));
 	hprintf(LogFile, _T("\r\n"));
+#endif
 
 	if (SymInitialize(GetCurrentProcess(), 0, TRUE)) {
 		DWORD dwOpts = SymGetOptions () ;
@@ -623,7 +653,6 @@ static void GenerateExceptionReport(PEXCEPTION_POINTERS data)
 		SymCleanup(GetCurrentProcess());
 	}
 
-#endif
 	RecordModuleList(LogFile);
 	CloseHandle(LogFile);
 
@@ -726,10 +755,8 @@ static LPCTSTR GetExceptionDescription(DWORD ExceptionCode)
 		return _T("Unknown exception type");
 }
 
-#if !defined(_M_ARM64) && !defined(_M_ARM)
 static void ImageHelpStackWalk(HANDLE LogFile, HANDLE hThread)
 {
-
 	SuspendThread(hThread);
 
 	CONTEXT context;
@@ -738,154 +765,21 @@ static void ImageHelpStackWalk(HANDLE LogFile, HANDLE hThread)
 	GetThreadContext(hThread, &context);
 	// Time to print part or all of the stack to the error log. This allows
 	// us to figure out the call stack, parameters, local variables, etc.
-	hprintf(LogFile, _T("\r\nRegisters:\r\n"));
-#ifdef	_WIN64
-	hprintf(LogFile, _T("RAX=%p CS=%04x RIP=%p ContextFlags=%08x\r\n"),
-			context.Rax, context.SegCs, context.Rip, context.ContextFlags);
-	hprintf(LogFile, _T("RBX=%p SS=%04x RSP=%p RBP=%p\r\n"),
-			context.Rbx, context.SegSs, context.Rsp, context.Rbp);
-	hprintf(LogFile, _T("RCX=%p DS=%04x RSI=%p FS=%04x\r\n"),
-			context.Rcx, context.SegDs, context.Rsi, context.SegFs);
-	hprintf(LogFile, _T("RDX=%p ES=%04x RDI=%p GS=%04x\r\n"),
-			context.Rdx, context.SegEs, context.Rdi, context.SegGs);
-#else
-	hprintf(LogFile, _T("EAX=%08x CS=%04x EIP=%08x EFLGS=%08x\r\n"),
-			context.Eax, context.SegCs, context.Eip, context.EFlags);
-	hprintf(LogFile, _T("EBX=%08x SS=%04x ESP=%08x EBP=%08x\r\n"),
-			context.Ebx, context.SegSs, context.Esp, context.Ebp);
-	hprintf(LogFile, _T("ECX=%08x DS=%04x ESI=%08x FS=%04x\r\n"),
-			context.Ecx, context.SegDs, context.Esi, context.SegFs);
-	hprintf(LogFile, _T("EDX=%08x ES=%04x EDI=%08x GS=%04x\r\n"),
-			context.Edx, context.SegEs, context.Edi, context.SegGs);
-#endif
 
 	hprintf(LogFile, _T("\r\nStack dump:\r\n"));
-#ifdef	_WIN64
+#if defined(_M_ARM64) || defined(_M_ARM)
+	g_dwStack = context.Sp & ~(STACK_COLUMN * sizeof(DWORD) - 1);
+#elif defined(_WIN64)
 	g_dwStack = context.Rsp & ~(STACK_COLUMN * sizeof(DWORD) - 1);
 #else
 	g_dwStack = context.Esp & ~(STACK_COLUMN * sizeof(DWORD) - 1);
 #endif
 	g_dwStackTop = -1;
 	PrintStack(LogFile, g_dwStack, g_dwStack + MAX_STACKDUMP_NUM * sizeof(DWORD));
+	ImageHelpStackWalk(LogFile, &context);
 
-	hprintf(LogFile, _T("\r\nCall Stack:\r\n"));
-
-	STACKFRAME64 sf;
-	memset(&sf, 0, sizeof(sf));
-
-#ifdef	_WIN64
-	sf.AddrPC.Offset       = context.Rip;
-	sf.AddrPC.Mode         = AddrModeFlat;
-	sf.AddrStack.Offset    = context.Rsp;
-	sf.AddrStack.Mode      = AddrModeFlat;
-#else
-	sf.AddrPC.Offset       = context.Eip;
-	sf.AddrPC.Mode         = AddrModeFlat;
-	sf.AddrStack.Offset    = context.Esp;
-	sf.AddrStack.Mode      = AddrModeFlat;
-	sf.AddrFrame.Offset    = context.Ebp;
-	sf.AddrFrame.Mode      = AddrModeFlat;
-#endif
-
-	while ( 1 )
-	{
-#ifdef	_WIN64
-		if (!StackWalk64(IMAGE_FILE_MACHINE_AMD64,
-						GetCurrentProcess(),
-						GetCurrentThread(),
-						&sf,
-						&context,
-						0,
-						SymFunctionTableAccess64,
-						SymGetModuleBase64,
-						0))
-			break;
-#else
-		if (!StackWalk64(IMAGE_FILE_MACHINE_I386,
-						GetCurrentProcess(),
-						GetCurrentThread(),
-						&sf,
-						&context,
-						0,
-						SymFunctionTableAccess64,
-						SymGetModuleBase64,
-						0))
-			break;
-#endif
-
-		if (0 == sf.AddrFrame.Offset) // Bail if frame is not okay.
-			break;
-
-		PrintStack(LogFile, (DWORD_PTR) sf.AddrFrame.Offset - ABOVE_STACKDUMP_NUM * sizeof(DWORD_PTR), 
-			(DWORD_PTR) sf.AddrFrame.Offset + BELOW_STACKDUMP_NUM *sizeof(DWORD_PTR));
-		hprintf(LogFile, _T("\r\n%p %p "), (char *) sf.AddrFrame.Offset, (char *) sf.AddrPC.Offset);
-
-		char UnDName[512];
-		UnDName[0] = 0;
-#if	0
-		ULONG64 symbolBuffer[(sizeof(SYMBOL_INFO) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
-		PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)symbolBuffer;
-		pSymbol->SizeOfStruct = sizeof(symbolBuffer);
-		pSymbol->MaxNameLen = 512;
-		DWORD64 symDisplacement = 0;
-
-		if (SymFromAddr(GetCurrentProcess(), sf.AddrPC.Offset,
-							&symDisplacement, pSymbol)) 
-#else
-		ULONG64 symbolBuffer[(sizeof(PIMAGEHLP_SYMBOL64) + 512 * sizeof(TCHAR) + sizeof(ULONG64)-1)/sizeof(ULONG64)];
-		PIMAGEHLP_SYMBOL64  pSymbol = (PIMAGEHLP_SYMBOL64)symbolBuffer;
-		pSymbol->SizeOfStruct = sizeof(symbolBuffer);
-		pSymbol->MaxNameLength = 512;
-		DWORD64 symDisplacement = 0;
-
-		if (SymGetSymFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset,
-							&symDisplacement, pSymbol)) 
-#endif
-		{
-
-#ifdef	UNICODE
-			hprintf(LogFile, _T("%S +%x\r\n"), pSymbol->Name, symDisplacement);
-#else
-			hprintf(LogFile, _T("%s +%x\r\n"), pSymbol->Name, symDisplacement);
-#endif
-			UnDecorateSymbolName(pSymbol->Name, UnDName, 512, UNDNAME_COMPLETE);
-		}
-		{
-			IMAGEHLP_LINE64 line;
-			DWORD lineDisplacement = 0;
-			line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-			if (SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &lineDisplacement, &line)) {
-#ifdef	UNICODE
-				hprintf(LogFile, _T("%S %d %S\r\n"), line.FileName, line.LineNumber, UnDName);
-#else
-				hprintf(LogFile, _T("%s %d %s\r\n"), line.FileName, line.LineNumber, UnDName);
-#endif
-				goto print_param;
-			}
-		} 
-		{
-			TCHAR CrashModulePathName[MAX_PATH];
-			CrashModulePathName[0] = 0;
-			MEMORY_BASIC_INFORMATION MemInfo;
-			// VirtualQuery can be used to get the allocation base associated with a
-			// code address, which is the same as the ModuleHandle. This can be used
-			// to get the filename of the module that the crash happened in.
-			if (VirtualQuery((void*)sf.AddrPC.Offset, &MemInfo, sizeof(MemInfo)))
-				GetModuleFileName((HINSTANCE)MemInfo.AllocationBase,
-					CrashModulePathName, MAX_PATH);
-#ifdef	UNICODE
-			hprintf(LogFile, _T("%s %S\r\n"), CrashModulePathName, UnDName);
-#else
-			hprintf(LogFile, _T("%s %s\r\n"), CrashModulePathName, UnDName);
-#endif
-		}
-print_param:
-		hprintf(LogFile, _T("Params:   %p %p %p %p\r\n"), (char *) sf.Params[0], (char *) sf.Params[1], (char *) sf.Params[2], (char *) sf.Params[3]);
-	}
-	hprintf(LogFile, _T("\r\n"));
 	ResumeThread(hThread);
 }
-#endif
 
 int XIOException::Filter(LPEXCEPTION_POINTERS pExp)
 {
@@ -957,7 +851,6 @@ void	XIOException::DumpStack(int nThread, HANDLE *hThread, unsigned *nThreadId)
 	localtime_s(&tm, &g_timeStart);
 	hprintf(LogFile, _T("start at %02d/%02d/%02d %02d:%02d:%02d\r\n"), tm.tm_year % 100, tm.tm_mon + 1, tm.tm_mday,
 		tm.tm_hour, tm.tm_min, tm.tm_sec);
-#if !defined(_M_ARM64) && !defined(_M_ARM)
 	if (SymInitialize(GetCurrentProcess(), 0, TRUE)) {
 		DWORD dwOpts = SymGetOptions();
 		if ((dwOpts & (SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS)) !=
@@ -969,7 +862,6 @@ void	XIOException::DumpStack(int nThread, HANDLE *hThread, unsigned *nThreadId)
 		}
 		SymCleanup(GetCurrentProcess());
 	}
-#endif // !defined(_M_ARM64)
 	RecordModuleList(LogFile);
 	CloseHandle(LogFile);
 //	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
@@ -1203,7 +1095,7 @@ static void GenerateExceptionReport()
     EXCEPTION_RECORD stExRec ;
     EXCEPTION_POINTERS stExpPtrs ;
 
-#if defined(_WIN64) || defined(_M_ARM)
+#if defined(_WIN64) || defined(_M_ARM64) || defined(_M_ARM)
 	RtlCaptureContext(&stContext);
 #else
 	SnapCurrentProcessMiniDump(&stContext);

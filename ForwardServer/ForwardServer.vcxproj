@@ -157,6 +157,7 @@
       <AdditionalIncludeDirectories>..\XLib</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -174,6 +175,7 @@
       <AdditionalIncludeDirectories>..\XLib</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -194,6 +196,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -216,6 +219,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -235,6 +239,7 @@
       <AdditionalIncludeDirectories>..\XLib</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -252,6 +257,7 @@
       <AdditionalIncludeDirectories>..\XLib</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -272,6 +278,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -294,6 +301,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

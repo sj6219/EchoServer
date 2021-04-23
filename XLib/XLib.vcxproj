@@ -166,6 +166,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -183,6 +184,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -203,6 +205,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -225,6 +228,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -244,6 +248,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -261,6 +266,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -281,6 +287,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -303,6 +310,7 @@
       <Optimization>Disabled</Optimization>
       <ExceptionHandling>false</ExceptionHandling>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>
