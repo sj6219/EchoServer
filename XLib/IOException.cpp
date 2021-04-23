@@ -296,7 +296,8 @@ static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 		ptrContext->Edx, ptrContext->SegEs, ptrContext->Edi, ptrContext->SegGs);
 #endif
 
-	__try {
+	//__try 
+	{
 		hprintf(LogFile, _T("\r\nCall Stack:\r\n"));
 
 		STACKFRAME64 sf;
@@ -320,8 +321,8 @@ static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 		sf.AddrPC.Mode         = AddrModeFlat;
 		sf.AddrStack.Offset    = ptrContext->Rsp;
 		sf.AddrStack.Mode      = AddrModeFlat;
-		//sf.AddrFrame.Offset = ptrContext->Rbp;
-		//sf.AddrFrame.Mode = AddrModeFlat;
+		sf.AddrFrame.Offset = ptrContext->Rbp;
+		sf.AddrFrame.Mode = AddrModeFlat;
 #else
 		sf.AddrPC.Offset       = ptrContext->Eip;
 		sf.AddrPC.Mode         = AddrModeFlat;
@@ -334,30 +335,25 @@ static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 		int depth = 0;
 		while ( 1 )
 		{
-#if defined(_M_ARM64) || defined(_M_ARM)
+			if (!StackWalk64(
+#if defined(_M_ARM64) 
+				IMAGE_FILE_MACHINE_ARM64,
+#elif defined(_M_ARM)
+				IMAGE_FILE_MACHINE_ARMNT,
 #elif defined(_WIN64)
-			if (!StackWalk64(IMAGE_FILE_MACHINE_AMD64,
-							GetCurrentProcess(),
-							GetCurrentThread(),
-							&sf,
-							ptrContext,
-							0,
-							SymFunctionTableAccess64,
-							SymGetModuleBase64,
-							0))
-				break;
+				IMAGE_FILE_MACHINE_AMD64,
 #else
-			if (!StackWalk64(IMAGE_FILE_MACHINE_I386,
-							GetCurrentProcess(),
-							GetCurrentThread(),
-							&sf,
-							ptrContext,
-							0,
-							SymFunctionTableAccess64,
-							SymGetModuleBase64,
-							0))
-				break;
+				IMAGE_FILE_MACHINE_I386,
 #endif
+				GetCurrentProcess(),
+				GetCurrentThread(),
+				&sf,
+				ptrContext,
+				0,
+				SymFunctionTableAccess64,
+				SymGetModuleBase64,
+				0))
+				break;
 			if (0 == sf.AddrFrame.Offset || ++depth > 20) // Bail if frame is not okay.
 				break;
 
@@ -428,15 +424,15 @@ static void ImageHelpStackWalk(HANDLE LogFile, PCONTEXT ptrContext)
 			hprintf(LogFile, _T("Params:   %p %p %p %p\r\n"), (char *) sf.Params[0], (char *) sf.Params[1], (char *) sf.Params[2], (char *) sf.Params[3]);
 
 #if defined(_M_ARM64) || defined(_M_ARM)
-			sf.AddrPC.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[1];
-			sf.AddrFrame.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[0];
+			//sf.AddrPC.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[1];
+			//sf.AddrFrame.Offset = ((DWORD_PTR*)sf.AddrFrame.Offset)[0];
 #endif
 		}
 		hprintf(LogFile, _T("\r\n"));
 	}
-	__except (EXCEPTION_EXECUTE_HANDLER) {
-		hprintf(LogFile, _T("Exception encountered during stack walk\r\n"));
-	}
+//	__except (EXCEPTION_EXECUTE_HANDLER) {
+//		hprintf(LogFile, _T("Exception encountered during stack walk\r\n"));
+//	}
 }
 
 static void __cdecl hprintf(HANDLE LogFile, LPCTSTR Format, ...)
