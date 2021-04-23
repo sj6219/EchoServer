@@ -43,7 +43,6 @@ void CServer::Shutdown()
 {
 	XSharedLock<XRWLock> lock(m_lock);
 	for (CSocket* pSocket : m_link)
-		
 		pSocket->Shutdown();
 }
 
