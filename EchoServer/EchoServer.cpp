@@ -14,6 +14,19 @@
 #include "Server.h"
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "Comctl32.lib")
+#include "eventlog.h"
+
+/*
+mc eventlog.mc
+
+reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v CategoryCount /t REG_DWORD /d 0 /f
+reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v TypesSupported /t REG_DWORD /d 7 /f
+for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v CategoryMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v EventMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v ParameterMessageFile /t REG_SZ /d %~fi /f
+
+reg delete HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /f
+*/
 
 #define MAX_LOADSTRING 100
 
@@ -36,6 +49,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
+
+	{
+		HANDLE event_log = RegisterEventSource(NULL, _T("EchoServer"));
+		LPCTSTR message = _T("Start up");
+		ReportEvent(event_log, EVENTLOG_INFORMATION_TYPE, 0, MSG_GENERAL_COMMAND, NULL, 1, 0, &message, NULL);
+		DeregisterEventSource(event_log);
+	}
  	
 	MSG msg;
 	HACCEL hAccelTable;

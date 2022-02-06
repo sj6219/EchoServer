@@ -335,6 +335,7 @@
   <ItemGroup>
     <ResourceCompile Include="echocounter.rc" />
     <ResourceCompile Include="EchoServer.rc" />
+    <ResourceCompile Include="eventlog.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="EchoServer.ico" />
