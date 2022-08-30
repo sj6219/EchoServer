@@ -49,7 +49,31 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-
+#if 0
+	{
+		// type \\.\pipe\pipe0
+		HANDLE hPipe  = CreateNamedPipe(_T("\\\\.\\pipe\\pipe0"),   // pipe name
+			PIPE_ACCESS_DUPLEX |      // read/write access
+			FILE_FLAG_OVERLAPPED,     // overlapped mode
+			PIPE_TYPE_BYTE |          // message type pipe
+			PIPE_READMODE_BYTE |      // message-read mode
+			PIPE_WAIT,                // blocking mode
+			PIPE_UNLIMITED_INSTANCES, // max. instances
+			0x10000,             // output buffer size
+			0x10000,             // input buffer size
+			0,                        // client time-out
+			NULL          // security attributes
+		);
+		if (hPipe != INVALID_HANDLE_VALUE) {
+			if (ConnectNamedPipe(hPipe, NULL) ||
+				GetLastError() == ERROR_PIPE_CONNECTED) {
+				CloseHandle(hPipe);
+			}
+			else
+				CloseHandle(hPipe);
+		}
+	}
+#endif
 	{
 		HANDLE event_log = RegisterEventSource(NULL, _T("EchoServer"));
 		LPCTSTR message = _T("Start up");
