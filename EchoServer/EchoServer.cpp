@@ -21,9 +21,9 @@ mc eventlog.mc
 
 reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v CategoryCount /t REG_DWORD /d 0 /f
 reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v TypesSupported /t REG_DWORD /d 7 /f
-for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v CategoryMessageFile /t REG_SZ /d %~fi /f
-for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v EventMessageFile /t REG_SZ /d %~fi /f
-for /F %i in ("..\x64\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v ParameterMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v CategoryMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v EventMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\EchoServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /v ParameterMessageFile /t REG_SZ /d %~fi /f
 
 reg delete HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\EchoServer /f
 */

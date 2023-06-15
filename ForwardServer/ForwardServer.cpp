@@ -23,9 +23,9 @@ mc eventlog.mc
 
 reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v CategoryCount /t REG_DWORD /d 0 /f
 reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v TypesSupported /t REG_DWORD /d 7 /f
-for /F %i in ("..\x64\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v CategoryMessageFile /t REG_SZ /d %~fi /f
-for /F %i in ("..\x64\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v EventMessageFile /t REG_SZ /d %~fi /f
-for /F %i in ("..\x64\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v ParameterMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v CategoryMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v EventMessageFile /t REG_SZ /d %~fi /f
+for /F %i in ("..\Release\ForwardServer.exe") do reg add HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /v ParameterMessageFile /t REG_SZ /d %~fi /f
 
 reg delete HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\ForwardServer /f
 */
